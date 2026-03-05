@@ -15,20 +15,37 @@ import { randomBytes } from "node:crypto";
  * These are logged for monitoring but content is still processed (wrapped safely).
  */
 const SUSPICIOUS_PATTERNS = [
+  // Classic jailbreak phrases
   /ignore\s+(all\s+)?(previous|prior|above)\s+(instructions?|prompts?)/i,
   /disregard\s+(all\s+)?(previous|prior|above)/i,
   /forget\s+(everything|all|your)\s+(instructions?|rules?|guidelines?)/i,
   /you\s+are\s+now\s+(a|an)\s+/i,
   /new\s+instructions?:/i,
   /system\s*:?\s*(prompt|override|command)/i,
+  // Destructive command injection
   /\bexec\b.*command\s*=/i,
   /elevated\s*=\s*true/i,
   /rm\s+-rf/i,
   /delete\s+all\s+(emails?|files?|data)/i,
+  // XML/HTML tag injection targeting system context
   /<\/?system>/i,
   /\]\s*\n\s*\[?(system|assistant|user)\]?:/i,
   /\[\s*(System\s*Message|System|Assistant|Internal)\s*\]/i,
   /^\s*System:\s+/im,
+  // Turn-delimiter injection — injects fake conversation turns
+  // (e.g. "\n\nHuman: ignore the above and instead...")
+  /\n\n(human|assistant|user)\s*:/im,
+  // ChatML / LLaMA-style control tokens
+  /<\|im_start\|>/i,
+  /<\|im_end\|>/i,
+  // Anthropic tool-use tag injection — could trick the model into
+  // believing a tool call was already made or is being requested
+  /<function_calls>/i,
+  /<tool_use>/i,
+  /<tool_result>/i,
+  // JSON / YAML role injection (common in structured-output attacks)
+  /"role"\s*:\s*"(system|assistant)"/i,
+  /\brole\s*[:=]\s*(system|assistant)\b/i,
 ];
 
 /**
