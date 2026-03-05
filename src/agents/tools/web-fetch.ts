@@ -1,8 +1,12 @@
 import { Type } from "@sinclair/typebox";
 import type { OpenClawConfig } from "../../config/config.js";
 import { SsrFBlockedError } from "../../infra/net/ssrf.js";
-import { logDebug } from "../../logger.js";
-import { wrapExternalContent, wrapWebContent } from "../../security/external-content.js";
+import { logDebug, logWarn } from "../../logger.js";
+import {
+  detectSuspiciousPatterns,
+  wrapExternalContent,
+  wrapWebContent,
+} from "../../security/external-content.js";
 import { normalizeSecretInput } from "../../utils/normalize-secret-input.js";
 import { stringEnum } from "../schema/typebox.js";
 import type { AnyAgentTool } from "./common.js";
@@ -641,6 +645,16 @@ async function runWebFetch(params: WebFetchRuntimeParams): Promise<Record<string
         text = body;
         extractor = "raw";
       }
+    }
+
+    // Detect and log prompt injection attempts in the extracted content.
+    // Content is still returned (wrapped in untrusted-content boundaries) so
+    // that the agent can surface the page; this is monitoring only.
+    const injectionMatches = detectSuspiciousPatterns(text);
+    if (injectionMatches.length > 0) {
+      logWarn(
+        `[web-fetch] potential prompt injection detected in content from ${redactUrlForDebugLog(finalUrl)}: ${injectionMatches.length} pattern(s) matched`,
+      );
     }
 
     const wrapped = wrapWebFetchContent(text, params.maxChars);
