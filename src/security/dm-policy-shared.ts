@@ -289,6 +289,10 @@ export function resolveDmGroupAccessWithCommandGate(
 export async function resolveDmAllowState(params: {
   provider: ChannelId;
   accountId: string;
+  /** When set, the pairing store is only consulted for policies that permit it
+   *  (i.e. NOT "allowlist" or "disabled"). Omitting this causes the store to be
+   *  read regardless of policy, which was the pre-CVE-2026-24763 bug. */
+  dmPolicy?: string | null;
   allowFrom?: Array<string | number> | null;
   normalizeEntry?: (raw: string) => string;
   readStore?: (provider: ChannelId, accountId: string) => Promise<string[]>;
@@ -305,6 +309,7 @@ export async function resolveDmAllowState(params: {
   const storeAllowFrom = await readStoreAllowFromForDmPolicy({
     provider: params.provider,
     accountId: params.accountId,
+    dmPolicy: params.dmPolicy,
     readStore: params.readStore,
   });
   const normalizeEntry = params.normalizeEntry ?? ((value: string) => value);
