@@ -17,6 +17,7 @@ import {
   isValidIPv4,
   resolveGatewayBindHost,
 } from "./net.js";
+import { getOrCreateGatewayPassword } from "./secure-bootstrap.js";
 import { mergeGatewayTailscaleConfig } from "./startup-auth.js";
 
 export type GatewayRuntimeConfig = {
@@ -98,12 +99,21 @@ export async function resolveGatewayRuntimeConfig(params: {
   const tailscaleOverrides = params.tailscale ?? {};
   const tailscaleConfig = mergeGatewayTailscaleConfig(tailscaleBase, tailscaleOverrides);
   const tailscaleMode = tailscaleConfig.mode ?? "off";
-  const resolvedAuth = resolveGatewayAuth({
+  let resolvedAuth = resolveGatewayAuth({
     authConfig: params.cfg.gateway?.auth,
     authOverride: params.auth,
     env: process.env,
     tailscaleMode,
   });
+
+  // Auto-bootstrap: when the operator has not configured any auth credentials,
+  // generate a secure password and store it in the OS keychain rather than
+  // refusing to start. The password is printed once to stderr on first boot.
+  if (resolvedAuth.modeSource === "default" && !resolvedAuth.token && !resolvedAuth.password) {
+    const autoPassword = await getOrCreateGatewayPassword();
+    resolvedAuth = { ...resolvedAuth, mode: "password", password: autoPassword };
+  }
+
   const authMode: ResolvedGatewayAuth["mode"] = resolvedAuth.mode;
   const hasToken = typeof resolvedAuth.token === "string" && resolvedAuth.token.trim().length > 0;
   const hasPassword =
@@ -129,6 +139,15 @@ export async function resolveGatewayRuntimeConfig(params: {
   }
   if (tailscaleMode !== "off" && !isLoopbackHost(bindHost)) {
     throw new Error("tailscale serve/funnel requires gateway bind=loopback (127.0.0.1)");
+  }
+  // Block auth=none on any non-loopback address — explicit guard for operators
+  // who set mode=none intentionally and then change the bind address.
+  if (authMode === "none" && !isLoopbackHost(bindHost)) {
+    throw new Error(
+      `refusing to bind gateway to ${bindHost}:${params.port} with auth mode=none; ` +
+        `authentication is required for non-loopback bindings ` +
+        `(set gateway.auth.token/password, or set DONNA_GATEWAY_TOKEN/DONNA_GATEWAY_PASSWORD)`,
+    );
   }
   if (!isLoopbackHost(bindHost) && !hasSharedSecret && authMode !== "trusted-proxy") {
     throw new Error(

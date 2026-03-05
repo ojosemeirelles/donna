@@ -15,10 +15,14 @@ import { ensureDir, resolveUserPath } from "../utils.js";
 import { VERSION } from "../version.js";
 import {
   maybeRestoreCredsFromBackup,
+  migrateToKeychain,
+  readCredsFromKeychain,
   readCredsJsonRaw,
   resolveDefaultWebAuthDir,
   resolveWebCredsBackupPath,
   resolveWebCredsPath,
+  secureDeleteFile,
+  writeCredsToKeychain,
 } from "./auth-store.js";
 
 export {
@@ -73,10 +77,21 @@ async function safeSaveCreds(
   }
   try {
     await Promise.resolve(saveCreds());
-    try {
-      fsSync.chmodSync(resolveWebCredsPath(authDir), 0o600);
-    } catch {
-      // best-effort on platforms that support it
+    // Move newly written creds.json to keychain; securely delete plaintext.
+    const credsPath = resolveWebCredsPath(authDir);
+    const written = readCredsJsonRaw(credsPath);
+    if (written) {
+      const stored = await writeCredsToKeychain(authDir, written);
+      if (stored) {
+        await secureDeleteFile(credsPath);
+      } else {
+        // keytar unavailable — keep file with restricted permissions
+        try {
+          fsSync.chmodSync(credsPath, 0o600);
+        } catch {
+          // best-effort on platforms that support it
+        }
+      }
     }
   } catch (err) {
     logger.warn({ error: String(err) }, "failed saving WhatsApp creds");
@@ -102,8 +117,26 @@ export async function createWaSocket(
   const authDir = resolveUserPath(opts.authDir ?? resolveDefaultWebAuthDir());
   await ensureDir(authDir);
   const sessionLogger = getChildLogger({ module: "web-session" });
+
+  // Migrate any pre-existing plaintext creds.json to the OS keychain.
+  await migrateToKeychain(authDir);
+
+  // If creds are already in keychain, write them to a temporary file so that
+  // Baileys' useMultiFileAuthState can read them. The file is deleted as soon
+  // as Baileys has loaded its in-memory state.
+  const keychainCreds = await readCredsFromKeychain(authDir);
+  if (keychainCreds) {
+    const credsPath = resolveWebCredsPath(authDir);
+    await fs.writeFile(credsPath, keychainCreds, { encoding: "utf-8", mode: 0o600 });
+  }
+
   maybeRestoreCredsFromBackup(authDir);
   const { state, saveCreds } = await useMultiFileAuthState(authDir);
+
+  // Immediately remove the temporary plaintext file after Baileys reads it.
+  if (keychainCreds) {
+    await secureDeleteFile(resolveWebCredsPath(authDir));
+  }
   const { version } = await fetchLatestBaileysVersion();
   const sock = makeWASocket({
     auth: {
