@@ -90,7 +90,14 @@ export async function readStoreAllowFromForDmPolicy(params: {
   shouldRead?: boolean | null;
   readStore?: (provider: ChannelId, accountId: string) => Promise<string[]>;
 }): Promise<string[]> {
-  if (params.shouldRead === false || params.dmPolicy === "allowlist") {
+  // Never inherit pairing-store approvals when DMs are fully disabled or
+  // restricted to a static allowlist — either policy means no new paired users
+  // should gain access, and reading the store could expose a bypass path.
+  if (
+    params.shouldRead === false ||
+    params.dmPolicy === "allowlist" ||
+    params.dmPolicy === "disabled"
+  ) {
     return [];
   }
   const readStore =
