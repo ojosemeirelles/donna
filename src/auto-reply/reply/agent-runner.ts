@@ -18,6 +18,7 @@ import type { TypingMode } from "../../config/types.js";
 import { emitAgentEvent } from "../../infra/agent-events.js";
 import { emitDiagnosticEvent, isDiagnosticsEnabled } from "../../infra/diagnostic-events.js";
 import { generateSecureUuid } from "../../infra/secure-random.js";
+import { checkSpendingLimits, SpendingLimitExceededError } from "../../infra/spending-limits.js";
 import { enqueueSystemEvent } from "../../infra/system-events.js";
 import { defaultRuntime } from "../../runtime.js";
 import { estimateUsageCost, resolveModelCostConfig } from "../../utils/usage-format.js";
@@ -332,6 +333,24 @@ export async function runReplyAgent(params: {
         `Role ordering conflict (${reason}). Restarting session ${sessionKey} -> ${nextSessionId}.`,
       cleanupTranscripts: true,
     });
+  // Enforce spending caps before each agent turn to avoid over-budget runs.
+  if (cfg.spending?.maxDailyCostUsd || cfg.spending?.maxSessionCostUsd) {
+    try {
+      await checkSpendingLimits({
+        config: cfg,
+        sessionId: followupRun.run.sessionId,
+        sessionEntry: activeSessionEntry,
+        sessionFile: followupRun.run.sessionFile,
+      });
+    } catch (err) {
+      if (err instanceof SpendingLimitExceededError) {
+        typing.cleanup();
+        return { text: err.message, isError: true };
+      }
+      throw err;
+    }
+  }
+
   try {
     const runStartedAt = Date.now();
     const runOutcome = await runAgentTurnWithFallback({
