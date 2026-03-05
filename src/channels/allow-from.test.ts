@@ -26,6 +26,16 @@ describe("mergeDmAllowFromSources", () => {
     ).toEqual(["+1111"]);
   });
 
+  it("excludes pairing-store entries when dmPolicy is disabled", () => {
+    expect(
+      mergeDmAllowFromSources({
+        allowFrom: ["+1111"],
+        storeAllowFrom: ["+2222", "+3333"],
+        dmPolicy: "disabled",
+      }),
+    ).toEqual(["+1111"]);
+  });
+
   it("keeps pairing-store entries for non-allowlist policies", () => {
     expect(
       mergeDmAllowFromSources({

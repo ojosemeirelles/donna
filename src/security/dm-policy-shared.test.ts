@@ -91,6 +91,14 @@ describe("security/dm-policy-shared", () => {
     });
   });
 
+  it("skips pairing-store reads when dmPolicy is disabled", async () => {
+    await expectStoreReadSkipped({
+      provider: "telegram",
+      accountId: "default",
+      dmPolicy: "disabled",
+    });
+  });
+
   it("skips pairing-store reads when shouldRead=false", async () => {
     await expectStoreReadSkipped({
       provider: "slack",
@@ -165,6 +173,38 @@ describe("security/dm-policy-shared", () => {
         normalizeEntry: (entry) => entry.trim(),
       }),
     ).toBeNull();
+  });
+
+  it("excludes storeAllowFrom when dmPolicy is disabled (CVE-2026-24763)", () => {
+    // A previously-paired user must not inherit access when DMs are disabled.
+    const lists = resolveEffectiveAllowFromLists({
+      allowFrom: ["+1111"],
+      groupAllowFrom: [],
+      storeAllowFrom: ["+2222", "+3333"],
+      dmPolicy: "disabled",
+    });
+    expect(lists.effectiveAllowFrom).toEqual(["+1111"]);
+  });
+
+  it("blocks DM with disabled policy even when sender is in pairing store", () => {
+    // End-to-end regression: paired sender must not bypass dmPolicy=disabled
+    // via effectiveAllowFrom leaking into the command-gate path.
+    const resolved = resolveDmGroupAccessWithCommandGate({
+      isGroup: false,
+      dmPolicy: "disabled",
+      groupPolicy: "allowlist",
+      allowFrom: ["owner"],
+      groupAllowFrom: [],
+      storeAllowFrom: ["paired-attacker"],
+      isSenderAllowed: (allowFrom) => allowFrom.includes("paired-attacker"),
+      command: {
+        useAccessGroups: true,
+        allowTextCommands: true,
+        hasControlCommand: true,
+      },
+    });
+    expect(resolved.decision).toBe("block");
+    expect(resolved.commandAuthorized).toBe(false);
   });
 
   it("excludes storeAllowFrom when dmPolicy is allowlist", () => {

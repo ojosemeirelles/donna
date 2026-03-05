@@ -3,7 +3,12 @@ export function mergeDmAllowFromSources(params: {
   storeAllowFrom?: Array<string | number>;
   dmPolicy?: string;
 }): string[] {
-  const storeEntries = params.dmPolicy === "allowlist" ? [] : (params.storeAllowFrom ?? []);
+  // Exclude pairing-store entries when the policy forbids any new DM access.
+  // "allowlist" uses only static config; "disabled" blocks all DMs entirely.
+  const storeEntries =
+    params.dmPolicy === "allowlist" || params.dmPolicy === "disabled"
+      ? []
+      : (params.storeAllowFrom ?? []);
   return [...(params.allowFrom ?? []), ...storeEntries]
     .map((value) => String(value).trim())
     .filter(Boolean);
