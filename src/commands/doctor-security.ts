@@ -103,6 +103,7 @@ export async function noteSecurityWarnings(cfg: OpenClawConfig) {
     const { hasWildcard, allowCount, isMultiUserDm } = await resolveDmAllowState({
       provider: params.provider,
       accountId: params.accountId,
+      dmPolicy: params.dmPolicy,
       allowFrom: params.allowFrom,
       normalizeEntry: params.normalizeEntry,
     });
@@ -124,8 +125,12 @@ export async function noteSecurityWarnings(cfg: OpenClawConfig) {
     }
 
     if (dmPolicy !== "open" && allowCount === 0) {
+      const blockedAction =
+        dmPolicy === "allowlist"
+          ? "silently blocked (allowlist policy — no pairing codes issued)"
+          : "blocked / get a pairing code";
       warnings.push(
-        `- ${params.label} DMs: locked (${policyPath}="${dmPolicy}") with no allowlist; unknown senders will be blocked / get a pairing code.`,
+        `- ${params.label} DMs: locked (${policyPath}="${dmPolicy}") with no allowlist; unknown senders will be ${blockedAction}.`,
       );
       warnings.push(`  ${params.approveHint}`);
     }

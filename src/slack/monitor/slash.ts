@@ -384,10 +384,13 @@ export async function registerSlackMonitorSlashCommands(params: {
             logVerbose(
               `slack: blocked slash sender ${command.user_id} (dmPolicy=${ctx.dmPolicy}, ${allowMatchMeta})`,
             );
-            await respond({
-              text: "You are not authorized to use this command.",
-              response_type: "ephemeral",
-            });
+            // allowlist policy requires silent discard — no response to the blocked sender.
+            if (ctx.dmPolicy !== "allowlist") {
+              await respond({
+                text: "You are not authorized to use this command.",
+                response_type: "ephemeral",
+              });
+            }
           },
           log: logVerbose,
         });

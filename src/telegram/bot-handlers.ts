@@ -26,9 +26,9 @@ import type {
 import { danger, logVerbose, warn } from "../globals.js";
 import { enqueueSystemEvent } from "../infra/system-events.js";
 import { MediaFetchError } from "../media/fetch.js";
-import { readChannelAllowFromStore } from "../pairing/pairing-store.js";
 import { resolveAgentRoute } from "../routing/resolve-route.js";
 import { resolveThreadSessionKeys } from "../routing/session-key.js";
+import { readStoreAllowFromForDmPolicy } from "../security/dm-policy-shared.js";
 import { withTelegramApiErrorLogging } from "./api-logging.js";
 import {
   isSenderAllowed,
@@ -430,7 +430,11 @@ export const registerTelegramHandlers = ({
   };
 
   const loadStoreAllowFrom = async () =>
-    readChannelAllowFromStore("telegram", process.env, accountId).catch(() => []);
+    readStoreAllowFromForDmPolicy({
+      provider: "telegram",
+      accountId,
+      dmPolicy: telegramCfg.dmPolicy,
+    });
 
   const resolveReplyMediaForMessage = async (
     ctx: TelegramContext,
