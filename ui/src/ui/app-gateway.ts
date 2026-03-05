@@ -136,6 +136,46 @@ function applySessionDefaults(host: GatewayHost, defaults?: SessionDefaultsSnaps
   }
 }
 
+/**
+ * Returns true only for URLs that are safe to connect to:
+ * - wss:// (TLS) at any host
+ * - ws:// exclusively on loopback (localhost / 127.0.0.1 / ::1)
+ *
+ * Anything else is rejected to prevent SSRF-style token exfiltration where a
+ * crafted URL redirects the WebSocket to an attacker-controlled server.
+ */
+function isAllowedGatewayUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol === "wss:") {
+      return true;
+    }
+    if (u.protocol === "ws:") {
+      const h = u.hostname.toLowerCase();
+      return h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "[::1]";
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Strip any token/password query params that may have leaked into the URL.
+ * Auth credentials must travel exclusively in the WebSocket message body,
+ * never in the URL (where they are visible in server logs and browser history).
+ */
+function sanitizeGatewayUrl(raw: string): string {
+  try {
+    const u = new URL(raw);
+    u.searchParams.delete("token");
+    u.searchParams.delete("password");
+    return u.toString();
+  } catch {
+    return raw;
+  }
+}
+
 export function connectGateway(host: GatewayHost) {
   host.lastError = null;
   host.lastErrorCode = null;
@@ -144,9 +184,17 @@ export function connectGateway(host: GatewayHost) {
   host.execApprovalQueue = [];
   host.execApprovalError = null;
 
+  const rawUrl = host.settings.gatewayUrl;
+  if (!isAllowedGatewayUrl(rawUrl)) {
+    host.lastError = `connection refused: "${rawUrl}" is not a permitted gateway endpoint — only wss:// or loopback ws:// are allowed`;
+    console.warn("[gateway] connectGateway: rejected unsafe URL", rawUrl);
+    return;
+  }
+  const safeUrl = sanitizeGatewayUrl(rawUrl);
+
   const previousClient = host.client;
   const client = new GatewayBrowserClient({
-    url: host.settings.gatewayUrl,
+    url: safeUrl,
     token: host.settings.token.trim() ? host.settings.token : undefined,
     password: host.password.trim() ? host.password : undefined,
     clientName: "openclaw-control-ui",

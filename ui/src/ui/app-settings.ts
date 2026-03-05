@@ -101,10 +101,9 @@ export function applySettingsFromUrl(host: SettingsHost) {
   let shouldCleanUrl = false;
 
   if (tokenRaw != null) {
-    const token = tokenRaw.trim();
-    if (token && token !== host.settings.token) {
-      applySettings(host, { ...host.settings, token });
-    }
+    // Never hydrate token from URL — strip only. Accepting a token from an
+    // untrusted URL leaks credentials to any page that can craft a redirect link
+    // (root cause of CVE-2026-25253 token-exfiltration class).
     params.delete("token");
     hashParams.delete("token");
     shouldCleanUrl = true;
@@ -130,10 +129,11 @@ export function applySettingsFromUrl(host: SettingsHost) {
   }
 
   if (gatewayUrlRaw != null) {
-    const gatewayUrl = gatewayUrlRaw.trim();
-    if (gatewayUrl && gatewayUrl !== host.settings.gatewayUrl) {
-      host.pendingGatewayUrl = gatewayUrl;
-    }
+    // Never redirect the gateway connection via URL params — strip only.
+    // Accepting a gatewayUrl from an untrusted URL redirects the WebSocket to
+    // an attacker-controlled server that then receives the auth token
+    // (CVE-2026-25253). Gateway URL must only come from static config or
+    // user-saved localStorage settings.
     params.delete("gatewayUrl");
     hashParams.delete("gatewayUrl");
     shouldCleanUrl = true;

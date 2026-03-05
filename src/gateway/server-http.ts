@@ -46,8 +46,10 @@ import {
   resolveHookDeliver,
 } from "./hooks.js";
 import { sendGatewayAuthFailure, setDefaultSecurityHeaders } from "./http-common.js";
+import { isLoopbackAddress } from "./net.js";
 import { handleOpenAiHttpRequest } from "./openai-http.js";
 import { handleOpenResponsesHttpRequest } from "./openresponses-http.js";
+import { checkBrowserOrigin } from "./origin-check.js";
 import {
   authorizeCanvasRequest,
   enforcePluginRouteGatewayAuth,
@@ -722,6 +724,47 @@ export function attachGatewayUpgradeHandler(opts: {
   const { httpServer, wss, canvasHost, clients, resolvedAuth, rateLimiter } = opts;
   httpServer.on("upgrade", (req, socket, head) => {
     void (async () => {
+      // ── Origin validation (CVE-2026-25253) ──────────────────────────────────
+      // Browser clients always send an Origin header on WebSocket upgrade.
+      // Non-browser clients (CLI, programmatic) omit it and pass through freely.
+      // When present, the origin must match the allowlist or be loopback-local.
+      const requestOrigin = Array.isArray(req.headers.origin)
+        ? req.headers.origin[0]
+        : req.headers.origin;
+      if (typeof requestOrigin === "string" && requestOrigin.trim() !== "") {
+        const configSnapshot = loadConfig();
+        const allowedOrigins = configSnapshot.gateway?.controlUi?.allowedOrigins ?? [];
+        const allowHostHeaderFallback =
+          configSnapshot.gateway?.controlUi?.dangerouslyAllowHostHeaderOriginFallback === true;
+        const remoteAddress = req.socket?.remoteAddress;
+        const isLocalClient = isLoopbackAddress(remoteAddress);
+        const requestHost = Array.isArray(req.headers.host)
+          ? req.headers.host[0]
+          : req.headers.host;
+
+        const originCheck = checkBrowserOrigin({
+          requestHost,
+          origin: requestOrigin,
+          allowedOrigins,
+          allowHostHeaderOriginFallback: allowHostHeaderFallback,
+          isLocalClient,
+        });
+
+        if (!originCheck.ok) {
+          // Sanitise before logging: truncate and strip CR/LF to prevent log injection.
+          const safeOrigin = requestOrigin.slice(0, 200).replace(/[\r\n]/g, "");
+          console.warn(
+            `[gateway] ws upgrade rejected: origin="${safeOrigin}" reason="${originCheck.reason}" remote=${remoteAddress ?? "?"}`,
+          );
+          socket.write(
+            "HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\nOrigin not allowed",
+          );
+          socket.destroy();
+          return;
+        }
+      }
+      // ────────────────────────────────────────────────────────────────────────
+
       const scopedCanvas = normalizeCanvasScopedUrl(req.url ?? "/");
       if (scopedCanvas.malformedScopedPath) {
         writeUpgradeAuthFailure(socket, { ok: false, reason: "unauthorized" });
