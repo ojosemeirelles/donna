@@ -1,5 +1,31 @@
 # Repository Guidelines
 
+<!-- PROJECT STATE (last updated: 2026-03-07) -->
+## Current Project State
+
+**What Donna is:** A rebranded, security-hardened AI gateway (forked from OpenClaw/MoltBot/ClawdBot).
+Connects AI models to messaging channels (Telegram, WhatsApp, Discord, Slack, Signal, iMessage, etc.)
+via a local daemon. TypeScript monorepo, pnpm, Node 22+.
+
+### Security Fixes Applied
+| Commit | CVE | Description |
+|--------|-----|-------------|
+| `d66ff8458` | CVE-2026-25157 | Web-fetch prompt injection detection gaps |
+| `bf7579be4` | CVE-2026-26134 | Spending limits enforcement |
+| `8d158524b` | CVE-2026-24763 | dmPolicy allowlist inheritance across all channels |
+
+### Rebranding
+| Commit | Description |
+|--------|-------------|
+| `8cd9673bd` | Full rename: openclaw/moltbot/clawdbot → donna (3,913 files) |
+
+### Next Steps
+- Test locally: `donna gateway --port 18789`, connect Telegram bot, connect WhatsApp via QR
+- Explore skills system (`extensions/`, `src/agents/`) for creating NOVA-style skills
+- Legacy cleanup dirs preserved: `.clawdbot`, `.moldbot`, `.moltbot` (backward compat)
+
+<!-- END PROJECT STATE -->
+
 - Repo: https://github.com/donna/donna
 - In chat replies, file references must be repo-root relative only (example: `extensions/bluebubbles/src/channel.ts:80`); never absolute paths or `~/...`.
 - GitHub issues/comments/PR comments: use literal multiline strings or `-F - <<'EOF'` (or $'...') for real newlines; never embed "\\n".
