@@ -3,9 +3,9 @@ import path from "node:path";
 import type {
   ChannelOnboardingAdapter,
   ChannelOnboardingDmPolicy,
-  OpenClawConfig,
+  DonnaConfig,
   WizardPrompter,
-} from "openclaw/plugin-sdk/zalouser";
+} from "donna/plugin-sdk/zalouser";
 import {
   addWildcardAllowFrom,
   DEFAULT_ACCOUNT_ID,
@@ -14,8 +14,8 @@ import {
   normalizeAccountId,
   promptAccountId,
   promptChannelAccessConfig,
-  resolvePreferredOpenClawTmpDir,
-} from "openclaw/plugin-sdk/zalouser";
+  resolvePreferredDonnaTmpDir,
+} from "donna/plugin-sdk/zalouser";
 import {
   listZalouserAccountIds,
   resolveDefaultZalouserAccountId,
@@ -33,11 +33,11 @@ import {
 const channel = "zalouser" as const;
 
 function setZalouserAccountScopedConfig(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   accountId: string,
   defaultPatch: Record<string, unknown>,
   accountPatch: Record<string, unknown> = defaultPatch,
-): OpenClawConfig {
+): DonnaConfig {
   if (accountId === DEFAULT_ACCOUNT_ID) {
     return {
       ...cfg,
@@ -49,7 +49,7 @@ function setZalouserAccountScopedConfig(
           ...defaultPatch,
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
   }
   return {
     ...cfg,
@@ -68,13 +68,13 @@ function setZalouserAccountScopedConfig(
         },
       },
     },
-  } as OpenClawConfig;
+  } as DonnaConfig;
 }
 
 function setZalouserDmPolicy(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   dmPolicy: "pairing" | "allowlist" | "open" | "disabled",
-): OpenClawConfig {
+): DonnaConfig {
   const allowFrom =
     dmPolicy === "open" ? addWildcardAllowFrom(cfg.channels?.zalouser?.allowFrom) : undefined;
   return {
@@ -87,7 +87,7 @@ function setZalouserDmPolicy(
         ...(allowFrom ? { allowFrom } : {}),
       },
     },
-  } as OpenClawConfig;
+  } as DonnaConfig;
 }
 
 async function noteZalouserHelp(prompter: WizardPrompter): Promise<void> {
@@ -97,7 +97,7 @@ async function noteZalouserHelp(prompter: WizardPrompter): Promise<void> {
       "",
       "This plugin uses zca-js directly (no external CLI dependency).",
       "",
-      "Docs: https://docs.openclaw.ai/channels/zalouser",
+      "Docs: https://docs.donna.ai/channels/zalouser",
     ].join("\n"),
     "Zalo Personal Setup",
   );
@@ -114,19 +114,16 @@ async function writeQrDataUrlToTempFile(
     return null;
   }
   const safeProfile = profile.replace(/[^a-zA-Z0-9_-]+/g, "-") || "default";
-  const filePath = path.join(
-    resolvePreferredOpenClawTmpDir(),
-    `openclaw-zalouser-qr-${safeProfile}.png`,
-  );
+  const filePath = path.join(resolvePreferredDonnaTmpDir(), `donna-zalouser-qr-${safeProfile}.png`);
   await fsp.writeFile(filePath, Buffer.from(base64, "base64"));
   return filePath;
 }
 
 async function promptZalouserAllowFrom(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   prompter: WizardPrompter;
   accountId: string;
-}): Promise<OpenClawConfig> {
+}): Promise<DonnaConfig> {
   const { cfg, prompter, accountId } = params;
   const resolved = resolveZalouserAccountSync({ cfg, accountId });
   const existingAllowFrom = resolved.config.allowFrom ?? [];
@@ -178,20 +175,20 @@ async function promptZalouserAllowFrom(params: {
 }
 
 function setZalouserGroupPolicy(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   accountId: string,
   groupPolicy: "open" | "allowlist" | "disabled",
-): OpenClawConfig {
+): DonnaConfig {
   return setZalouserAccountScopedConfig(cfg, accountId, {
     groupPolicy,
   });
 }
 
 function setZalouserGroupAllowlist(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   accountId: string,
   groupKeys: string[],
-): OpenClawConfig {
+): DonnaConfig {
   const groups = Object.fromEntries(groupKeys.map((key) => [key, { allow: true }]));
   return setZalouserAccountScopedConfig(cfg, accountId, {
     groups,

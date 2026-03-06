@@ -4,7 +4,7 @@ import {
   type OAuthCredentials,
   type OAuthProvider,
 } from "@mariozechner/pi-ai";
-import { loadConfig, type OpenClawConfig } from "../../config/config.js";
+import { loadConfig, type DonnaConfig } from "../../config/config.js";
 import { coerceSecretRef } from "../../config/types.secrets.js";
 import { withFileLock } from "../../infra/file-lock.js";
 import { refreshQwenPortalCredentials } from "../../providers/qwen-portal-oauth.js";
@@ -41,7 +41,7 @@ const isCompatibleModeType = (mode: string | undefined, type: string | undefined
 };
 
 function isProfileConfigCompatible(params: {
-  cfg?: OpenClawConfig;
+  cfg?: DonnaConfig;
   profileId: string;
   provider: string;
   mode: "api_key" | "token" | "oauth";
@@ -88,13 +88,13 @@ function buildOAuthProfileResult(params: {
 }
 
 type ResolveApiKeyForProfileParams = {
-  cfg?: OpenClawConfig;
+  cfg?: DonnaConfig;
   store: AuthProfileStore;
   profileId: string;
   agentDir?: string;
 };
 
-type SecretDefaults = NonNullable<OpenClawConfig["secrets"]>["defaults"];
+type SecretDefaults = NonNullable<DonnaConfig["secrets"]>["defaults"];
 
 function adoptNewerMainOAuthCredential(params: {
   store: AuthProfileStore;
@@ -239,7 +239,7 @@ async function resolveProfileSecretString(params: {
   value: string | undefined;
   valueRef: unknown;
   refDefaults: SecretDefaults | undefined;
-  configForRefResolution: OpenClawConfig;
+  configForRefResolution: DonnaConfig;
   cache: SecretRefResolveCache;
   inlineFailureMessage: string;
   refFailureMessage: string;

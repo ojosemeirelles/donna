@@ -6,7 +6,7 @@ import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
 import { resolveBrowserControlAuth } from "../browser/control-auth.js";
 import { listChannelPlugins } from "../channels/plugins/index.js";
 import { formatCliCommand } from "../cli/command-format.js";
-import type { ConfigFileSnapshot, OpenClawConfig } from "../config/config.js";
+import type { ConfigFileSnapshot, DonnaConfig } from "../config/config.js";
 import { resolveConfigPath, resolveStateDir } from "../config/paths.js";
 import { hasConfiguredSecretInput } from "../config/types.secrets.js";
 import { resolveGatewayAuth } from "../gateway/auth.js";
@@ -85,7 +85,7 @@ export type SecurityAuditReport = {
 };
 
 export type SecurityAuditOptions = {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
   deep?: boolean;
@@ -112,7 +112,7 @@ export type SecurityAuditOptions = {
 };
 
 type AuditExecutionContext = {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   env: NodeJS.ProcessEnv;
   platform: NodeJS.Platform;
   includeFilesystem: boolean;
@@ -163,7 +163,7 @@ function hasNonEmptyString(value: unknown): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function isFeishuDocToolEnabled(cfg: OpenClawConfig): boolean {
+function isFeishuDocToolEnabled(cfg: DonnaConfig): boolean {
   const channels = asRecord(cfg.channels);
   const feishu = asRecord(channels?.feishu);
   if (!feishu || feishu.enabled === false) {
@@ -231,7 +231,7 @@ async function collectFilesystemFindings(params: {
         checkId: "fs.state_dir.perms_world_writable",
         severity: "critical",
         title: "State dir is world-writable",
-        detail: `${formatPermissionDetail(params.stateDir, stateDirPerms)}; other users can write into your OpenClaw state.`,
+        detail: `${formatPermissionDetail(params.stateDir, stateDirPerms)}; other users can write into your Donna state.`,
         remediation: formatPermissionRemediation({
           targetPath: params.stateDir,
           perms: stateDirPerms,
@@ -245,7 +245,7 @@ async function collectFilesystemFindings(params: {
         checkId: "fs.state_dir.perms_group_writable",
         severity: "warn",
         title: "State dir is group-writable",
-        detail: `${formatPermissionDetail(params.stateDir, stateDirPerms)}; group users can write into your OpenClaw state.`,
+        detail: `${formatPermissionDetail(params.stateDir, stateDirPerms)}; group users can write into your Donna state.`,
         remediation: formatPermissionRemediation({
           targetPath: params.stateDir,
           perms: stateDirPerms,
@@ -335,7 +335,7 @@ async function collectFilesystemFindings(params: {
 }
 
 function collectGatewayConfigFindings(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   env: NodeJS.ProcessEnv,
 ): SecurityAuditFinding[] {
   const findings: SecurityAuditFinding[] = [];
@@ -354,11 +354,9 @@ function collectGatewayConfigFindings(
     : [];
   const hasToken = typeof auth.token === "string" && auth.token.trim().length > 0;
   const hasPassword = typeof auth.password === "string" && auth.password.trim().length > 0;
-  const envTokenConfigured =
-    hasNonEmptyString(env.OPENCLAW_GATEWAY_TOKEN) || hasNonEmptyString(env.CLAWDBOT_GATEWAY_TOKEN);
+  const envTokenConfigured = hasNonEmptyString(env.DONNA_GATEWAY_TOKEN);
   const envPasswordConfigured =
-    hasNonEmptyString(env.OPENCLAW_GATEWAY_PASSWORD) ||
-    hasNonEmptyString(env.CLAWDBOT_GATEWAY_PASSWORD);
+    hasNonEmptyString(env.DONNA_GATEWAY_PASSWORD) || hasNonEmptyString(env.DONNA_GATEWAY_PASSWORD);
   const tokenConfiguredFromConfig = hasConfiguredSecretInput(
     cfg.gateway?.auth?.token,
     cfg.secrets?.defaults,
@@ -714,7 +712,7 @@ function isStrictLoopbackTrustedProxyEntry(entry: string): boolean {
 }
 
 function collectBrowserControlFindings(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   env: NodeJS.ProcessEnv,
 ): SecurityAuditFinding[] {
   const findings: SecurityAuditFinding[] = [];
@@ -728,7 +726,7 @@ function collectBrowserControlFindings(
       severity: "warn",
       title: "Browser control config looks invalid",
       detail: String(err),
-      remediation: `Fix browser.cdpUrl in ${resolveConfigPath()} and re-run "${formatCliCommand("openclaw security audit --deep")}".`,
+      remediation: `Fix browser.cdpUrl in ${resolveConfigPath()} and re-run "${formatCliCommand("donna security audit --deep")}".`,
     });
     return findings;
   }
@@ -741,8 +739,8 @@ function collectBrowserControlFindings(
   const explicitAuthMode = cfg.gateway?.auth?.mode;
   const tokenConfigured =
     Boolean(browserAuth.token) ||
-    hasNonEmptyString(env.OPENCLAW_GATEWAY_TOKEN) ||
-    hasNonEmptyString(env.CLAWDBOT_GATEWAY_TOKEN) ||
+    hasNonEmptyString(env.DONNA_GATEWAY_TOKEN) ||
+    hasNonEmptyString(env.DONNA_GATEWAY_TOKEN) ||
     hasConfiguredSecretInput(cfg.gateway?.auth?.token, cfg.secrets?.defaults);
   const passwordCanWin =
     explicitAuthMode === "password" ||
@@ -753,8 +751,8 @@ function collectBrowserControlFindings(
   const passwordConfigured =
     Boolean(browserAuth.password) ||
     (passwordCanWin &&
-      (hasNonEmptyString(env.OPENCLAW_GATEWAY_PASSWORD) ||
-        hasNonEmptyString(env.CLAWDBOT_GATEWAY_PASSWORD) ||
+      (hasNonEmptyString(env.DONNA_GATEWAY_PASSWORD) ||
+        hasNonEmptyString(env.DONNA_GATEWAY_PASSWORD) ||
         hasConfiguredSecretInput(cfg.gateway?.auth?.password, cfg.secrets?.defaults)));
   if (!tokenConfigured && !passwordConfigured) {
     findings.push({
@@ -794,7 +792,7 @@ function collectBrowserControlFindings(
   return findings;
 }
 
-function collectLoggingFindings(cfg: OpenClawConfig): SecurityAuditFinding[] {
+function collectLoggingFindings(cfg: DonnaConfig): SecurityAuditFinding[] {
   const redact = cfg.logging?.redactSensitive;
   if (redact !== "off") {
     return [];
@@ -810,7 +808,7 @@ function collectLoggingFindings(cfg: OpenClawConfig): SecurityAuditFinding[] {
   ];
 }
 
-function collectElevatedFindings(cfg: OpenClawConfig): SecurityAuditFinding[] {
+function collectElevatedFindings(cfg: DonnaConfig): SecurityAuditFinding[] {
   const findings: SecurityAuditFinding[] = [];
   const enabled = cfg.tools?.elevated?.enabled;
   const allowFrom = cfg.tools?.elevated?.allowFrom ?? {};
@@ -845,7 +843,7 @@ function collectElevatedFindings(cfg: OpenClawConfig): SecurityAuditFinding[] {
   return findings;
 }
 
-function collectExecRuntimeFindings(cfg: OpenClawConfig): SecurityAuditFinding[] {
+function collectExecRuntimeFindings(cfg: DonnaConfig): SecurityAuditFinding[] {
   const findings: SecurityAuditFinding[] = [];
   const globalExecHost = cfg.tools?.exec?.host;
   const defaultSandboxMode = resolveSandboxConfigForAgent(cfg).mode;
@@ -1037,7 +1035,7 @@ function collectExecRuntimeFindings(cfg: OpenClawConfig): SecurityAuditFinding[]
 }
 
 async function maybeProbeGateway(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   env: NodeJS.ProcessEnv;
   timeoutMs: number;
   probe: typeof probeGateway;
@@ -1212,7 +1210,7 @@ export async function runSecurityAudit(opts: SecurityAuditOptions): Promise<Secu
       severity: "warn",
       title: "Gateway probe failed (deep)",
       detail: deep.gateway.error ?? "gateway unreachable",
-      remediation: `Run "${formatCliCommand("openclaw status --all")}" to debug connectivity/auth, then re-run "${formatCliCommand("openclaw security audit --deep")}".`,
+      remediation: `Run "${formatCliCommand("donna status --all")}" to debug connectivity/auth, then re-run "${formatCliCommand("donna security audit --deep")}".`,
     });
   }
 

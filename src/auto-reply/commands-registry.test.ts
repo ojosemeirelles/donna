@@ -249,23 +249,21 @@ describe("commands registry", () => {
   });
 
   it("normalizes telegram-style command mentions for the current bot", () => {
-    expect(normalizeCommandBody("/help@openclaw", { botUsername: "openclaw" })).toBe("/help");
+    expect(normalizeCommandBody("/help@donna", { botUsername: "donna" })).toBe("/help");
     expect(
-      normalizeCommandBody("/help@openclaw args", {
-        botUsername: "openclaw",
+      normalizeCommandBody("/help@donna args", {
+        botUsername: "donna",
       }),
     ).toBe("/help args");
     expect(
-      normalizeCommandBody("/help@openclaw: args", {
-        botUsername: "openclaw",
+      normalizeCommandBody("/help@donna: args", {
+        botUsername: "donna",
       }),
     ).toBe("/help args");
   });
 
   it("keeps telegram-style command mentions for other bots", () => {
-    expect(normalizeCommandBody("/help@otherbot", { botUsername: "openclaw" })).toBe(
-      "/help@otherbot",
-    );
+    expect(normalizeCommandBody("/help@otherbot", { botUsername: "donna" })).toBe("/help@otherbot");
   });
 
   it("normalizes dock command aliases", () => {

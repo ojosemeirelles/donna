@@ -1,10 +1,10 @@
 import { expect } from "vitest";
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 
 export function expectGeneratedTokenPersistedToGatewayAuth(params: {
   generatedToken?: string;
   authToken?: string;
-  persistedConfig?: OpenClawConfig;
+  persistedConfig?: DonnaConfig;
 }) {
   expect(params.generatedToken).toMatch(/^[0-9a-f]{48}$/);
   expect(params.authToken).toBe(params.generatedToken);

@@ -1,21 +1,21 @@
 import { Command } from "commander";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ConfigFileSnapshot, OpenClawConfig } from "../config/types.js";
+import type { ConfigFileSnapshot, DonnaConfig } from "../config/types.js";
 
 /**
  * Test for issue #6070:
- * `openclaw config set/unset` must update snapshot.resolved (user config after $include/${ENV},
+ * `donna config set/unset` must update snapshot.resolved (user config after $include/${ENV},
  * but before runtime defaults), so runtime defaults don't leak into the written config.
  */
 
 const mockReadConfigFileSnapshot = vi.fn<() => Promise<ConfigFileSnapshot>>();
 const mockWriteConfigFile = vi.fn<
-  (cfg: OpenClawConfig, options?: { unsetPaths?: string[][] }) => Promise<void>
+  (cfg: DonnaConfig, options?: { unsetPaths?: string[][] }) => Promise<void>
 >(async () => {});
 
 vi.mock("../config/config.js", () => ({
   readConfigFileSnapshot: () => mockReadConfigFileSnapshot(),
-  writeConfigFile: (cfg: OpenClawConfig, options?: { unsetPaths?: string[][] }) =>
+  writeConfigFile: (cfg: DonnaConfig, options?: { unsetPaths?: string[][] }) =>
     mockWriteConfigFile(cfg, options),
 }));
 
@@ -34,12 +34,9 @@ vi.mock("../runtime.js", () => ({
   },
 }));
 
-function buildSnapshot(params: {
-  resolved: OpenClawConfig;
-  config: OpenClawConfig;
-}): ConfigFileSnapshot {
+function buildSnapshot(params: { resolved: DonnaConfig; config: DonnaConfig }): ConfigFileSnapshot {
   return {
-    path: "/tmp/openclaw.json",
+    path: "/tmp/donna.json",
     exists: true,
     raw: JSON.stringify(params.resolved),
     parsed: params.resolved,
@@ -52,7 +49,7 @@ function buildSnapshot(params: {
   };
 }
 
-function setSnapshot(resolved: OpenClawConfig, config: OpenClawConfig) {
+function setSnapshot(resolved: DonnaConfig, config: DonnaConfig) {
   mockReadConfigFileSnapshot.mockResolvedValueOnce(buildSnapshot({ resolved, config }));
 }
 
@@ -60,7 +57,7 @@ function setSnapshotOnce(snapshot: ConfigFileSnapshot) {
   mockReadConfigFileSnapshot.mockResolvedValueOnce(snapshot);
 }
 
-function withRuntimeDefaults(resolved: OpenClawConfig): OpenClawConfig {
+function withRuntimeDefaults(resolved: DonnaConfig): DonnaConfig {
   return {
     ...resolved,
     agents: {
@@ -77,7 +74,7 @@ function makeInvalidSnapshot(params: {
   path?: string;
 }): ConfigFileSnapshot {
   return {
-    path: params.path ?? "/tmp/custom-openclaw.json",
+    path: params.path ?? "/tmp/custom-donna.json",
     exists: true,
     raw: "{}",
     parsed: {},
@@ -127,7 +124,7 @@ describe("config cli", () => {
 
   describe("config set - issue #6070", () => {
     it("preserves existing config keys when setting a new value", async () => {
-      const resolved: OpenClawConfig = {
+      const resolved: DonnaConfig = {
         agents: {
           list: [{ id: "main" }, { id: "oracle", workspace: "~/oracle-workspace" }],
         },
@@ -135,7 +132,7 @@ describe("config cli", () => {
         tools: { allow: ["group:fs"] },
         logging: { level: "debug" },
       };
-      const runtimeMerged: OpenClawConfig = {
+      const runtimeMerged: DonnaConfig = {
         ...withRuntimeDefaults(resolved),
       };
       setSnapshot(resolved, runtimeMerged);
@@ -153,7 +150,7 @@ describe("config cli", () => {
     });
 
     it("does not inject runtime defaults into the written config", async () => {
-      const resolved: OpenClawConfig = {
+      const resolved: DonnaConfig = {
         gateway: { port: 18789 },
       };
       const runtimeMerged = {
@@ -167,7 +164,7 @@ describe("config cli", () => {
         } as never,
         messages: { ackReaction: "✅" } as never,
         sessions: { persistence: { enabled: true } } as never,
-      } as unknown as OpenClawConfig;
+      } as unknown as DonnaConfig;
       setSnapshot(resolved, runtimeMerged);
 
       await runConfigCommand(["config", "set", "gateway.auth.mode", "token"]);
@@ -184,7 +181,7 @@ describe("config cli", () => {
     });
 
     it("auto-seeds a valid Ollama provider when setting only models.providers.ollama.apiKey", async () => {
-      const resolved: OpenClawConfig = {
+      const resolved: DonnaConfig = {
         gateway: { port: 18789 },
       };
       setSnapshot(resolved, resolved);
@@ -204,7 +201,7 @@ describe("config cli", () => {
 
   describe("config get", () => {
     it("redacts sensitive values", async () => {
-      const resolved: OpenClawConfig = {
+      const resolved: DonnaConfig = {
         gateway: {
           auth: {
             token: "super-secret-token",
@@ -215,13 +212,13 @@ describe("config cli", () => {
 
       await runConfigCommand(["config", "get", "gateway.auth.token"]);
 
-      expect(mockLog).toHaveBeenCalledWith("__OPENCLAW_REDACTED__");
+      expect(mockLog).toHaveBeenCalledWith("__DONNA_REDACTED__");
     });
   });
 
   describe("config validate", () => {
     it("prints success and exits 0 when config is valid", async () => {
-      const resolved: OpenClawConfig = {
+      const resolved: DonnaConfig = {
         gateway: { port: 18789 },
       };
       setSnapshot(resolved, resolved);
@@ -263,7 +260,7 @@ describe("config cli", () => {
 
       const payload = await runValidateJsonAndGetPayload();
       expect(payload.valid).toBe(false);
-      expect(payload.path).toBe("/tmp/custom-openclaw.json");
+      expect(payload.path).toBe("/tmp/custom-donna.json");
       expect(payload.issues).toEqual([{ path: "gateway.bind", message: "Invalid enum value" }]);
       expect(mockError).not.toHaveBeenCalled();
     });
@@ -284,7 +281,7 @@ describe("config cli", () => {
 
       const payload = await runValidateJsonAndGetPayload();
       expect(payload.valid).toBe(false);
-      expect(payload.path).toBe("/tmp/custom-openclaw.json");
+      expect(payload.path).toBe("/tmp/custom-donna.json");
       expect(payload.issues).toEqual([
         {
           path: "update.channel",
@@ -297,7 +294,7 @@ describe("config cli", () => {
 
     it("prints file-not-found and exits 1 when config file is missing", async () => {
       setSnapshotOnce({
-        path: "/tmp/openclaw.json",
+        path: "/tmp/donna.json",
         exists: false,
         raw: null,
         parsed: {},
@@ -317,7 +314,7 @@ describe("config cli", () => {
 
   describe("config set parsing flags", () => {
     it("falls back to raw string when parsing fails and strict mode is off", async () => {
-      const resolved: OpenClawConfig = { gateway: { port: 18789 } };
+      const resolved: DonnaConfig = { gateway: { port: 18789 } };
       setSnapshot(resolved, resolved);
 
       await runConfigCommand(["config", "set", "gateway.auth.mode", "{bad"]);
@@ -390,7 +387,7 @@ describe("config cli", () => {
 
   describe("config unset - issue #6070", () => {
     it("preserves existing config keys when unsetting a value", async () => {
-      const resolved: OpenClawConfig = {
+      const resolved: DonnaConfig = {
         agents: { list: [{ id: "main" }] },
         gateway: { port: 18789 },
         tools: {
@@ -399,7 +396,7 @@ describe("config cli", () => {
         },
         logging: { level: "debug" },
       };
-      const runtimeMerged: OpenClawConfig = {
+      const runtimeMerged: DonnaConfig = {
         ...withRuntimeDefaults(resolved),
       };
       setSnapshot(resolved, runtimeMerged);
@@ -422,24 +419,24 @@ describe("config cli", () => {
 
   describe("config file", () => {
     it("prints the active config file path", async () => {
-      const resolved: OpenClawConfig = { gateway: { port: 18789 } };
+      const resolved: DonnaConfig = { gateway: { port: 18789 } };
       setSnapshot(resolved, resolved);
 
       await runConfigCommand(["config", "file"]);
 
-      expect(mockLog).toHaveBeenCalledWith("/tmp/openclaw.json");
+      expect(mockLog).toHaveBeenCalledWith("/tmp/donna.json");
       expect(mockWriteConfigFile).not.toHaveBeenCalled();
     });
 
     it("handles config file path with home directory", async () => {
-      const resolved: OpenClawConfig = { gateway: { port: 18789 } };
+      const resolved: DonnaConfig = { gateway: { port: 18789 } };
       const snapshot = buildSnapshot({ resolved, config: resolved });
-      snapshot.path = "/home/user/.openclaw/openclaw.json";
+      snapshot.path = "/home/user/.donna/donna.json";
       mockReadConfigFileSnapshot.mockResolvedValueOnce(snapshot);
 
       await runConfigCommand(["config", "file"]);
 
-      expect(mockLog).toHaveBeenCalledWith("/home/user/.openclaw/openclaw.json");
+      expect(mockLog).toHaveBeenCalledWith("/home/user/.donna/donna.json");
     });
   });
 });

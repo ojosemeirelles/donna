@@ -1,18 +1,18 @@
 {
-  "name": "@openclaw/memory-core",
+  "name": "@donna/memory-core",
   "version": "2026.3.2",
   "private": true,
-  "description": "OpenClaw core memory search plugin",
+  "description": "Donna core memory search plugin",
   "type": "module",
   "peerDependencies": {
-    "openclaw": ">=2026.3.2"
+    "donna": ">=2026.3.2"
   },
   "peerDependenciesMeta": {
-    "openclaw": {
+    "donna": {
       "optional": true
     }
   },
-  "openclaw": {
+  "donna": {
     "extensions": [
       "./index.ts"
     ]

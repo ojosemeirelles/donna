@@ -44,7 +44,7 @@ import { readLatestAssistantReply } from "./tools/agent-step.js";
 import { sanitizeTextContent, extractAssistantText } from "./tools/sessions-helpers.js";
 import { isAnnounceSkip } from "./tools/sessions-send-helpers.js";
 
-const FAST_TEST_MODE = process.env.OPENCLAW_TEST_FAST === "1";
+const FAST_TEST_MODE = process.env.DONNA_TEST_FAST === "1";
 const FAST_TEST_RETRY_INTERVAL_MS = 8;
 const FAST_TEST_REPLY_CHANGE_WAIT_MS = 20;
 const DEFAULT_SUBAGENT_ANNOUNCE_TIMEOUT_MS = 60_000;
@@ -1036,10 +1036,10 @@ export function buildSubagentSystemPrompt(params: {
       ...(acpEnabled
         ? [
             'For ACP harness sessions (codex/claudecode/gemini), use `sessions_spawn` with `runtime: "acp"` (set `agentId` unless `acp.defaultAgent` is configured).',
-            '`agents_list` and `subagents` apply to OpenClaw sub-agents (`runtime: "subagent"`); ACP harness ids are controlled by `acp.allowedAgents`.',
+            '`agents_list` and `subagents` apply to Donna sub-agents (`runtime: "subagent"`); ACP harness ids are controlled by `acp.allowedAgents`.',
             "Do not ask users to run slash commands or CLI when `sessions_spawn` can do it directly.",
-            "Do not use `exec` (`openclaw ...`, `acpx ...`) to spawn ACP sessions.",
-            'Use `subagents` only for OpenClaw subagents (`runtime: "subagent"`).',
+            "Do not use `exec` (`donna ...`, `acpx ...`) to spawn ACP sessions.",
+            'Use `subagents` only for Donna subagents (`runtime: "subagent"`).',
             "Subagent results auto-announce back to you; ACP sessions continue in their bound thread.",
             "Avoid polling loops; spawn, orchestrate, and synthesize results.",
           ]

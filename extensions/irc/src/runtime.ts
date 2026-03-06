@@ -1,4 +1,4 @@
-import type { PluginRuntime } from "openclaw/plugin-sdk/irc";
+import type { PluginRuntime } from "donna/plugin-sdk/irc";
 
 let runtime: PluginRuntime | null = null;
 

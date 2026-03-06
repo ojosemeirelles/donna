@@ -92,11 +92,11 @@ describeLaunchdIntegration("launchd integration", () => {
 
   beforeAll(async () => {
     const testId = randomUUID().slice(0, 8);
-    homeDir = await fs.mkdtemp(path.join(os.tmpdir(), `openclaw-launchd-int-${testId}-`));
+    homeDir = await fs.mkdtemp(path.join(os.tmpdir(), `donna-launchd-int-${testId}-`));
     env = {
       HOME: homeDir,
-      OPENCLAW_LAUNCHD_LABEL: `ai.openclaw.launchd-int-${testId}`,
-      OPENCLAW_LOG_PREFIX: `gateway-launchd-int-${testId}`,
+      DONNA_LAUNCHD_LABEL: `ai.donna.launchd-int-${testId}`,
+      DONNA_LOG_PREFIX: `gateway-launchd-int-${testId}`,
     };
   });
 

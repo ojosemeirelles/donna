@@ -1,17 +1,17 @@
-# @openclaw/zalo
+# @donna/zalo
 
-Zalo channel plugin for OpenClaw (Bot API).
+Zalo channel plugin for Donna (Bot API).
 
 ## Install (local checkout)
 
 ```bash
-openclaw plugins install ./extensions/zalo
+donna plugins install ./extensions/zalo
 ```
 
 ## Install (npm)
 
 ```bash
-openclaw plugins install @openclaw/zalo
+donna plugins install @donna/zalo
 ```
 
 Onboarding: select Zalo and confirm the install prompt to fetch the plugin automatically.

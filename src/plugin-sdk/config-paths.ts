@@ -1,7 +1,7 @@
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 
 export function resolveChannelAccountConfigBasePath(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   channelKey: string;
   accountId: string;
 }): string {

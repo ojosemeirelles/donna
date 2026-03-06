@@ -1,19 +1,19 @@
-import type { OpenClawConfig } from "../../../config/config.js";
+import type { DonnaConfig } from "../../../config/config.js";
 import type { WizardPrompter } from "../../../wizard/prompts.js";
 import { promptChannelAccessConfig, type ChannelAccessPolicy } from "./channel-access.js";
 
 export async function configureChannelAccessWithAllowlist<TResolved>(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   prompter: WizardPrompter;
   label: string;
   currentPolicy: ChannelAccessPolicy;
   currentEntries: string[];
   placeholder: string;
   updatePrompt: boolean;
-  setPolicy: (cfg: OpenClawConfig, policy: ChannelAccessPolicy) => OpenClawConfig;
-  resolveAllowlist: (params: { cfg: OpenClawConfig; entries: string[] }) => Promise<TResolved>;
-  applyAllowlist: (params: { cfg: OpenClawConfig; resolved: TResolved }) => OpenClawConfig;
-}): Promise<OpenClawConfig> {
+  setPolicy: (cfg: DonnaConfig, policy: ChannelAccessPolicy) => DonnaConfig;
+  resolveAllowlist: (params: { cfg: DonnaConfig; entries: string[] }) => Promise<TResolved>;
+  applyAllowlist: (params: { cfg: DonnaConfig; resolved: TResolved }) => DonnaConfig;
+}): Promise<DonnaConfig> {
   let next = params.cfg;
   const accessConfig = await promptChannelAccessConfig({
     prompter: params.prompter,

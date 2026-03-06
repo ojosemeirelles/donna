@@ -1,4 +1,4 @@
-import { fetchWithSsrFGuard } from "openclaw/plugin-sdk/voice-call";
+import { fetchWithSsrFGuard } from "donna/plugin-sdk/voice-call";
 
 type GuardedJsonApiRequestParams = {
   url: string;

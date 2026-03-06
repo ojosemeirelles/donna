@@ -1,6 +1,6 @@
 import os from "node:os";
 import { resolveGatewayPort } from "../config/paths.js";
-import type { OpenClawConfig } from "../config/types.js";
+import type { DonnaConfig } from "../config/types.js";
 import { normalizeSecretInputString, resolveSecretInputRef } from "../config/types.secrets.js";
 import { secretRefKey } from "../secrets/ref-contract.js";
 import { resolveSecretRefValues } from "../secrets/resolve.js";
@@ -92,7 +92,7 @@ function normalizeUrl(raw: string, schemeFallback: "ws" | "wss"): string | null 
 }
 
 function resolveScheme(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   opts?: {
     forceSecure?: boolean;
   },
@@ -150,15 +150,15 @@ function pickTailnetIPv4(
   return pickIPv4Matching(networkInterfaces, isTailnetIPv4);
 }
 
-function resolveAuth(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): ResolveAuthResult {
+function resolveAuth(cfg: DonnaConfig, env: NodeJS.ProcessEnv): ResolveAuthResult {
   const mode = cfg.gateway?.auth?.mode;
   const token =
-    env.OPENCLAW_GATEWAY_TOKEN?.trim() ||
-    env.CLAWDBOT_GATEWAY_TOKEN?.trim() ||
+    env.DONNA_GATEWAY_TOKEN?.trim() ||
+    env.DONNA_GATEWAY_TOKEN?.trim() ||
     cfg.gateway?.auth?.token?.trim();
   const password =
-    env.OPENCLAW_GATEWAY_PASSWORD?.trim() ||
-    env.CLAWDBOT_GATEWAY_PASSWORD?.trim() ||
+    env.DONNA_GATEWAY_PASSWORD?.trim() ||
+    env.DONNA_GATEWAY_PASSWORD?.trim() ||
     normalizeSecretInputString(cfg.gateway?.auth?.password);
 
   if (mode === "password") {
@@ -183,9 +183,9 @@ function resolveAuth(cfg: OpenClawConfig, env: NodeJS.ProcessEnv): ResolveAuthRe
 }
 
 async function resolveGatewayPasswordSecretRef(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   env: NodeJS.ProcessEnv,
-): Promise<OpenClawConfig> {
+): Promise<DonnaConfig> {
   const authPassword = cfg.gateway?.auth?.password;
   const { ref } = resolveSecretInputRef({
     value: authPassword,
@@ -194,9 +194,7 @@ async function resolveGatewayPasswordSecretRef(
   if (!ref) {
     return cfg;
   }
-  const hasPasswordEnvCandidate = Boolean(
-    env.OPENCLAW_GATEWAY_PASSWORD?.trim() || env.CLAWDBOT_GATEWAY_PASSWORD?.trim(),
-  );
+  const hasPasswordEnvCandidate = Boolean(env.DONNA_GATEWAY_PASSWORD?.trim());
   if (hasPasswordEnvCandidate) {
     return cfg;
   }
@@ -206,8 +204,7 @@ async function resolveGatewayPasswordSecretRef(
   }
   if (mode !== "password") {
     const hasTokenCandidate =
-      Boolean(env.OPENCLAW_GATEWAY_TOKEN?.trim() || env.CLAWDBOT_GATEWAY_TOKEN?.trim()) ||
-      Boolean(cfg.gateway?.auth?.token?.trim());
+      Boolean(env.DONNA_GATEWAY_TOKEN?.trim()) || Boolean(cfg.gateway?.auth?.token?.trim());
     if (hasTokenCandidate) {
       return cfg;
     }
@@ -233,7 +230,7 @@ async function resolveGatewayPasswordSecretRef(
 }
 
 async function resolveGatewayUrl(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   opts: {
     env: NodeJS.ProcessEnv;
     publicUrl?: string;
@@ -301,7 +298,7 @@ export function encodePairingSetupCode(payload: PairingSetupPayload): string {
 }
 
 export async function resolvePairingSetupFromConfig(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   options: ResolvePairingSetupOptions = {},
 ): Promise<PairingSetupResolution> {
   const env = options.env ?? process.env;

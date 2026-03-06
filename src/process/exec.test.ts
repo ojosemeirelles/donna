@@ -19,17 +19,17 @@ describe("runCommandWithTimeout", () => {
     const resolved = resolveCommandEnv({
       argv: ["node", "script.js"],
       baseEnv: {
-        OPENCLAW_BASE_ENV: "base",
-        OPENCLAW_TO_REMOVE: undefined,
+        DONNA_BASE_ENV: "base",
+        DONNA_TO_REMOVE: undefined,
       },
       env: {
-        OPENCLAW_TEST_ENV: "ok",
+        DONNA_TEST_ENV: "ok",
       },
     });
 
-    expect(resolved.OPENCLAW_BASE_ENV).toBe("base");
-    expect(resolved.OPENCLAW_TEST_ENV).toBe("ok");
-    expect(resolved.OPENCLAW_TO_REMOVE).toBeUndefined();
+    expect(resolved.DONNA_BASE_ENV).toBe("base");
+    expect(resolved.DONNA_TEST_ENV).toBe("ok");
+    expect(resolved.DONNA_TO_REMOVE).toBeUndefined();
   });
 
   it("suppresses npm fund prompts for npm argv", async () => {

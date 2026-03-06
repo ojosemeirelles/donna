@@ -272,14 +272,14 @@ describe("buildServiceEnvironment", () => {
     } else {
       expect(env.PATH).toContain("/usr/bin");
     }
-    expect(env.OPENCLAW_GATEWAY_PORT).toBe("18789");
-    expect(env.OPENCLAW_GATEWAY_TOKEN).toBe("secret");
-    expect(env.OPENCLAW_SERVICE_MARKER).toBe("openclaw");
-    expect(env.OPENCLAW_SERVICE_KIND).toBe("gateway");
-    expect(typeof env.OPENCLAW_SERVICE_VERSION).toBe("string");
-    expect(env.OPENCLAW_SYSTEMD_UNIT).toBe("openclaw-gateway.service");
+    expect(env.DONNA_GATEWAY_PORT).toBe("18789");
+    expect(env.DONNA_GATEWAY_TOKEN).toBe("secret");
+    expect(env.DONNA_SERVICE_MARKER).toBe("donna");
+    expect(env.DONNA_SERVICE_KIND).toBe("gateway");
+    expect(typeof env.DONNA_SERVICE_VERSION).toBe("string");
+    expect(env.DONNA_SYSTEMD_UNIT).toBe("donna-gateway.service");
     if (process.platform === "darwin") {
-      expect(env.OPENCLAW_LAUNCHD_LABEL).toBe("ai.openclaw.gateway");
+      expect(env.DONNA_LAUNCHD_LABEL).toBe("ai.donna.gateway");
     }
   });
 
@@ -301,12 +301,12 @@ describe("buildServiceEnvironment", () => {
 
   it("uses profile-specific unit and label", () => {
     const env = buildServiceEnvironment({
-      env: { HOME: "/home/user", OPENCLAW_PROFILE: "work" },
+      env: { HOME: "/home/user", DONNA_PROFILE: "work" },
       port: 18789,
     });
-    expect(env.OPENCLAW_SYSTEMD_UNIT).toBe("openclaw-gateway-work.service");
+    expect(env.DONNA_SYSTEMD_UNIT).toBe("donna-gateway-work.service");
     if (process.platform === "darwin") {
-      expect(env.OPENCLAW_LAUNCHD_LABEL).toBe("ai.openclaw.work");
+      expect(env.DONNA_LAUNCHD_LABEL).toBe("ai.donna.work");
     }
   });
 
@@ -339,40 +339,21 @@ describe("buildNodeServiceEnvironment", () => {
     expect(env.HOME).toBe("/home/user");
   });
 
-  it("passes through OPENCLAW_GATEWAY_TOKEN for node services", () => {
+  it("passes through DONNA_GATEWAY_TOKEN for node services", () => {
     const env = buildNodeServiceEnvironment({
-      env: { HOME: "/home/user", OPENCLAW_GATEWAY_TOKEN: " node-token " },
+      env: { HOME: "/home/user", DONNA_GATEWAY_TOKEN: " node-token " },
     });
-    expect(env.OPENCLAW_GATEWAY_TOKEN).toBe("node-token");
+    expect(env.DONNA_GATEWAY_TOKEN).toBe("node-token");
   });
 
-  it("maps legacy CLAWDBOT_GATEWAY_TOKEN to OPENCLAW_GATEWAY_TOKEN for node services", () => {
-    const env = buildNodeServiceEnvironment({
-      env: { HOME: "/home/user", CLAWDBOT_GATEWAY_TOKEN: " legacy-token " },
-    });
-    expect(env.OPENCLAW_GATEWAY_TOKEN).toBe("legacy-token");
-  });
-
-  it("prefers OPENCLAW_GATEWAY_TOKEN over legacy CLAWDBOT_GATEWAY_TOKEN", () => {
+  it("omits DONNA_GATEWAY_TOKEN when token env var is empty", () => {
     const env = buildNodeServiceEnvironment({
       env: {
         HOME: "/home/user",
-        OPENCLAW_GATEWAY_TOKEN: "openclaw-token",
-        CLAWDBOT_GATEWAY_TOKEN: "legacy-token",
+        DONNA_GATEWAY_TOKEN: "   ",
       },
     });
-    expect(env.OPENCLAW_GATEWAY_TOKEN).toBe("openclaw-token");
-  });
-
-  it("omits OPENCLAW_GATEWAY_TOKEN when both token env vars are empty", () => {
-    const env = buildNodeServiceEnvironment({
-      env: {
-        HOME: "/home/user",
-        OPENCLAW_GATEWAY_TOKEN: "   ",
-        CLAWDBOT_GATEWAY_TOKEN: " ",
-      },
-    });
-    expect(env.OPENCLAW_GATEWAY_TOKEN).toBeUndefined();
+    expect(env.DONNA_GATEWAY_TOKEN).toBeUndefined();
   });
 
   it("forwards proxy environment variables for node services", () => {
@@ -451,31 +432,31 @@ describe("shared Node TLS env defaults", () => {
 describe("resolveGatewayStateDir", () => {
   it("uses the default state dir when no overrides are set", () => {
     const env = { HOME: "/Users/test" };
-    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw"));
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".donna"));
   });
 
   it("appends the profile suffix when set", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_PROFILE: "rescue" };
-    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw-rescue"));
+    const env = { HOME: "/Users/test", DONNA_PROFILE: "rescue" };
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".donna-rescue"));
   });
 
   it("treats default profiles as the base state dir", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_PROFILE: "Default" };
-    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw"));
+    const env = { HOME: "/Users/test", DONNA_PROFILE: "Default" };
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".donna"));
   });
 
-  it("uses OPENCLAW_STATE_DIR when provided", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_STATE_DIR: "/var/lib/openclaw" };
-    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/var/lib/openclaw"));
+  it("uses DONNA_STATE_DIR when provided", () => {
+    const env = { HOME: "/Users/test", DONNA_STATE_DIR: "/var/lib/donna" };
+    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/var/lib/donna"));
   });
 
-  it("expands ~ in OPENCLAW_STATE_DIR", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_STATE_DIR: "~/openclaw-state" };
-    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/Users/test/openclaw-state"));
+  it("expands ~ in DONNA_STATE_DIR", () => {
+    const env = { HOME: "/Users/test", DONNA_STATE_DIR: "~/donna-state" };
+    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/Users/test/donna-state"));
   });
 
   it("preserves Windows absolute paths without HOME", () => {
-    const env = { OPENCLAW_STATE_DIR: "C:\\State\\openclaw" };
-    expect(resolveGatewayStateDir(env)).toBe("C:\\State\\openclaw");
+    const env = { DONNA_STATE_DIR: "C:\\State\\donna" };
+    expect(resolveGatewayStateDir(env)).toBe("C:\\State\\donna");
   });
 });

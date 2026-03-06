@@ -1,4 +1,4 @@
-import type { SecretInput } from "openclaw/plugin-sdk/zalo";
+import type { SecretInput } from "donna/plugin-sdk/zalo";
 
 export type ZaloAccountConfig = {
   /** Optional display name for this account (used in CLI/UI lists). */

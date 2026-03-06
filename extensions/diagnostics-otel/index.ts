@@ -1,5 +1,5 @@
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk/diagnostics-otel";
-import { emptyPluginConfigSchema } from "openclaw/plugin-sdk/diagnostics-otel";
+import type { DonnaPluginApi } from "donna/plugin-sdk/diagnostics-otel";
+import { emptyPluginConfigSchema } from "donna/plugin-sdk/diagnostics-otel";
 import { createDiagnosticsOtelService } from "./src/service.js";
 
 const plugin = {
@@ -7,7 +7,7 @@ const plugin = {
   name: "Diagnostics OpenTelemetry",
   description: "Export diagnostics events to OpenTelemetry",
   configSchema: emptyPluginConfigSchema(),
-  register(api: OpenClawPluginApi) {
+  register(api: DonnaPluginApi) {
     api.registerService(createDiagnosticsOtelService());
   },
 };

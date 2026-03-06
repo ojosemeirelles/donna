@@ -1,5 +1,5 @@
 import Testing
-@testable import OpenClaw
+@testable import Donna
 
 @MainActor
 @Suite struct TalkModeIncrementalSpeechBufferTests {

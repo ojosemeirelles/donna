@@ -43,6 +43,6 @@ export async function stopKnownBrowserProfiles(params: {
       }
     }
   } catch (err) {
-    params.onWarn(`openclaw browser stop failed: ${String(err)}`);
+    params.onWarn(`donna browser stop failed: ${String(err)}`);
   }
 }

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 import { withEnvAsync } from "../test-utils/env.js";
 import { checkSpendingLimits, SpendingLimitExceededError } from "./spending-limits.js";
 
@@ -45,15 +45,15 @@ describe("SpendingLimitExceededError", () => {
 
 describe("checkSpendingLimits", () => {
   const withStateDir = async <T>(stateDir: string, fn: () => Promise<T>): Promise<T> =>
-    withEnvAsync({ OPENCLAW_STATE_DIR: stateDir }, fn);
+    withEnvAsync({ DONNA_STATE_DIR: stateDir }, fn);
 
   it("passes when no spending config is set", async () => {
-    const config: OpenClawConfig = {};
+    const config: DonnaConfig = {};
     await expect(checkSpendingLimits({ config })).resolves.toBeUndefined();
   });
 
   it("passes when limits are zero (disabled)", async () => {
-    const config: OpenClawConfig = {
+    const config: DonnaConfig = {
       spending: { maxDailyCostUsd: 0, maxSessionCostUsd: 0 },
     };
     await expect(checkSpendingLimits({ config })).resolves.toBeUndefined();
@@ -67,7 +67,7 @@ describe("checkSpendingLimits", () => {
     const sessionFile = path.join(sessionsDir, "sess-a.jsonl");
     await fs.writeFile(sessionFile, JSON.stringify(makeEntry({ cost: 0.03 })) + "\n");
 
-    const config: OpenClawConfig = { spending: { maxDailyCostUsd: 1.0 } };
+    const config: DonnaConfig = { spending: { maxDailyCostUsd: 1.0 } };
 
     await withStateDir(root, () =>
       expect(checkSpendingLimits({ config })).resolves.toBeUndefined(),
@@ -88,7 +88,7 @@ describe("checkSpendingLimits", () => {
         .join("\n") + "\n",
     );
 
-    const config: OpenClawConfig = { spending: { maxDailyCostUsd: 1.0 } };
+    const config: DonnaConfig = { spending: { maxDailyCostUsd: 1.0 } };
 
     await withStateDir(root, async () => {
       const err = await checkSpendingLimits({ config }).catch((e) => e);
@@ -107,7 +107,7 @@ describe("checkSpendingLimits", () => {
     const sessionFile = path.join(sessionsDir, "sess-c.jsonl");
     await fs.writeFile(sessionFile, JSON.stringify(makeEntry({ cost: 0.1 })) + "\n");
 
-    const config: OpenClawConfig = { spending: { maxSessionCostUsd: 1.0 } };
+    const config: DonnaConfig = { spending: { maxSessionCostUsd: 1.0 } };
 
     await withStateDir(root, () =>
       expect(checkSpendingLimits({ config, sessionFile })).resolves.toBeUndefined(),
@@ -127,7 +127,7 @@ describe("checkSpendingLimits", () => {
         .join("\n") + "\n",
     );
 
-    const config: OpenClawConfig = { spending: { maxSessionCostUsd: 0.5 } };
+    const config: DonnaConfig = { spending: { maxSessionCostUsd: 0.5 } };
 
     await withStateDir(root, async () => {
       const err = await checkSpendingLimits({ config, sessionFile }).catch((e) => e);
@@ -152,7 +152,7 @@ describe("checkSpendingLimits", () => {
         .join("\n") + "\n",
     );
 
-    const config: OpenClawConfig = {
+    const config: DonnaConfig = {
       spending: { maxDailyCostUsd: 1.0, maxSessionCostUsd: 3.0 },
     };
 
@@ -170,7 +170,7 @@ describe("checkSpendingLimits", () => {
     await fs.mkdir(sessionsDir, { recursive: true });
 
     // No session files — daily total is $0
-    const config: OpenClawConfig = { spending: { maxDailyCostUsd: 5.0, maxSessionCostUsd: 0.01 } };
+    const config: DonnaConfig = { spending: { maxDailyCostUsd: 5.0, maxSessionCostUsd: 0.01 } };
 
     // maxSessionCostUsd is very low, but without sessionFile there is nothing to check
     await withStateDir(root, () =>

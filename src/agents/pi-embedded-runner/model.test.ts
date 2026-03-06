@@ -5,7 +5,7 @@ vi.mock("../pi-model-discovery.js", () => ({
   discoverModels: vi.fn(() => ({ find: vi.fn(() => null) })),
 }));
 
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 import { buildInlineProviderModels, resolveModel } from "./model.js";
 import {
   buildOpenAICodexForwardCompatExpectation,
@@ -48,7 +48,7 @@ function expectResolvedForwardCompatFallback(params: {
   provider: string;
   id: string;
   expectedModel: Record<string, unknown>;
-  cfg?: OpenClawConfig;
+  cfg?: DonnaConfig;
 }) {
   const result = resolveModel(params.provider, params.id, "/tmp/agent", params.cfg);
   expect(result.error).toBeUndefined();
@@ -192,7 +192,7 @@ describe("resolveModel", () => {
           },
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
 
     const result = resolveModel("custom", "missing-model", "/tmp/agent", cfg);
 
@@ -212,7 +212,7 @@ describe("resolveModel", () => {
           },
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
 
     // Requesting a non-listed model forces the providerCfg fallback branch.
     const result = resolveModel("custom", "missing-model", "/tmp/agent", cfg);
@@ -244,7 +244,7 @@ describe("resolveModel", () => {
           },
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
 
     const result = resolveModel("custom", "model-b", "/tmp/agent", cfg);
 
@@ -271,7 +271,7 @@ describe("resolveModel", () => {
           },
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
 
     const result = resolveModel("custom", "model-b", "/tmp/agent", cfg);
 
@@ -384,7 +384,7 @@ describe("resolveModel", () => {
     // This test verifies the ordering: codex fallback must fire BEFORE the generic providerCfg fallback.
     // If ordering is wrong, the generic fallback would use api: "openai-responses" (the default)
     // instead of "openai-codex-responses".
-    const cfg: OpenClawConfig = {
+    const cfg: DonnaConfig = {
       models: {
         providers: {
           "openai-codex": {
@@ -393,7 +393,7 @@ describe("resolveModel", () => {
           },
         },
       },
-    } as unknown as OpenClawConfig;
+    } as unknown as DonnaConfig;
 
     expectResolvedForwardCompatFallback({
       provider: "openai-codex",
@@ -414,7 +414,7 @@ describe("resolveModel", () => {
     expect(result.model).toBeUndefined();
     expect(result.error).toContain("Unknown model: ollama/gemma3:4b");
     expect(result.error).toContain("OLLAMA_API_KEY");
-    expect(result.error).toContain("docs.openclaw.ai/providers/ollama");
+    expect(result.error).toContain("docs.donna.ai/providers/ollama");
   });
 
   it("includes auth hint for unknown vllm models", () => {
@@ -453,7 +453,7 @@ describe("resolveModel", () => {
           },
         },
       },
-    } as unknown as OpenClawConfig;
+    } as unknown as DonnaConfig;
 
     const result = resolveModel("anthropic", "claude-sonnet-4-5", "/tmp/agent", cfg);
     expect(result.error).toBeUndefined();
@@ -481,7 +481,7 @@ describe("resolveModel", () => {
           },
         },
       },
-    } as unknown as OpenClawConfig;
+    } as unknown as DonnaConfig;
 
     const result = resolveModel("anthropic", "claude-sonnet-4-5", "/tmp/agent", cfg);
     expect(result.error).toBeUndefined();

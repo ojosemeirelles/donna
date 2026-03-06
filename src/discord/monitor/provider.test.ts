@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AcpRuntimeError } from "../../acp/runtime/errors.js";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 import type { RuntimeEnv } from "../../runtime.js";
 
 type NativeCommandSpecMock = {
@@ -66,7 +66,7 @@ const {
     })),
     createdBindingManagers,
     getAcpSessionStatusMock: vi.fn(
-      async (_params: { cfg: OpenClawConfig; sessionKey: string; signal?: AbortSignal }) => ({
+      async (_params: { cfg: DonnaConfig; sessionKey: string; signal?: AbortSignal }) => ({
         state: "idle",
       }),
     ),
@@ -286,7 +286,7 @@ vi.mock("./thread-bindings.js", () => ({
 
 describe("monitorDiscordProvider", () => {
   type ReconcileHealthProbeParams = {
-    cfg: OpenClawConfig;
+    cfg: DonnaConfig;
     accountId: string;
     sessionKey: string;
     binding: unknown;
@@ -294,7 +294,7 @@ describe("monitorDiscordProvider", () => {
   };
 
   type ReconcileStartupParams = {
-    cfg: OpenClawConfig;
+    cfg: DonnaConfig;
     healthProbe?: (
       params: ReconcileHealthProbeParams,
     ) => Promise<{ status: string; reason?: string }>;
@@ -308,7 +308,7 @@ describe("monitorDiscordProvider", () => {
     };
   };
 
-  const baseConfig = (): OpenClawConfig =>
+  const baseConfig = (): DonnaConfig =>
     ({
       channels: {
         discord: {
@@ -317,7 +317,7 @@ describe("monitorDiscordProvider", () => {
           },
         },
       },
-    }) as OpenClawConfig;
+    }) as DonnaConfig;
 
   const getConstructedEventQueue = (): { listenerTimeout?: number } | undefined => {
     expect(clientConstructorOptionsMock).toHaveBeenCalledTimes(1);

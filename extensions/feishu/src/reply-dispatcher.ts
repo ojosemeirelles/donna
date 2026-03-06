@@ -2,10 +2,10 @@ import {
   createReplyPrefixContext,
   createTypingCallbacks,
   logTypingFailure,
-  type ClawdbotConfig,
+  type DonnaConfig,
   type ReplyPayload,
   type RuntimeEnv,
-} from "openclaw/plugin-sdk/feishu";
+} from "donna/plugin-sdk/feishu";
 import { resolveFeishuAccount } from "./accounts.js";
 import { createFeishuClient } from "./client.js";
 import { sendMediaFeishu } from "./media.js";
@@ -37,7 +37,7 @@ function normalizeEpochMs(timestamp: number | undefined): number | undefined {
 }
 
 export type CreateFeishuReplyDispatcherParams = {
-  cfg: ClawdbotConfig;
+  cfg: DonnaConfig;
   agentId: string;
   runtime: RuntimeEnv;
   chatId: string;

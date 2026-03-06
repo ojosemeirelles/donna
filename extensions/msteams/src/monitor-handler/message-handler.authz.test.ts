@@ -1,4 +1,4 @@
-import type { OpenClawConfig, PluginRuntime, RuntimeEnv } from "openclaw/plugin-sdk/msteams";
+import type { DonnaConfig, PluginRuntime, RuntimeEnv } from "donna/plugin-sdk/msteams";
 import { describe, expect, it, vi } from "vitest";
 import type { MSTeamsMessageHandlerDeps } from "../monitor-handler.js";
 import { setMSTeamsRuntime } from "../runtime.js";
@@ -44,7 +44,7 @@ describe("msteams monitor handler authz", () => {
             groupAllowFrom: [],
           },
         },
-      } as OpenClawConfig,
+      } as DonnaConfig,
       runtime: { error: vi.fn() } as unknown as RuntimeEnv,
       appId: "test-app",
       adapter: {} as MSTeamsMessageHandlerDeps["adapter"],

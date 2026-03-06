@@ -124,7 +124,7 @@ describe("preflightDiscordMessage", () => {
       author: {
         id: "relay-bot-1",
         bot: true,
-        username: "OpenClaw",
+        username: "Donna",
       },
     } as unknown as import("@buape/carbon").Message;
 
@@ -134,14 +134,14 @@ describe("preflightDiscordMessage", () => {
           mainKey: "main",
           scope: "per-sender",
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {
         allowBots: true,
-      } as NonNullable<import("../../config/config.js").OpenClawConfig["channels"]>["discord"],
+      } as NonNullable<import("../../config/config.js").DonnaConfig["channels"]>["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,
@@ -227,14 +227,14 @@ describe("preflightDiscordMessage", () => {
           mainKey: "main",
           scope: "per-sender",
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {
         allowBots: true,
-      } as NonNullable<import("../../config/config.js").OpenClawConfig["channels"]>["discord"],
+      } as NonNullable<import("../../config/config.js").DonnaConfig["channels"]>["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,
@@ -318,14 +318,14 @@ describe("preflightDiscordMessage", () => {
           mainKey: "main",
           scope: "per-sender",
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {
         allowBots: true,
-      } as NonNullable<import("../../config/config.js").OpenClawConfig["channels"]>["discord"],
+      } as NonNullable<import("../../config/config.js").DonnaConfig["channels"]>["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,
@@ -391,14 +391,14 @@ describe("preflightDiscordMessage", () => {
           mainKey: "main",
           scope: "per-sender",
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {
         allowBots: "mentions",
-      } as NonNullable<import("../../config/config.js").OpenClawConfig["channels"]>["discord"],
+      } as NonNullable<import("../../config/config.js").DonnaConfig["channels"]>["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,
@@ -442,11 +442,11 @@ describe("preflightDiscordMessage", () => {
     } as unknown as import("@buape/carbon").Client;
     const message = {
       id: "m-bot-mentions-on",
-      content: "hi <@openclaw-bot>",
+      content: "hi <@donna-bot>",
       timestamp: new Date().toISOString(),
       channelId,
       attachments: [],
-      mentionedUsers: [{ id: "openclaw-bot" }],
+      mentionedUsers: [{ id: "donna-bot" }],
       mentionedRoles: [],
       mentionedEveryone: false,
       author: {
@@ -462,14 +462,14 @@ describe("preflightDiscordMessage", () => {
           mainKey: "main",
           scope: "per-sender",
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {
         allowBots: "mentions",
-      } as NonNullable<import("../../config/config.js").OpenClawConfig["channels"]>["discord"],
+      } as NonNullable<import("../../config/config.js").DonnaConfig["channels"]>["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,
@@ -533,14 +533,14 @@ describe("preflightDiscordMessage", () => {
           mainKey: "main",
           scope: "per-sender",
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {} as NonNullable<
-        import("../../config/config.js").OpenClawConfig["channels"]
+        import("../../config/config.js").DonnaConfig["channels"]
       >["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,
@@ -610,14 +610,14 @@ describe("preflightDiscordMessage", () => {
           mainKey: "main",
           scope: "per-sender",
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {} as NonNullable<
-        import("../../config/config.js").OpenClawConfig["channels"]
+        import("../../config/config.js").DonnaConfig["channels"]
       >["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,
@@ -688,14 +688,14 @@ describe("preflightDiscordMessage", () => {
           mainKey: "main",
           scope: "per-sender",
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {
         allowBots: true,
-      } as NonNullable<import("../../config/config.js").OpenClawConfig["channels"]>["discord"],
+      } as NonNullable<import("../../config/config.js").DonnaConfig["channels"]>["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,
@@ -729,7 +729,7 @@ describe("preflightDiscordMessage", () => {
   });
 
   it("uses attachment content_type for guild audio preflight mention detection", async () => {
-    transcribeFirstAudioMock.mockResolvedValue("hey openclaw");
+    transcribeFirstAudioMock.mockResolvedValue("hey donna");
 
     const channelId = "channel-audio-1";
     const client = {
@@ -776,17 +776,17 @@ describe("preflightDiscordMessage", () => {
         },
         messages: {
           groupChat: {
-            mentionPatterns: ["openclaw"],
+            mentionPatterns: ["donna"],
           },
         },
-      } as import("../../config/config.js").OpenClawConfig,
+      } as import("../../config/config.js").DonnaConfig,
       discordConfig: {} as NonNullable<
-        import("../../config/config.js").OpenClawConfig["channels"]
+        import("../../config/config.js").DonnaConfig["channels"]
       >["discord"],
       accountId: "default",
       token: "token",
       runtime: {} as import("../../runtime.js").RuntimeEnv,
-      botUserId: "openclaw-bot",
+      botUserId: "donna-bot",
       guildHistories: new Map(),
       historyLimit: 0,
       mediaMaxBytes: 1_000_000,

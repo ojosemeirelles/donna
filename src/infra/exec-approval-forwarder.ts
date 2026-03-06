@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 import { loadConfig } from "../config/config.js";
 import { loadSessionStore, resolveStorePath } from "../config/sessions.js";
 import type {
@@ -39,11 +39,11 @@ export type ExecApprovalForwarder = {
 };
 
 export type ExecApprovalForwarderDeps = {
-  getConfig?: () => OpenClawConfig;
+  getConfig?: () => DonnaConfig;
   deliver?: typeof deliverOutboundPayloads;
   nowMs?: () => number;
   resolveSessionTarget?: (params: {
-    cfg: OpenClawConfig;
+    cfg: DonnaConfig;
     request: ExecApprovalRequest;
   }) => ExecApprovalForwardTarget | null;
 };
@@ -122,10 +122,7 @@ function resolveChannelAccountConfig<T>(
 
 // Discord has component-based exec approvals; skip text fallback only when the
 // Discord-specific handler is enabled for the same target account.
-function shouldSkipDiscordForwarding(
-  target: ExecApprovalForwardTarget,
-  cfg: OpenClawConfig,
-): boolean {
+function shouldSkipDiscordForwarding(target: ExecApprovalForwardTarget, cfg: DonnaConfig): boolean {
   const channel = normalizeMessageChannel(target.channel) ?? target.channel;
   if (channel !== "discord") {
     return false;
@@ -221,7 +218,7 @@ function normalizeTurnSourceChannel(value?: string | null): DeliverableMessageCh
 }
 
 function defaultResolveSessionTarget(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   request: ExecApprovalRequest;
 }): ExecApprovalForwardTarget | null {
   const sessionKey = params.request.request.sessionKey?.trim();
@@ -259,7 +256,7 @@ function defaultResolveSessionTarget(params: {
 }
 
 async function deliverToTargets(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   targets: ForwardTarget[];
   text: string;
   deliver: typeof deliverOutboundPayloads;
@@ -290,11 +287,11 @@ async function deliverToTargets(params: {
 }
 
 function resolveForwardTargets(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   config?: ExecApprovalForwardingConfig;
   request: ExecApprovalRequest;
   resolveSessionTarget: (params: {
-    cfg: OpenClawConfig;
+    cfg: DonnaConfig;
     request: ExecApprovalRequest;
   }) => ExecApprovalForwardTarget | null;
 }): ForwardTarget[] {

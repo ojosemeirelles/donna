@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AcpRuntimeError } from "../../acp/runtime/errors.js";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 import type { SessionBindingRecord } from "../../infra/outbound/session-binding-service.js";
 import { createInternalHookEventPayload } from "../../test-utils/internal-hook-event-payload.js";
 import type { MsgContext } from "../templating.js";
@@ -69,7 +69,7 @@ const ttsMocks = vi.hoisted(() => {
     normalizeTtsAutoMode: vi.fn((value: unknown) =>
       typeof value === "string" ? value : undefined,
     ),
-    resolveTtsConfig: vi.fn((_cfg: OpenClawConfig) => ({ mode: "final" })),
+    resolveTtsConfig: vi.fn((_cfg: DonnaConfig) => ({ mode: "final" })),
   };
 });
 
@@ -142,7 +142,7 @@ vi.mock("../../infra/outbound/session-binding-service.js", async (importOriginal
 vi.mock("../../tts/tts.js", () => ({
   maybeApplyTtsToPayload: (params: unknown) => ttsMocks.maybeApplyTtsToPayload(params),
   normalizeTtsAutoMode: (value: unknown) => ttsMocks.normalizeTtsAutoMode(value),
-  resolveTtsConfig: (cfg: OpenClawConfig) => ttsMocks.resolveTtsConfig(cfg),
+  resolveTtsConfig: (cfg: DonnaConfig) => ttsMocks.resolveTtsConfig(cfg),
 }));
 
 const { dispatchReplyFromConfig } = await import("./dispatch-from-config.js");
@@ -150,7 +150,7 @@ const { resetInboundDedupe } = await import("./inbound-dedupe.js");
 const { __testing: acpManagerTesting } = await import("../../acp/control-plane/manager.js");
 
 const noAbortResult = { handled: false, aborted: false } as const;
-const emptyConfig = {} as OpenClawConfig;
+const emptyConfig = {} as DonnaConfig;
 type DispatchReplyArgs = Parameters<typeof dispatchReplyFromConfig>[0];
 
 function createDispatcher(): ReplyDispatcher {
@@ -248,11 +248,8 @@ describe("dispatchReplyFromConfig", () => {
       OriginatingTo: "channel:C123",
     });
 
-    const replyResolver = async (
-      _ctx: MsgContext,
-      _opts?: GetReplyOptions,
-      _cfg?: OpenClawConfig,
-    ) => ({ text: "hi" }) satisfies ReplyPayload;
+    const replyResolver = async (_ctx: MsgContext, _opts?: GetReplyOptions, _cfg?: DonnaConfig) =>
+      ({ text: "hi" }) satisfies ReplyPayload;
     await dispatchReplyFromConfig({ ctx, cfg, dispatcher, replyResolver });
 
     expect(mocks.routeReply).not.toHaveBeenCalled();
@@ -273,11 +270,8 @@ describe("dispatchReplyFromConfig", () => {
       OriginatingTo: "telegram:999",
     });
 
-    const replyResolver = async (
-      _ctx: MsgContext,
-      _opts?: GetReplyOptions,
-      _cfg?: OpenClawConfig,
-    ) => ({ text: "hi" }) satisfies ReplyPayload;
+    const replyResolver = async (_ctx: MsgContext, _opts?: GetReplyOptions, _cfg?: DonnaConfig) =>
+      ({ text: "hi" }) satisfies ReplyPayload;
     await dispatchReplyFromConfig({ ctx, cfg, dispatcher, replyResolver });
 
     expect(dispatcher.sendFinalReply).not.toHaveBeenCalled();
@@ -412,11 +406,7 @@ describe("dispatchReplyFromConfig", () => {
       OriginatingTo: "telegram:999",
     });
 
-    const replyResolver = async (
-      _ctx: MsgContext,
-      opts?: GetReplyOptions,
-      _cfg?: OpenClawConfig,
-    ) => {
+    const replyResolver = async (_ctx: MsgContext, opts?: GetReplyOptions, _cfg?: DonnaConfig) => {
       expect(opts?.onToolResult).toBeDefined();
       await opts?.onToolResult?.({
         text: "NO_REPLY",
@@ -445,11 +435,7 @@ describe("dispatchReplyFromConfig", () => {
       ChatType: "direct",
     });
 
-    const replyResolver = async (
-      _ctx: MsgContext,
-      opts?: GetReplyOptions,
-      _cfg?: OpenClawConfig,
-    ) => {
+    const replyResolver = async (_ctx: MsgContext, opts?: GetReplyOptions, _cfg?: DonnaConfig) => {
       expect(opts?.onToolResult).toBeDefined();
       expect(typeof opts?.onToolResult).toBe("function");
       return { text: "hi" } satisfies ReplyPayload;
@@ -468,11 +454,7 @@ describe("dispatchReplyFromConfig", () => {
       ChatType: "group",
     });
 
-    const replyResolver = async (
-      _ctx: MsgContext,
-      opts?: GetReplyOptions,
-      _cfg?: OpenClawConfig,
-    ) => {
+    const replyResolver = async (_ctx: MsgContext, opts?: GetReplyOptions, _cfg?: DonnaConfig) => {
       expect(opts?.onToolResult).toBeDefined();
       await opts?.onToolResult?.({ text: "🔧 exec: ls" });
       await opts?.onToolResult?.({
@@ -500,11 +482,7 @@ describe("dispatchReplyFromConfig", () => {
       ChatType: "direct",
     });
 
-    const replyResolver = async (
-      _ctx: MsgContext,
-      opts?: GetReplyOptions,
-      _cfg?: OpenClawConfig,
-    ) => {
+    const replyResolver = async (_ctx: MsgContext, opts?: GetReplyOptions, _cfg?: DonnaConfig) => {
       // Simulate tool result emission
       await opts?.onToolResult?.({ text: "🔧 exec: ls" });
       return { text: "done" } satisfies ReplyPayload;
@@ -527,11 +505,7 @@ describe("dispatchReplyFromConfig", () => {
       CommandSource: "native",
     });
 
-    const replyResolver = async (
-      _ctx: MsgContext,
-      opts?: GetReplyOptions,
-      _cfg?: OpenClawConfig,
-    ) => {
+    const replyResolver = async (_ctx: MsgContext, opts?: GetReplyOptions, _cfg?: DonnaConfig) => {
       expect(opts?.onToolResult).toBeDefined();
       await opts?.onToolResult?.({ text: "🔧 tools/sessions_send" });
       await opts?.onToolResult?.({
@@ -628,7 +602,7 @@ describe("dispatchReplyFromConfig", () => {
         dispatch: { enabled: true },
         stream: { coalesceIdleMs: 0, maxChunkChars: 128 },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -703,7 +677,7 @@ describe("dispatchReplyFromConfig", () => {
         enabled: true,
         dispatch: { enabled: true },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -785,7 +759,7 @@ describe("dispatchReplyFromConfig", () => {
         enabled: true,
         dispatch: { enabled: true },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -842,7 +816,7 @@ describe("dispatchReplyFromConfig", () => {
           default: "deny",
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -891,7 +865,7 @@ describe("dispatchReplyFromConfig", () => {
           default: "deny",
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -943,7 +917,7 @@ describe("dispatchReplyFromConfig", () => {
       commands: {
         text: false,
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -996,7 +970,7 @@ describe("dispatchReplyFromConfig", () => {
           default: "deny",
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1052,7 +1026,7 @@ describe("dispatchReplyFromConfig", () => {
           default: "deny",
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1111,7 +1085,7 @@ describe("dispatchReplyFromConfig", () => {
         dispatch: { enabled: true },
         stream: { coalesceIdleMs: 0, maxChunkChars: 256 },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1162,7 +1136,7 @@ describe("dispatchReplyFromConfig", () => {
         dispatch: { enabled: true },
         stream: { coalesceIdleMs: 0, maxChunkChars: 256 },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1212,7 +1186,7 @@ describe("dispatchReplyFromConfig", () => {
         dispatch: { enabled: true },
         stream: { coalesceIdleMs: 0, maxChunkChars: 128 },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1264,7 +1238,7 @@ describe("dispatchReplyFromConfig", () => {
         enabled: true,
         dispatch: { enabled: true },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1305,7 +1279,7 @@ describe("dispatchReplyFromConfig", () => {
         enabled: true,
         dispatch: { enabled: false },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1333,7 +1307,7 @@ describe("dispatchReplyFromConfig", () => {
         enabled: true,
         dispatch: { enabled: true },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1381,7 +1355,7 @@ describe("dispatchReplyFromConfig", () => {
         enabled: true,
         dispatch: { enabled: true },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "discord",
@@ -1527,7 +1501,7 @@ describe("dispatchReplyFromConfig", () => {
 
   it("emits diagnostics when enabled", async () => {
     setNoAbort();
-    const cfg = { diagnostics: { enabled: true } } as OpenClawConfig;
+    const cfg = { diagnostics: { enabled: true } } as DonnaConfig;
     const dispatcher = createDispatcher();
     const ctx = buildTestCtx({
       Provider: "slack",
@@ -1557,7 +1531,7 @@ describe("dispatchReplyFromConfig", () => {
 
   it("marks diagnostics skipped for duplicate inbound messages", async () => {
     setNoAbort();
-    const cfg = { diagnostics: { enabled: true } } as OpenClawConfig;
+    const cfg = { diagnostics: { enabled: true } } as DonnaConfig;
     const ctx = buildTestCtx({
       Provider: "whatsapp",
       OriginatingChannel: "whatsapp",

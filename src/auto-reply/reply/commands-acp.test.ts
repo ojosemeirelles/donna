@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AcpRuntimeError } from "../../acp/runtime/errors.js";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 import type { SessionBindingRecord } from "../../infra/outbound/session-binding-service.js";
 
 const hoisted = vi.hoisted(() => {
@@ -169,9 +169,9 @@ const baseCfg = {
       },
     },
   },
-} satisfies OpenClawConfig;
+} satisfies DonnaConfig;
 
-function createDiscordParams(commandBody: string, cfg: OpenClawConfig = baseCfg) {
+function createDiscordParams(commandBody: string, cfg: DonnaConfig = baseCfg) {
   const params = buildCommandTestParams(commandBody, cfg, {
     Provider: "discord",
     Surface: "discord",
@@ -291,17 +291,17 @@ function mockBoundThreadSession(options?: {
   );
 }
 
-function createThreadParams(commandBody: string, cfg: OpenClawConfig = baseCfg) {
+function createThreadParams(commandBody: string, cfg: DonnaConfig = baseCfg) {
   const params = createDiscordParams(commandBody, cfg);
   params.ctx.MessageThreadId = defaultThreadId;
   return params;
 }
 
-async function runDiscordAcpCommand(commandBody: string, cfg: OpenClawConfig = baseCfg) {
+async function runDiscordAcpCommand(commandBody: string, cfg: DonnaConfig = baseCfg) {
   return handleAcpCommand(createDiscordParams(commandBody, cfg), true);
 }
 
-async function runThreadAcpCommand(commandBody: string, cfg: OpenClawConfig = baseCfg) {
+async function runThreadAcpCommand(commandBody: string, cfg: DonnaConfig = baseCfg) {
   return handleAcpCommand(createThreadParams(commandBody, cfg), true);
 }
 
@@ -466,7 +466,7 @@ describe("/acp command", () => {
           },
         },
       },
-    } satisfies OpenClawConfig;
+    } satisfies DonnaConfig;
 
     const result = await runDiscordAcpCommand("/acp spawn codex", cfg);
 
@@ -535,7 +535,7 @@ describe("/acp command", () => {
         ...baseCfg.acp,
         dispatch: { enabled: false },
       },
-    } satisfies OpenClawConfig;
+    } satisfies DonnaConfig;
     const result = await runDiscordAcpCommand("/acp steer tighten logging", cfg);
     expect(result?.reply?.text).toContain("ACP dispatch is disabled by policy");
     expect(hoisted.runTurnMock).not.toHaveBeenCalled();

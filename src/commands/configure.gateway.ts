@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 import { resolveGatewayPort } from "../config/config.js";
 import {
   maybeAddTailnetOriginToControlUiAllowedOrigins,
@@ -22,10 +22,10 @@ import {
 type GatewayAuthChoice = "token" | "password" | "trusted-proxy";
 
 export async function promptGatewayConfig(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   runtime: RuntimeEnv,
 ): Promise<{
-  config: OpenClawConfig;
+  config: DonnaConfig;
   port: number;
   token?: string;
 }> {
@@ -189,12 +189,12 @@ export async function promptGatewayConfig(
   if (authMode === "trusted-proxy") {
     note(
       [
-        "Trusted proxy mode: OpenClaw trusts user identity from a reverse proxy.",
+        "Trusted proxy mode: Donna trusts user identity from a reverse proxy.",
         "The proxy must authenticate users and pass identity via headers.",
         "Only requests from specified proxy IPs will be trusted.",
         "",
         "Common use cases: Pomerium, Caddy + OAuth, Traefik + forward auth",
-        "Docs: https://docs.openclaw.ai/gateway/trusted-proxy-auth",
+        "Docs: https://docs.donna.ai/gateway/trusted-proxy-auth",
       ].join("\n"),
       "Trusted Proxy Auth",
     );

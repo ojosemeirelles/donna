@@ -6,7 +6,7 @@ import CryptoKit
 import EventKit
 import Foundation
 import Darwin
-import OpenClawKit
+import DonnaKit
 import Network
 import Observation
 import os
@@ -755,7 +755,7 @@ final class GatewayConnectionController {
         if manualClientId?.isEmpty == false {
             return manualClientId!
         }
-        return "openclaw-ios"
+        return "donna-ios"
     }
 
     private func resolveManualPort(host: String, port: Int, useTLS: Bool) -> Int? {
@@ -785,32 +785,32 @@ final class GatewayConnectionController {
     }
 
     private func currentCaps() -> [String] {
-        var caps = [OpenClawCapability.canvas.rawValue, OpenClawCapability.screen.rawValue]
+        var caps = [DonnaCapability.canvas.rawValue, DonnaCapability.screen.rawValue]
 
         // Default-on: if the key doesn't exist yet, treat it as enabled.
         let cameraEnabled =
             UserDefaults.standard.object(forKey: "camera.enabled") == nil
                 ? true
                 : UserDefaults.standard.bool(forKey: "camera.enabled")
-        if cameraEnabled { caps.append(OpenClawCapability.camera.rawValue) }
+        if cameraEnabled { caps.append(DonnaCapability.camera.rawValue) }
 
         let voiceWakeEnabled = UserDefaults.standard.bool(forKey: VoiceWakePreferences.enabledKey)
-        if voiceWakeEnabled { caps.append(OpenClawCapability.voiceWake.rawValue) }
+        if voiceWakeEnabled { caps.append(DonnaCapability.voiceWake.rawValue) }
 
         let locationModeRaw = UserDefaults.standard.string(forKey: "location.enabledMode") ?? "off"
-        let locationMode = OpenClawLocationMode(rawValue: locationModeRaw) ?? .off
-        if locationMode != .off { caps.append(OpenClawCapability.location.rawValue) }
+        let locationMode = DonnaLocationMode(rawValue: locationModeRaw) ?? .off
+        if locationMode != .off { caps.append(DonnaCapability.location.rawValue) }
 
-        caps.append(OpenClawCapability.device.rawValue)
+        caps.append(DonnaCapability.device.rawValue)
         if WatchMessagingService.isSupportedOnDevice() {
-            caps.append(OpenClawCapability.watch.rawValue)
+            caps.append(DonnaCapability.watch.rawValue)
         }
-        caps.append(OpenClawCapability.photos.rawValue)
-        caps.append(OpenClawCapability.contacts.rawValue)
-        caps.append(OpenClawCapability.calendar.rawValue)
-        caps.append(OpenClawCapability.reminders.rawValue)
+        caps.append(DonnaCapability.photos.rawValue)
+        caps.append(DonnaCapability.contacts.rawValue)
+        caps.append(DonnaCapability.calendar.rawValue)
+        caps.append(DonnaCapability.reminders.rawValue)
         if Self.motionAvailable() {
-            caps.append(OpenClawCapability.motion.rawValue)
+            caps.append(DonnaCapability.motion.rawValue)
         }
 
         return caps
@@ -818,58 +818,58 @@ final class GatewayConnectionController {
 
     private func currentCommands() -> [String] {
         var commands: [String] = [
-            OpenClawCanvasCommand.present.rawValue,
-            OpenClawCanvasCommand.hide.rawValue,
-            OpenClawCanvasCommand.navigate.rawValue,
-            OpenClawCanvasCommand.evalJS.rawValue,
-            OpenClawCanvasCommand.snapshot.rawValue,
-            OpenClawCanvasA2UICommand.push.rawValue,
-            OpenClawCanvasA2UICommand.pushJSONL.rawValue,
-            OpenClawCanvasA2UICommand.reset.rawValue,
-            OpenClawScreenCommand.record.rawValue,
-            OpenClawSystemCommand.notify.rawValue,
-            OpenClawChatCommand.push.rawValue,
-            OpenClawTalkCommand.pttStart.rawValue,
-            OpenClawTalkCommand.pttStop.rawValue,
-            OpenClawTalkCommand.pttCancel.rawValue,
-            OpenClawTalkCommand.pttOnce.rawValue,
+            DonnaCanvasCommand.present.rawValue,
+            DonnaCanvasCommand.hide.rawValue,
+            DonnaCanvasCommand.navigate.rawValue,
+            DonnaCanvasCommand.evalJS.rawValue,
+            DonnaCanvasCommand.snapshot.rawValue,
+            DonnaCanvasA2UICommand.push.rawValue,
+            DonnaCanvasA2UICommand.pushJSONL.rawValue,
+            DonnaCanvasA2UICommand.reset.rawValue,
+            DonnaScreenCommand.record.rawValue,
+            DonnaSystemCommand.notify.rawValue,
+            DonnaChatCommand.push.rawValue,
+            DonnaTalkCommand.pttStart.rawValue,
+            DonnaTalkCommand.pttStop.rawValue,
+            DonnaTalkCommand.pttCancel.rawValue,
+            DonnaTalkCommand.pttOnce.rawValue,
         ]
 
         let caps = Set(self.currentCaps())
-        if caps.contains(OpenClawCapability.camera.rawValue) {
-            commands.append(OpenClawCameraCommand.list.rawValue)
-            commands.append(OpenClawCameraCommand.snap.rawValue)
-            commands.append(OpenClawCameraCommand.clip.rawValue)
+        if caps.contains(DonnaCapability.camera.rawValue) {
+            commands.append(DonnaCameraCommand.list.rawValue)
+            commands.append(DonnaCameraCommand.snap.rawValue)
+            commands.append(DonnaCameraCommand.clip.rawValue)
         }
-        if caps.contains(OpenClawCapability.location.rawValue) {
-            commands.append(OpenClawLocationCommand.get.rawValue)
+        if caps.contains(DonnaCapability.location.rawValue) {
+            commands.append(DonnaLocationCommand.get.rawValue)
         }
-        if caps.contains(OpenClawCapability.device.rawValue) {
-            commands.append(OpenClawDeviceCommand.status.rawValue)
-            commands.append(OpenClawDeviceCommand.info.rawValue)
+        if caps.contains(DonnaCapability.device.rawValue) {
+            commands.append(DonnaDeviceCommand.status.rawValue)
+            commands.append(DonnaDeviceCommand.info.rawValue)
         }
-        if caps.contains(OpenClawCapability.watch.rawValue) {
-            commands.append(OpenClawWatchCommand.status.rawValue)
-            commands.append(OpenClawWatchCommand.notify.rawValue)
+        if caps.contains(DonnaCapability.watch.rawValue) {
+            commands.append(DonnaWatchCommand.status.rawValue)
+            commands.append(DonnaWatchCommand.notify.rawValue)
         }
-        if caps.contains(OpenClawCapability.photos.rawValue) {
-            commands.append(OpenClawPhotosCommand.latest.rawValue)
+        if caps.contains(DonnaCapability.photos.rawValue) {
+            commands.append(DonnaPhotosCommand.latest.rawValue)
         }
-        if caps.contains(OpenClawCapability.contacts.rawValue) {
-            commands.append(OpenClawContactsCommand.search.rawValue)
-            commands.append(OpenClawContactsCommand.add.rawValue)
+        if caps.contains(DonnaCapability.contacts.rawValue) {
+            commands.append(DonnaContactsCommand.search.rawValue)
+            commands.append(DonnaContactsCommand.add.rawValue)
         }
-        if caps.contains(OpenClawCapability.calendar.rawValue) {
-            commands.append(OpenClawCalendarCommand.events.rawValue)
-            commands.append(OpenClawCalendarCommand.add.rawValue)
+        if caps.contains(DonnaCapability.calendar.rawValue) {
+            commands.append(DonnaCalendarCommand.events.rawValue)
+            commands.append(DonnaCalendarCommand.add.rawValue)
         }
-        if caps.contains(OpenClawCapability.reminders.rawValue) {
-            commands.append(OpenClawRemindersCommand.list.rawValue)
-            commands.append(OpenClawRemindersCommand.add.rawValue)
+        if caps.contains(DonnaCapability.reminders.rawValue) {
+            commands.append(DonnaRemindersCommand.list.rawValue)
+            commands.append(DonnaRemindersCommand.add.rawValue)
         }
-        if caps.contains(OpenClawCapability.motion.rawValue) {
-            commands.append(OpenClawMotionCommand.activity.rawValue)
-            commands.append(OpenClawMotionCommand.pedometer.rawValue)
+        if caps.contains(DonnaCapability.motion.rawValue) {
+            commands.append(DonnaMotionCommand.activity.rawValue)
+            commands.append(DonnaMotionCommand.pedometer.rawValue)
         }
 
         return commands

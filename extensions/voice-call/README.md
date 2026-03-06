@@ -1,6 +1,6 @@
-# @openclaw/voice-call
+# @donna/voice-call
 
-Official Voice Call plugin for **OpenClaw**.
+Official Voice Call plugin for **Donna**.
 
 Providers:
 
@@ -9,15 +9,15 @@ Providers:
 - **Plivo** (Voice API + XML transfer + GetInput speech)
 - **Mock** (dev/no network)
 
-Docs: `https://docs.openclaw.ai/plugins/voice-call`
-Plugin system: `https://docs.openclaw.ai/plugin`
+Docs: `https://docs.donna.ai/plugins/voice-call`
+Plugin system: `https://docs.donna.ai/plugin`
 
 ## Install (local dev)
 
-### Option A: install via OpenClaw (recommended)
+### Option A: install via Donna (recommended)
 
 ```bash
-openclaw plugins install @openclaw/voice-call
+donna plugins install @donna/voice-call
 ```
 
 Restart the Gateway afterwards.
@@ -25,9 +25,9 @@ Restart the Gateway afterwards.
 ### Option B: copy into your global extensions folder (dev)
 
 ```bash
-mkdir -p ~/.openclaw/extensions
-cp -R extensions/voice-call ~/.openclaw/extensions/voice-call
-cd ~/.openclaw/extensions/voice-call && pnpm install
+mkdir -p ~/.donna/extensions
+cp -R extensions/voice-call ~/.donna/extensions/voice-call
+cd ~/.donna/extensions/voice-call && pnpm install
 ```
 
 ## Config
@@ -143,13 +143,13 @@ Notes:
 ## CLI
 
 ```bash
-openclaw voicecall call --to "+15555550123" --message "Hello from OpenClaw"
-openclaw voicecall continue --call-id <id> --message "Any questions?"
-openclaw voicecall speak --call-id <id> --message "One moment"
-openclaw voicecall end --call-id <id>
-openclaw voicecall status --call-id <id>
-openclaw voicecall tail
-openclaw voicecall expose --mode funnel
+donna voicecall call --to "+15555550123" --message "Hello from Donna"
+donna voicecall continue --call-id <id> --message "Any questions?"
+donna voicecall speak --call-id <id> --message "One moment"
+donna voicecall end --call-id <id>
+donna voicecall status --call-id <id>
+donna voicecall tail
+donna voicecall expose --mode funnel
 ```
 
 ## Tool

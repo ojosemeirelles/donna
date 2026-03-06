@@ -44,21 +44,21 @@ describe("findExtraGatewayServices (win32)", () => {
     expect(result).toEqual([]);
   });
 
-  it("collects only non-openclaw marker tasks from schtasks output", async () => {
+  it("collects only non-donna marker tasks from schtasks output", async () => {
     execSchtasksMock.mockResolvedValueOnce({
       code: 0,
       stdout: [
-        "TaskName: OpenClaw Gateway",
-        "Task To Run: C:\\Program Files\\OpenClaw\\openclaw.exe gateway run",
+        "TaskName: Donna Gateway",
+        "Task To Run: C:\\Program Files\\Donna\\donna.exe gateway run",
         "",
-        "TaskName: Clawdbot Legacy",
-        "Task To Run: C:\\clawdbot\\clawdbot.exe run",
+        "TaskName: Donna Legacy",
+        "Task To Run: C:\\donna\\donna.exe run",
         "",
         "TaskName: Other Task",
         "Task To Run: C:\\tools\\helper.exe",
         "",
         "TaskName: MoltBot Legacy",
-        "Task To Run: C:\\moltbot\\moltbot.exe run",
+        "Task To Run: C:\\donna\\donna.exe run",
         "",
       ].join("\n"),
       stderr: "",
@@ -68,18 +68,18 @@ describe("findExtraGatewayServices (win32)", () => {
     expect(result).toEqual([
       {
         platform: "win32",
-        label: "Clawdbot Legacy",
-        detail: "task: Clawdbot Legacy, run: C:\\clawdbot\\clawdbot.exe run",
+        label: "Donna Legacy",
+        detail: "task: Donna Legacy, run: C:\\donna\\donna.exe run",
         scope: "system",
-        marker: "clawdbot",
+        marker: "donna",
         legacy: true,
       },
       {
         platform: "win32",
         label: "MoltBot Legacy",
-        detail: "task: MoltBot Legacy, run: C:\\moltbot\\moltbot.exe run",
+        detail: "task: MoltBot Legacy, run: C:\\donna\\donna.exe run",
         scope: "system",
-        marker: "moltbot",
+        marker: "donna",
         legacy: true,
       },
     ]);

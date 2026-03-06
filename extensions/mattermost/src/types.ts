@@ -3,7 +3,7 @@ import type {
   DmPolicy,
   GroupPolicy,
   SecretInput,
-} from "openclaw/plugin-sdk/mattermost";
+} from "donna/plugin-sdk/mattermost";
 
 export type MattermostChatMode = "oncall" | "onmessage" | "onchar";
 

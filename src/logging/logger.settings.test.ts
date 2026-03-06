@@ -3,7 +3,7 @@ import { __test__ } from "./logger.js";
 
 describe("shouldSkipLoadConfigFallback", () => {
   it("matches config validate invocations", () => {
-    expect(__test__.shouldSkipLoadConfigFallback(["node", "openclaw", "config", "validate"])).toBe(
+    expect(__test__.shouldSkipLoadConfigFallback(["node", "donna", "config", "validate"])).toBe(
       true,
     );
   });
@@ -12,7 +12,7 @@ describe("shouldSkipLoadConfigFallback", () => {
     expect(
       __test__.shouldSkipLoadConfigFallback([
         "node",
-        "openclaw",
+        "donna",
         "--profile",
         "work",
         "--no-color",
@@ -24,9 +24,9 @@ describe("shouldSkipLoadConfigFallback", () => {
   });
 
   it("does not match other commands", () => {
-    expect(
-      __test__.shouldSkipLoadConfigFallback(["node", "openclaw", "config", "get", "foo"]),
-    ).toBe(false);
-    expect(__test__.shouldSkipLoadConfigFallback(["node", "openclaw", "status"])).toBe(false);
+    expect(__test__.shouldSkipLoadConfigFallback(["node", "donna", "config", "get", "foo"])).toBe(
+      false,
+    );
+    expect(__test__.shouldSkipLoadConfigFallback(["node", "donna", "status"])).toBe(false);
   });
 });

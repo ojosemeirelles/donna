@@ -1,10 +1,10 @@
 import type {
   ChannelAccountSnapshot,
   ChatType,
-  OpenClawConfig,
+  DonnaConfig,
   ReplyPayload,
   RuntimeEnv,
-} from "openclaw/plugin-sdk/mattermost";
+} from "donna/plugin-sdk/mattermost";
 import {
   buildAgentMediaPayload,
   DM_GROUP_ACCESS_REASON,
@@ -27,7 +27,7 @@ import {
   warnMissingProviderGroupPolicyFallbackOnce,
   listSkillCommandsForAgents,
   type HistoryEntry,
-} from "openclaw/plugin-sdk/mattermost";
+} from "donna/plugin-sdk/mattermost";
 import { getMattermostRuntime } from "../runtime.js";
 import { resolveMattermostAccount } from "./accounts.js";
 import {
@@ -74,7 +74,7 @@ export type MonitorMattermostOpts = {
   botToken?: string;
   baseUrl?: string;
   accountId?: string;
-  config?: OpenClawConfig;
+  config?: DonnaConfig;
   runtime?: RuntimeEnv;
   abortSignal?: AbortSignal;
   statusSink?: (patch: Partial<ChannelAccountSnapshot>) => void;
@@ -230,10 +230,10 @@ export async function monitorMattermostProvider(opts: MonitorMattermostOpts = {}
     try {
       const teams = await fetchMattermostUserTeams(client, botUserId);
 
-      // Use the *runtime* listener port when available (e.g. `openclaw gateway run --port <port>`).
-      // The gateway sets OPENCLAW_GATEWAY_PORT when it boots, but the config file may still contain
+      // Use the *runtime* listener port when available (e.g. `donna gateway run --port <port>`).
+      // The gateway sets DONNA_GATEWAY_PORT when it boots, but the config file may still contain
       // a different port.
-      const envPortRaw = process.env.OPENCLAW_GATEWAY_PORT?.trim();
+      const envPortRaw = process.env.DONNA_GATEWAY_PORT?.trim();
       const envPort = envPortRaw ? Number.parseInt(envPortRaw, 10) : NaN;
       const gatewayPort =
         Number.isFinite(envPort) && envPort > 0 ? envPort : (cfg.gateway?.port ?? 18789);

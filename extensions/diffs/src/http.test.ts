@@ -12,7 +12,7 @@ describe("createDiffsHttpHandler", () => {
   let store: DiffArtifactStore;
 
   beforeEach(async () => {
-    rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-diffs-http-"));
+    rootDir = await fs.mkdtemp(path.join(os.tmpdir(), "donna-diffs-http-"));
     store = new DiffArtifactStore({ rootDir });
   });
 
@@ -110,7 +110,7 @@ describe("createDiffsHttpHandler", () => {
 
     expect(handled).toBe(true);
     expect(res.statusCode).toBe(200);
-    expect(String(res.body)).toContain("openclawDiffsReady");
+    expect(String(res.body)).toContain("donnaDiffsReady");
   });
 
   it("blocks non-loopback viewer access by default", async () => {

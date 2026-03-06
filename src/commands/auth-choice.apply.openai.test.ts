@@ -10,14 +10,14 @@ import {
 
 describe("applyAuthChoiceOpenAI", () => {
   const lifecycle = createAuthTestLifecycle([
-    "OPENCLAW_STATE_DIR",
-    "OPENCLAW_AGENT_DIR",
+    "DONNA_STATE_DIR",
+    "DONNA_AGENT_DIR",
     "PI_CODING_AGENT_DIR",
     "OPENAI_API_KEY",
   ]);
 
   async function setupTempState() {
-    const env = await setupAuthTestEnv("openclaw-openai-");
+    const env = await setupAuthTestEnv("donna-openai-");
     lifecycle.setStateDir(env.stateDir);
     return env.agentDir;
   }
