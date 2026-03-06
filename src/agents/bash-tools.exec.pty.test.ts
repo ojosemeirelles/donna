@@ -18,10 +18,10 @@ test("exec supports pty output", async () => {
   expect(text).toContain("ok");
 });
 
-test("exec sets OPENCLAW_SHELL in pty mode", async () => {
+test("exec sets DONNA_SHELL in pty mode", async () => {
   const tool = createExecTool({ allowBackground: false, security: "full", ask: "off" });
-  const result = await tool.execute("toolcall-openclaw-shell", {
-    command: "node -e \"process.stdout.write(process.env.OPENCLAW_SHELL || '')\"",
+  const result = await tool.execute("toolcall-donna-shell", {
+    command: "node -e \"process.stdout.write(process.env.DONNA_SHELL || '')\"",
     pty: true,
   });
 

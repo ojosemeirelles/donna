@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { OpenClawConfig } from "../../../config/config.js";
+import type { DonnaConfig } from "../../../config/config.js";
 import {
   isOllamaCompatProvider,
   resolveAttemptFsWorkspaceOnly,
@@ -12,7 +12,7 @@ import {
   wrapStreamFnTrimToolCallNames,
 } from "./attempt.js";
 
-function createOllamaProviderConfig(injectNumCtxForOpenAICompat: boolean): OpenClawConfig {
+function createOllamaProviderConfig(injectNumCtxForOpenAICompat: boolean): DonnaConfig {
   return {
     models: {
       providers: {
@@ -85,7 +85,7 @@ describe("resolvePromptModeForSession", () => {
 
 describe("resolveAttemptFsWorkspaceOnly", () => {
   it("uses global tools.fs.workspaceOnly when agent has no override", () => {
-    const cfg: OpenClawConfig = {
+    const cfg: DonnaConfig = {
       tools: {
         fs: { workspaceOnly: true },
       },
@@ -100,7 +100,7 @@ describe("resolveAttemptFsWorkspaceOnly", () => {
   });
 
   it("prefers agent-specific tools.fs.workspaceOnly override", () => {
-    const cfg: OpenClawConfig = {
+    const cfg: DonnaConfig = {
       tools: {
         fs: { workspaceOnly: true },
       },

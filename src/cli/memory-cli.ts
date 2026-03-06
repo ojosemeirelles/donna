@@ -581,11 +581,11 @@ export function registerMemoryCli(program: Command) {
       "after",
       () =>
         `\n${theme.heading("Examples:")}\n${formatHelpExamples([
-          ["openclaw memory status", "Show index and provider status."],
-          ["openclaw memory index --force", "Force a full reindex."],
-          ['openclaw memory search --query "deployment notes"', "Search indexed memory entries."],
-          ["openclaw memory status --json", "Output machine-readable JSON."],
-        ])}\n\n${theme.muted("Docs:")} ${formatDocsLink("/cli/memory", "docs.openclaw.ai/cli/memory")}\n`,
+          ["donna memory status", "Show index and provider status."],
+          ["donna memory index --force", "Force a full reindex."],
+          ['donna memory search --query "deployment notes"', "Search indexed memory entries."],
+          ["donna memory status --json", "Output machine-readable JSON."],
+        ])}\n\n${theme.muted("Docs:")} ${formatDocsLink("/cli/memory", "docs.donna.ai/cli/memory")}\n`,
     );
 
   memory

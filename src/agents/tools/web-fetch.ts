@@ -1,5 +1,5 @@
 import { Type } from "@sinclair/typebox";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 import { SsrFBlockedError } from "../../infra/net/ssrf.js";
 import { logDebug, logWarn } from "../../logger.js";
 import {
@@ -66,7 +66,7 @@ const WebFetchSchema = Type.Object({
   ),
 });
 
-type WebFetchConfig = NonNullable<OpenClawConfig["tools"]>["web"] extends infer Web
+type WebFetchConfig = NonNullable<DonnaConfig["tools"]>["web"] extends infer Web
   ? Web extends { fetch?: infer Fetch }
     ? Fetch
     : undefined
@@ -83,7 +83,7 @@ type FirecrawlFetchConfig =
     }
   | undefined;
 
-function resolveFetchConfig(cfg?: OpenClawConfig): WebFetchConfig {
+function resolveFetchConfig(cfg?: DonnaConfig): WebFetchConfig {
   const fetch = cfg?.tools?.web?.fetch;
   if (!fetch || typeof fetch !== "object") {
     return undefined;
@@ -724,7 +724,7 @@ function resolveFirecrawlEndpoint(baseUrl: string): string {
 }
 
 export function createWebFetchTool(options?: {
-  config?: OpenClawConfig;
+  config?: DonnaConfig;
   sandboxed?: boolean;
 }): AnyAgentTool | null {
   const fetch = resolveFetchConfig(options?.config);

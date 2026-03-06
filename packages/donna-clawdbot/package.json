@@ -1,0 +1,16 @@
+{
+  "name": "donna",
+  "version": "2026.2.12",
+  "description": "Compatibility shim that forwards to donna",
+  "bin": {
+    "donna": "./bin/donna.js"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./cli-entry": "./bin/donna.js"
+  },
+  "dependencies": {
+    "donna": "workspace:*"
+  }
+}

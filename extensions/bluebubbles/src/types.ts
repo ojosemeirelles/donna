@@ -1,6 +1,6 @@
-import type { DmPolicy, GroupPolicy } from "openclaw/plugin-sdk/bluebubbles";
+import type { DmPolicy, GroupPolicy } from "donna/plugin-sdk/bluebubbles";
 
-export type { DmPolicy, GroupPolicy } from "openclaw/plugin-sdk/bluebubbles";
+export type { DmPolicy, GroupPolicy } from "donna/plugin-sdk/bluebubbles";
 
 export type BlueBubblesGroupConfig = {
   /** If true, only respond in this group when mentioned. */

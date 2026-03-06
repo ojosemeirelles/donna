@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { OpenClawConfig } from "../../../config/config.js";
+import type { DonnaConfig } from "../../../config/config.js";
 
 const handleDiscordAction = vi.fn(async (..._args: unknown[]) => ({ details: { ok: true } }));
 const handleTelegramAction = vi.fn(async (..._args: unknown[]) => ({ ok: true }));
@@ -30,8 +30,8 @@ const { telegramMessageActions } = await import("./telegram.js");
 const { signalMessageActions } = await import("./signal.js");
 const { createSlackActions } = await import("../slack.actions.js");
 
-function telegramCfg(): OpenClawConfig {
-  return { channels: { telegram: { botToken: "tok" } } } as OpenClawConfig;
+function telegramCfg(): DonnaConfig {
+  return { channels: { telegram: { botToken: "tok" } } } as DonnaConfig;
 }
 
 type TelegramActionInput = Parameters<NonNullable<typeof telegramMessageActions.handleAction>>[0];
@@ -39,7 +39,7 @@ type TelegramActionInput = Parameters<NonNullable<typeof telegramMessageActions.
 async function runTelegramAction(
   action: TelegramActionInput["action"],
   params: TelegramActionInput["params"],
-  options?: { cfg?: OpenClawConfig; accountId?: string },
+  options?: { cfg?: DonnaConfig; accountId?: string },
 ) {
   const cfg = options?.cfg ?? telegramCfg();
   const handleAction = telegramMessageActions.handleAction;
@@ -62,13 +62,13 @@ async function runSignalAction(
   action: SignalActionInput["action"],
   params: SignalActionInput["params"],
   options?: {
-    cfg?: OpenClawConfig;
+    cfg?: DonnaConfig;
     accountId?: string;
     toolContext?: SignalActionInput["toolContext"];
   },
 ) {
   const cfg =
-    options?.cfg ?? ({ channels: { signal: { account: "+15550001111" } } } as OpenClawConfig);
+    options?.cfg ?? ({ channels: { signal: { account: "+15550001111" } } } as DonnaConfig);
   const handleAction = signalMessageActions.handleAction;
   if (!handleAction) {
     throw new Error("signal handleAction unavailable");
@@ -85,7 +85,7 @@ async function runSignalAction(
 }
 
 function slackHarness() {
-  const cfg = { channels: { slack: { botToken: "tok" } } } as OpenClawConfig;
+  const cfg = { channels: { slack: { botToken: "tok" } } } as DonnaConfig;
   const actions = createSlackActions("slack");
   return { cfg, actions };
 }
@@ -127,7 +127,7 @@ function expectChannelCreateAction(actions: string[], expected: boolean) {
   expect(actions).not.toContain("channel-create");
 }
 
-function createSignalAccountOverrideCfg(): OpenClawConfig {
+function createSignalAccountOverrideCfg(): DonnaConfig {
   return {
     channels: {
       signal: {
@@ -137,12 +137,10 @@ function createSignalAccountOverrideCfg(): OpenClawConfig {
         },
       },
     },
-  } as OpenClawConfig;
+  } as DonnaConfig;
 }
 
-function createDiscordModerationOverrideCfg(params?: {
-  channelsEnabled?: boolean;
-}): OpenClawConfig {
+function createDiscordModerationOverrideCfg(params?: { channelsEnabled?: boolean }): DonnaConfig {
   const accountActions = params?.channelsEnabled
     ? { moderation: true, channels: true }
     : { moderation: true };
@@ -155,13 +153,13 @@ function createDiscordModerationOverrideCfg(params?: {
         },
       },
     },
-  } as OpenClawConfig;
+  } as DonnaConfig;
 }
 
 async function expectSignalActionRejected(
   params: Record<string, unknown>,
   error: RegExp,
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
 ) {
   const handleAction = signalMessageActions.handleAction;
   if (!handleAction) {
@@ -197,7 +195,7 @@ beforeEach(() => {
 
 describe("discord message actions", () => {
   it("lists channel and upload actions by default", async () => {
-    const cfg = { channels: { discord: { token: "d0" } } } as OpenClawConfig;
+    const cfg = { channels: { discord: { token: "d0" } } } as DonnaConfig;
     const actions = discordMessageActions.listActions?.({ cfg }) ?? [];
 
     expect(actions).toContain("emoji-upload");
@@ -208,7 +206,7 @@ describe("discord message actions", () => {
   it("respects disabled channel actions", async () => {
     const cfg = {
       channels: { discord: { token: "d0", actions: { channels: false } } },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const actions = discordMessageActions.listActions?.({ cfg }) ?? [];
 
     expect(actions).not.toContain("channel-create");
@@ -238,7 +236,7 @@ describe("discord message actions", () => {
     ] as const;
 
     for (const channelConfig of cases) {
-      const cfg = channelConfig as unknown as OpenClawConfig;
+      const cfg = channelConfig as unknown as DonnaConfig;
       const actions = discordMessageActions.listActions?.({ cfg }) ?? [];
       expectModerationActions(actions);
     }
@@ -254,7 +252,7 @@ describe("discord message actions", () => {
           },
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const actions = discordMessageActions.listActions?.({ cfg }) ?? [];
 
     // moderation defaults to false, so without explicit true it stays hidden
@@ -403,7 +401,7 @@ describe("handleDiscordMessageAction", () => {
     it(testCase.name, async () => {
       await handleDiscordMessageAction({
         ...testCase.input,
-        cfg: {} as OpenClawConfig,
+        cfg: {} as DonnaConfig,
       });
 
       const call = handleDiscordAction.mock.calls.at(-1);
@@ -421,7 +419,7 @@ describe("handleDiscordMessageAction", () => {
         durationMin: 5,
         senderUserId: "spoofed-admin-id",
       },
-      cfg: {} as OpenClawConfig,
+      cfg: {} as DonnaConfig,
       requesterSenderId: "trusted-sender-id",
       toolContext: { currentChannelProvider: "discord" },
     });
@@ -443,7 +441,7 @@ describe("handleDiscordMessageAction", () => {
     await handleDiscordMessageAction({
       action: "send",
       params: { to: "channel:123", message: "hi", media: "/tmp/file.png" },
-      cfg: {} as OpenClawConfig,
+      cfg: {} as DonnaConfig,
       mediaLocalRoots: ["/tmp/agent-root"],
     });
 
@@ -464,7 +462,7 @@ describe("handleDiscordMessageAction", () => {
         channelId: "123",
         emoji: "ok",
       },
-      cfg: {} as OpenClawConfig,
+      cfg: {} as DonnaConfig,
       toolContext: { currentMessageId: "9001" },
     });
 
@@ -487,7 +485,7 @@ describe("handleDiscordMessageAction", () => {
           channelId: "123",
           emoji: "ok",
         },
-        cfg: {} as OpenClawConfig,
+        cfg: {} as DonnaConfig,
       }),
     ).rejects.toThrow(/messageId required/i);
 
@@ -513,7 +511,7 @@ describe("telegramMessageActions", () => {
               },
             },
           },
-        } as OpenClawConfig,
+        } as DonnaConfig,
         expectSticker: true,
       },
       {
@@ -527,7 +525,7 @@ describe("telegramMessageActions", () => {
               },
             },
           },
-        } as OpenClawConfig,
+        } as DonnaConfig,
         expectSticker: false,
       },
     ] as const;
@@ -681,7 +679,7 @@ describe("telegramMessageActions", () => {
           },
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const actions = telegramMessageActions.listActions?.({ cfg }) ?? [];
 
     expect(actions).toContain("sticker");
@@ -799,14 +797,14 @@ describe("signalMessageActions", () => {
     const cases = [
       {
         name: "no configured accounts",
-        cfg: {} as OpenClawConfig,
+        cfg: {} as DonnaConfig,
         expected: [],
       },
       {
         name: "reactions disabled",
         cfg: {
           channels: { signal: { account: "+15550001111", actions: { reactions: false } } },
-        } as OpenClawConfig,
+        } as DonnaConfig,
         expected: ["send"],
       },
       {
@@ -832,7 +830,7 @@ describe("signalMessageActions", () => {
   it("blocks reactions when action gate is disabled", async () => {
     const cfg = {
       channels: { signal: { account: "+15550001111", actions: { reactions: false } } },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     await expectSignalActionRejected(
       { to: "+15550001111", messageId: "123", emoji: "✅" },
       /actions\.reactions/,
@@ -854,7 +852,7 @@ describe("signalMessageActions", () => {
       },
       {
         name: "normalizes uuid recipients",
-        cfg: { channels: { signal: { account: "+15550001111" } } } as OpenClawConfig,
+        cfg: { channels: { signal: { account: "+15550001111" } } } as DonnaConfig,
         accountId: undefined,
         params: {
           recipient: "uuid:123e4567-e89b-12d3-a456-426614174000",
@@ -868,7 +866,7 @@ describe("signalMessageActions", () => {
       },
       {
         name: "passes groupId and targetAuthor for group reactions",
-        cfg: { channels: { signal: { account: "+15550001111" } } } as OpenClawConfig,
+        cfg: { channels: { signal: { account: "+15550001111" } } } as DonnaConfig,
         accountId: undefined,
         params: {
           to: "signal:group:group-id",
@@ -923,7 +921,7 @@ describe("signalMessageActions", () => {
   it("rejects reaction when neither messageId nor toolContext.currentMessageId is provided", async () => {
     const cfg = {
       channels: { signal: { account: "+15550001111" } },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     await expectSignalActionRejected(
       { to: "+15559999999", emoji: "✅" },
       /messageId.*required/,
@@ -934,7 +932,7 @@ describe("signalMessageActions", () => {
   it("requires targetAuthor for group reactions", async () => {
     const cfg = {
       channels: { signal: { account: "+15550001111" } },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     await expectSignalActionRejected(
       { to: "signal:group:group-id", messageId: "123", emoji: "✅" },
       /targetAuthor/,

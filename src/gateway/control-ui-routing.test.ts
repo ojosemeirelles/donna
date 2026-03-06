@@ -24,8 +24,8 @@ describe("classifyControlUiRequest", () => {
 
   it("falls through basePath non-read methods for plugin webhooks", () => {
     const classified = classifyControlUiRequest({
-      basePath: "/openclaw",
-      pathname: "/openclaw",
+      basePath: "/donna",
+      pathname: "/donna",
       search: "",
       method: "POST",
     });
@@ -35,8 +35,8 @@ describe("classifyControlUiRequest", () => {
   it("falls through PUT/DELETE/PATCH/OPTIONS under basePath for plugin handlers", () => {
     for (const method of ["PUT", "DELETE", "PATCH", "OPTIONS"]) {
       const classified = classifyControlUiRequest({
-        basePath: "/openclaw",
-        pathname: "/openclaw/webhook",
+        basePath: "/donna",
+        pathname: "/donna/webhook",
         search: "",
         method,
       });
@@ -46,18 +46,18 @@ describe("classifyControlUiRequest", () => {
 
   it("returns redirect for basePath entrypoint GET", () => {
     const classified = classifyControlUiRequest({
-      basePath: "/openclaw",
-      pathname: "/openclaw",
+      basePath: "/donna",
+      pathname: "/donna",
       search: "?foo=1",
       method: "GET",
     });
-    expect(classified).toEqual({ kind: "redirect", location: "/openclaw/?foo=1" });
+    expect(classified).toEqual({ kind: "redirect", location: "/donna/?foo=1" });
   });
 
   it("classifies basePath subroutes as control ui", () => {
     const classified = classifyControlUiRequest({
-      basePath: "/openclaw",
-      pathname: "/openclaw/chat",
+      basePath: "/donna",
+      pathname: "/donna/chat",
       search: "",
       method: "HEAD",
     });

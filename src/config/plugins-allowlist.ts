@@ -1,6 +1,6 @@
-import type { OpenClawConfig } from "./config.js";
+import type { DonnaConfig } from "./config.js";
 
-export function ensurePluginAllowlisted(cfg: OpenClawConfig, pluginId: string): OpenClawConfig {
+export function ensurePluginAllowlisted(cfg: DonnaConfig, pluginId: string): DonnaConfig {
   const allow = cfg.plugins?.allow;
   if (!Array.isArray(allow) || allow.includes(pluginId)) {
     return cfg;

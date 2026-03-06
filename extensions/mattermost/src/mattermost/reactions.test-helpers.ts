@@ -1,7 +1,7 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/mattermost";
+import type { DonnaConfig } from "donna/plugin-sdk/mattermost";
 import { expect, vi } from "vitest";
 
-export function createMattermostTestConfig(): OpenClawConfig {
+export function createMattermostTestConfig(): DonnaConfig {
   return {
     channels: {
       mattermost: {

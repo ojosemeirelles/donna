@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "ai.openclaw.android.benchmark"
+    namespace = "ai.donna.android.benchmark"
     compileSdk = 36
 
     defaultConfig {

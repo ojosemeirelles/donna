@@ -1,17 +1,17 @@
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 import type { WizardPrompter } from "../wizard/prompts.js";
 import { ensureModelAllowlistEntry } from "./model-allowlist.js";
 
 export async function applyDefaultModelChoice(params: {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   setDefaultModel: boolean;
   defaultModel: string;
-  applyDefaultConfig: (config: OpenClawConfig) => OpenClawConfig;
-  applyProviderConfig: (config: OpenClawConfig) => OpenClawConfig;
+  applyDefaultConfig: (config: DonnaConfig) => DonnaConfig;
+  applyProviderConfig: (config: DonnaConfig) => DonnaConfig;
   noteDefault?: string;
   noteAgentModel: (model: string) => Promise<void>;
   prompter: WizardPrompter;
-}): Promise<{ config: OpenClawConfig; agentModelOverride?: string }> {
+}): Promise<{ config: DonnaConfig; agentModelOverride?: string }> {
   if (params.setDefaultModel) {
     const next = params.applyDefaultConfig(params.config);
     if (params.noteDefault) {

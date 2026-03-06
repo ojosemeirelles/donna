@@ -14,7 +14,7 @@ import {
 } from "../plugins/manifest-registry.js";
 import { isRecord } from "../utils.js";
 import { hasAnyWhatsAppAuth } from "../web/accounts.js";
-import type { OpenClawConfig } from "./config.js";
+import type { DonnaConfig } from "./config.js";
 import { ensurePluginAllowlisted } from "./plugins-allowlist.js";
 
 type PluginEnableChange = {
@@ -23,7 +23,7 @@ type PluginEnableChange = {
 };
 
 export type PluginAutoEnableResult = {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   changes: string[];
 };
 
@@ -66,10 +66,7 @@ function accountsHaveKeys(value: unknown, keys: readonly string[]): boolean {
   return false;
 }
 
-function resolveChannelConfig(
-  cfg: OpenClawConfig,
-  channelId: string,
-): Record<string, unknown> | null {
+function resolveChannelConfig(cfg: DonnaConfig, channelId: string): Record<string, unknown> | null {
   const channels = cfg.channels as Record<string, unknown> | undefined;
   const entry = channels?.[channelId];
   return isRecord(entry) ? entry : null;
@@ -142,7 +139,7 @@ function hasAnyNumberKeys(entry: Record<string, unknown>, keys: readonly string[
 }
 
 function isStructuredChannelConfigured(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   channelId: string,
   env: NodeJS.ProcessEnv,
   spec: StructuredChannelConfigSpec,
@@ -169,7 +166,7 @@ function isStructuredChannelConfigured(
   return recordHasKeys(entry);
 }
 
-function isWhatsAppConfigured(cfg: OpenClawConfig): boolean {
+function isWhatsAppConfigured(cfg: DonnaConfig): boolean {
   if (hasAnyWhatsAppAuth(cfg)) {
     return true;
   }
@@ -180,13 +177,13 @@ function isWhatsAppConfigured(cfg: OpenClawConfig): boolean {
   return recordHasKeys(entry);
 }
 
-function isGenericChannelConfigured(cfg: OpenClawConfig, channelId: string): boolean {
+function isGenericChannelConfigured(cfg: DonnaConfig, channelId: string): boolean {
   const entry = resolveChannelConfig(cfg, channelId);
   return recordHasKeys(entry);
 }
 
 export function isChannelConfigured(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   channelId: string,
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
@@ -200,7 +197,7 @@ export function isChannelConfigured(
   return isGenericChannelConfigured(cfg, channelId);
 }
 
-function collectModelRefs(cfg: OpenClawConfig): string[] {
+function collectModelRefs(cfg: DonnaConfig): string[] {
   const refs: string[] = [];
   const pushModelRef = (value: unknown) => {
     if (typeof value === "string" && value.trim()) {
@@ -254,7 +251,7 @@ function extractProviderFromModelRef(value: string): string | null {
   return normalizeProviderId(trimmed.slice(0, slash));
 }
 
-function isProviderConfigured(cfg: OpenClawConfig, providerId: string): boolean {
+function isProviderConfigured(cfg: DonnaConfig, providerId: string): boolean {
   const normalized = normalizeProviderId(providerId);
 
   const profiles = cfg.auth?.profiles;
@@ -315,7 +312,7 @@ function resolvePluginIdForChannel(
   return channelToPluginId.get(channelId) ?? channelId;
 }
 
-function collectCandidateChannelIds(cfg: OpenClawConfig): string[] {
+function collectCandidateChannelIds(cfg: DonnaConfig): string[] {
   const channelIds = new Set<string>(CHANNEL_PLUGIN_IDS);
   const configuredChannels = cfg.channels as Record<string, unknown> | undefined;
   if (!configuredChannels || typeof configuredChannels !== "object") {
@@ -332,7 +329,7 @@ function collectCandidateChannelIds(cfg: OpenClawConfig): string[] {
 }
 
 function resolveConfiguredPlugins(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   env: NodeJS.ProcessEnv,
   registry: PluginManifestRegistry,
 ): PluginEnableChange[] {
@@ -367,7 +364,7 @@ function resolveConfiguredPlugins(
   return changes;
 }
 
-function isPluginExplicitlyDisabled(cfg: OpenClawConfig, pluginId: string): boolean {
+function isPluginExplicitlyDisabled(cfg: DonnaConfig, pluginId: string): boolean {
   const builtInChannelId = normalizeChatChannelId(pluginId);
   if (builtInChannelId) {
     const channels = cfg.channels as Record<string, unknown> | undefined;
@@ -385,7 +382,7 @@ function isPluginExplicitlyDisabled(cfg: OpenClawConfig, pluginId: string): bool
   return entry?.enabled === false;
 }
 
-function isPluginDenied(cfg: OpenClawConfig, pluginId: string): boolean {
+function isPluginDenied(cfg: DonnaConfig, pluginId: string): boolean {
   const deny = cfg.plugins?.deny;
   return Array.isArray(deny) && deny.includes(pluginId);
 }
@@ -400,7 +397,7 @@ function resolvePreferredOverIds(pluginId: string): string[] {
 }
 
 function shouldSkipPreferredPluginAutoEnable(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   entry: PluginEnableChange,
   configured: PluginEnableChange[],
 ): boolean {
@@ -422,7 +419,7 @@ function shouldSkipPreferredPluginAutoEnable(
   return false;
 }
 
-function registerPluginEntry(cfg: OpenClawConfig, pluginId: string): OpenClawConfig {
+function registerPluginEntry(cfg: DonnaConfig, pluginId: string): DonnaConfig {
   const builtInChannelId = normalizeChatChannelId(pluginId);
   if (builtInChannelId) {
     const channels = cfg.channels as Record<string, unknown> | undefined;
@@ -469,7 +466,7 @@ function formatAutoEnableChange(entry: PluginEnableChange): string {
 }
 
 export function applyPluginAutoEnable(params: {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   env?: NodeJS.ProcessEnv;
   /** Pre-loaded manifest registry. When omitted, the registry is loaded from
    *  the installed plugins on disk. Pass an explicit registry in tests to

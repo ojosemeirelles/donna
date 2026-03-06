@@ -8,11 +8,11 @@ import {
   resolveDefaultGroupPolicy,
   type ChannelPlugin,
   type ChannelStatusIssue,
-  type OpenClawConfig,
+  type DonnaConfig,
   type LineConfig,
   type LineChannelData,
   type ResolvedLineAccount,
-} from "openclaw/plugin-sdk/line";
+} from "donna/plugin-sdk/line";
 import { getLineRuntime } from "./runtime.js";
 
 // LINE channel metadata
@@ -45,7 +45,7 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = {
       if (!account.channelAccessToken) {
         throw new Error("LINE channel access token not configured");
       }
-      await line.pushMessageLine(id, "OpenClaw: your access has been approved.", {
+      await line.pushMessageLine(id, "Donna: your access has been approved.", {
         channelAccessToken: account.channelAccessToken,
       });
     },
@@ -159,7 +159,7 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = {
         allowFrom: account.config.allowFrom ?? [],
         policyPath: `${basePath}dmPolicy`,
         allowFromPath: basePath,
-        approveHint: "openclaw pairing approve line <code>",
+        approveHint: "donna pairing approve line <code>",
         normalizeEntry: (raw) => raw.replace(/^line:(?:user:)?/i, ""),
       };
     },
@@ -677,7 +677,7 @@ export const linePlugin: ChannelPlugin<ResolvedLineAccount> = {
     },
     logoutAccount: async ({ accountId, cfg }) => {
       const envToken = process.env.LINE_CHANNEL_ACCESS_TOKEN?.trim() ?? "";
-      const nextCfg = { ...cfg } as OpenClawConfig;
+      const nextCfg = { ...cfg } as DonnaConfig;
       const lineConfig = (cfg.channels?.line ?? {}) as LineConfig;
       const nextLine = { ...lineConfig };
       let cleared = false;

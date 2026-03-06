@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 import {
   loadConfig,
   resolveConfigPath,
@@ -32,7 +32,7 @@ type CallGatewayBaseOptions = {
   token?: string;
   password?: string;
   tlsFingerprint?: string;
-  config?: OpenClawConfig;
+  config?: DonnaConfig;
   method: string;
   params?: unknown;
   expectFinal?: boolean;
@@ -128,7 +128,7 @@ export function ensureExplicitGatewayAuth(params: {
 
 export function buildGatewayConnectionDetails(
   options: {
-    config?: OpenClawConfig;
+    config?: DonnaConfig;
     url?: string;
     configPath?: string;
     urlSource?: "cli" | "env";
@@ -151,8 +151,8 @@ export function buildGatewayConnectionDetails(
       : undefined;
   const envUrlOverride = cliUrlOverride
     ? undefined
-    : (trimToUndefined(process.env.OPENCLAW_GATEWAY_URL) ??
-      trimToUndefined(process.env.CLAWDBOT_GATEWAY_URL));
+    : (trimToUndefined(process.env.DONNA_GATEWAY_URL) ??
+      trimToUndefined(process.env.DONNA_GATEWAY_URL));
   const urlOverride = cliUrlOverride ?? envUrlOverride;
   const remoteUrl =
     typeof remote?.url === "string" && remote.url.trim().length > 0 ? remote.url.trim() : undefined;
@@ -162,7 +162,7 @@ export function buildGatewayConnectionDetails(
   const url = urlOverride || remoteUrl || localUrl;
   const urlSource = urlOverride
     ? urlSourceHint === "env"
-      ? "env OPENCLAW_GATEWAY_URL"
+      ? "env DONNA_GATEWAY_URL"
       : "cli --url"
     : remoteUrl
       ? "config gateway.remote.url"
@@ -174,7 +174,7 @@ export function buildGatewayConnectionDetails(
     ? "Warn: gateway.mode=remote but gateway.remote.url is missing; set gateway.remote.url or switch gateway.mode=local."
     : undefined;
 
-  const allowPrivateWs = process.env.OPENCLAW_ALLOW_INSECURE_PRIVATE_WS === "1";
+  const allowPrivateWs = process.env.DONNA_ALLOW_INSECURE_PRIVATE_WS === "1";
   // Security check: block ALL insecure ws:// to non-loopback addresses (CWE-319, CVSS 9.8)
   // This applies to the FINAL resolved URL, regardless of source (config, CLI override, etc).
   // Both credentials and chat/conversation data must not be transmitted over plaintext to remote hosts.
@@ -191,9 +191,9 @@ export function buildGatewayConnectionDetails(
         "- or use Tailscale Serve/Funnel for HTTPS remote access",
         allowPrivateWs
           ? undefined
-          : "Break-glass (trusted private networks only): set OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1",
-        "Doctor: openclaw doctor --fix",
-        "Docs: https://docs.openclaw.ai/gateway/remote",
+          : "Break-glass (trusted private networks only): set DONNA_ALLOW_INSECURE_PRIVATE_WS=1",
+        "Doctor: donna doctor --fix",
+        "Docs: https://docs.donna.ai/gateway/remote",
       ].join("\n"),
     );
   }
@@ -225,7 +225,7 @@ type GatewayRemoteSettings = {
 };
 
 type ResolvedGatewayCallContext = {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   configPath: string;
   isRemoteMode: boolean;
   remote?: GatewayRemoteSettings;
@@ -244,13 +244,11 @@ function trimToUndefined(value: unknown): string | undefined {
 }
 
 function readGatewayTokenEnv(env: NodeJS.ProcessEnv): string | undefined {
-  return trimToUndefined(env.OPENCLAW_GATEWAY_TOKEN) ?? trimToUndefined(env.CLAWDBOT_GATEWAY_TOKEN);
+  return trimToUndefined(env.DONNA_GATEWAY_TOKEN) ?? trimToUndefined(env.DONNA_GATEWAY_TOKEN);
 }
 
 function readGatewayPasswordEnv(env: NodeJS.ProcessEnv): string | undefined {
-  return (
-    trimToUndefined(env.OPENCLAW_GATEWAY_PASSWORD) ?? trimToUndefined(env.CLAWDBOT_GATEWAY_PASSWORD)
-  );
+  return trimToUndefined(env.DONNA_GATEWAY_PASSWORD) ?? trimToUndefined(env.DONNA_GATEWAY_PASSWORD);
 }
 
 function resolveGatewayCallTimeout(timeoutValue: unknown): {
@@ -274,8 +272,8 @@ function resolveGatewayCallContext(opts: CallGatewayBaseOptions): ResolvedGatewa
   const cliUrlOverride = trimToUndefined(opts.url);
   const envUrlOverride = cliUrlOverride
     ? undefined
-    : (trimToUndefined(process.env.OPENCLAW_GATEWAY_URL) ??
-      trimToUndefined(process.env.CLAWDBOT_GATEWAY_URL));
+    : (trimToUndefined(process.env.DONNA_GATEWAY_URL) ??
+      trimToUndefined(process.env.DONNA_GATEWAY_URL));
   const urlOverride = cliUrlOverride ?? envUrlOverride;
   const urlOverrideSource = cliUrlOverride ? "cli" : envUrlOverride ? "env" : undefined;
   const remoteUrl = trimToUndefined(remote?.url);
@@ -306,7 +304,7 @@ function ensureRemoteModeUrlConfigured(context: ResolvedGatewayCallContext): voi
 }
 
 async function resolveGatewaySecretInputString(params: {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   value: unknown;
   path: string;
   env: NodeJS.ProcessEnv;
@@ -491,7 +489,7 @@ async function resolveGatewayCredentialsWithEnv(
 }
 
 export async function resolveGatewayCredentialsWithSecretInputs(params: {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   explicitAuth?: ExplicitGatewayAuth;
   urlOverride?: string;
   env?: NodeJS.ProcessEnv;

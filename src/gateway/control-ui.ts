@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 import { openBoundaryFileSync } from "../infra/boundary-file-read.js";
 import { resolveControlUiRootSync } from "../infra/control-ui-assets.js";
 import { isWithinDir } from "../infra/path-safety.js";
@@ -32,7 +32,7 @@ const CONTROL_UI_ASSETS_MISSING_MESSAGE =
 
 export type ControlUiRequestOptions = {
   basePath?: string;
-  config?: OpenClawConfig;
+  config?: DonnaConfig;
   agentId?: string;
   root?: ControlUiRootState;
 };

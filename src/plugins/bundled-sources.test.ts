@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { findBundledPluginSource, resolveBundledPluginSources } from "./bundled-sources.js";
 
-const discoverOpenClawPluginsMock = vi.fn();
+const discoverDonnaPluginsMock = vi.fn();
 const loadPluginManifestMock = vi.fn();
 
 vi.mock("./discovery.js", () => ({
-  discoverOpenClawPlugins: (...args: unknown[]) => discoverOpenClawPluginsMock(...args),
+  discoverDonnaPlugins: (...args: unknown[]) => discoverDonnaPluginsMock(...args),
 }));
 
 vi.mock("./manifest.js", () => ({
@@ -14,36 +14,36 @@ vi.mock("./manifest.js", () => ({
 
 describe("bundled plugin sources", () => {
   beforeEach(() => {
-    discoverOpenClawPluginsMock.mockReset();
+    discoverDonnaPluginsMock.mockReset();
     loadPluginManifestMock.mockReset();
   });
 
   it("resolves bundled sources keyed by plugin id", () => {
-    discoverOpenClawPluginsMock.mockReturnValue({
+    discoverDonnaPluginsMock.mockReturnValue({
       candidates: [
         {
           origin: "global",
           rootDir: "/global/feishu",
-          packageName: "@openclaw/feishu",
-          packageManifest: { install: { npmSpec: "@openclaw/feishu" } },
+          packageName: "@donna/feishu",
+          packageManifest: { install: { npmSpec: "@donna/feishu" } },
         },
         {
           origin: "bundled",
           rootDir: "/app/extensions/feishu",
-          packageName: "@openclaw/feishu",
-          packageManifest: { install: { npmSpec: "@openclaw/feishu" } },
+          packageName: "@donna/feishu",
+          packageManifest: { install: { npmSpec: "@donna/feishu" } },
         },
         {
           origin: "bundled",
           rootDir: "/app/extensions/feishu-dup",
-          packageName: "@openclaw/feishu",
-          packageManifest: { install: { npmSpec: "@openclaw/feishu" } },
+          packageName: "@donna/feishu",
+          packageManifest: { install: { npmSpec: "@donna/feishu" } },
         },
         {
           origin: "bundled",
           rootDir: "/app/extensions/msteams",
-          packageName: "@openclaw/msteams",
-          packageManifest: { install: { npmSpec: "@openclaw/msteams" } },
+          packageName: "@donna/msteams",
+          packageManifest: { install: { npmSpec: "@donna/msteams" } },
         },
       ],
       diagnostics: [],
@@ -59,7 +59,7 @@ describe("bundled plugin sources", () => {
       return {
         ok: false,
         error: "invalid manifest",
-        manifestPath: `${rootDir}/openclaw.plugin.json`,
+        manifestPath: `${rootDir}/donna.plugin.json`,
       };
     });
 
@@ -69,18 +69,18 @@ describe("bundled plugin sources", () => {
     expect(map.get("feishu")).toEqual({
       pluginId: "feishu",
       localPath: "/app/extensions/feishu",
-      npmSpec: "@openclaw/feishu",
+      npmSpec: "@donna/feishu",
     });
   });
 
   it("finds bundled source by npm spec", () => {
-    discoverOpenClawPluginsMock.mockReturnValue({
+    discoverDonnaPluginsMock.mockReturnValue({
       candidates: [
         {
           origin: "bundled",
           rootDir: "/app/extensions/feishu",
-          packageName: "@openclaw/feishu",
-          packageManifest: { install: { npmSpec: "@openclaw/feishu" } },
+          packageName: "@donna/feishu",
+          packageManifest: { install: { npmSpec: "@donna/feishu" } },
         },
       ],
       diagnostics: [],
@@ -88,10 +88,10 @@ describe("bundled plugin sources", () => {
     loadPluginManifestMock.mockReturnValue({ ok: true, manifest: { id: "feishu" } });
 
     const resolved = findBundledPluginSource({
-      lookup: { kind: "npmSpec", value: "@openclaw/feishu" },
+      lookup: { kind: "npmSpec", value: "@donna/feishu" },
     });
     const missing = findBundledPluginSource({
-      lookup: { kind: "npmSpec", value: "@openclaw/not-found" },
+      lookup: { kind: "npmSpec", value: "@donna/not-found" },
     });
 
     expect(resolved?.pluginId).toBe("feishu");
@@ -100,13 +100,13 @@ describe("bundled plugin sources", () => {
   });
 
   it("finds bundled source by plugin id", () => {
-    discoverOpenClawPluginsMock.mockReturnValue({
+    discoverDonnaPluginsMock.mockReturnValue({
       candidates: [
         {
           origin: "bundled",
           rootDir: "/app/extensions/diffs",
-          packageName: "@openclaw/diffs",
-          packageManifest: { install: { npmSpec: "@openclaw/diffs" } },
+          packageName: "@donna/diffs",
+          packageManifest: { install: { npmSpec: "@donna/diffs" } },
         },
       ],
       diagnostics: [],

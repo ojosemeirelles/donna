@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "../../../config/config.js";
+import type { DonnaConfig } from "../../../config/config.js";
 import {
   getThreadBindingManager,
   type ThreadBindingRecord,
@@ -39,7 +39,7 @@ function resolveDiscordWebhookIdentity(params: {
 }
 
 async function maybeSendDiscordWebhookText(params: {
-  cfg?: OpenClawConfig;
+  cfg?: DonnaConfig;
   text: string;
   threadId?: string | number | null;
   accountId?: string | null;

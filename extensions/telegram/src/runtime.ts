@@ -1,4 +1,4 @@
-import type { PluginRuntime } from "openclaw/plugin-sdk/telegram";
+import type { PluginRuntime } from "donna/plugin-sdk/telegram";
 
 let runtime: PluginRuntime | null = null;
 

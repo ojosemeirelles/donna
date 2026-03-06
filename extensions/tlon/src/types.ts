@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "openclaw/plugin-sdk/tlon";
+import type { DonnaConfig } from "donna/plugin-sdk/tlon";
 
 export type TlonResolvedAccount = {
   accountId: string;
@@ -23,7 +23,7 @@ export type TlonResolvedAccount = {
 };
 
 export function resolveTlonAccount(
-  cfg: OpenClawConfig,
+  cfg: DonnaConfig,
   accountId?: string | null,
 ): TlonResolvedAccount {
   const base = cfg.channels?.tlon as
@@ -121,7 +121,7 @@ export function resolveTlonAccount(
   };
 }
 
-export function listTlonAccountIds(cfg: OpenClawConfig): string[] {
+export function listTlonAccountIds(cfg: DonnaConfig): string[] {
   const base = cfg.channels?.tlon as
     | { ship?: string; accounts?: Record<string, Record<string, unknown>> }
     | undefined;

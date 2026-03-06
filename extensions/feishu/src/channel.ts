@@ -1,4 +1,4 @@
-import type { ChannelMeta, ChannelPlugin, ClawdbotConfig } from "openclaw/plugin-sdk/feishu";
+import type { ChannelMeta, ChannelPlugin, DonnaConfig } from "donna/plugin-sdk/feishu";
 import {
   buildBaseChannelStatusSummary,
   createDefaultChannelRuntimeState,
@@ -6,7 +6,7 @@ import {
   PAIRING_APPROVED_MESSAGE,
   resolveAllowlistProviderRuntimeGroupPolicy,
   resolveDefaultGroupPolicy,
-} from "openclaw/plugin-sdk/feishu";
+} from "donna/plugin-sdk/feishu";
 import {
   resolveFeishuAccount,
   resolveFeishuCredentials,
@@ -201,7 +201,7 @@ export const feishuPlugin: ChannelPlugin<ResolvedFeishuAccount> = {
 
       if (isDefault) {
         // Delete entire feishu config
-        const next = { ...cfg } as ClawdbotConfig;
+        const next = { ...cfg } as DonnaConfig;
         const nextChannels = { ...cfg.channels };
         delete (nextChannels as Record<string, unknown>).feishu;
         if (Object.keys(nextChannels).length > 0) {

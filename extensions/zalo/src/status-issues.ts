@@ -1,4 +1,4 @@
-import type { ChannelAccountSnapshot, ChannelStatusIssue } from "openclaw/plugin-sdk/zalo";
+import type { ChannelAccountSnapshot, ChannelStatusIssue } from "donna/plugin-sdk/zalo";
 
 type ZaloAccountStatus = {
   accountId?: unknown;

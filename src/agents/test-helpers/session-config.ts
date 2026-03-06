@@ -1,8 +1,8 @@
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 
 export function createPerSenderSessionConfig(
-  overrides: Partial<NonNullable<OpenClawConfig["session"]>> = {},
-): NonNullable<OpenClawConfig["session"]> {
+  overrides: Partial<NonNullable<DonnaConfig["session"]>> = {},
+): NonNullable<DonnaConfig["session"]> {
   return {
     mainKey: "main",
     scope: "per-sender",

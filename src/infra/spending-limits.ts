@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 import type { SessionEntry } from "../config/sessions/types.js";
 import { loadCostUsageSummary, loadSessionCostSummary } from "./session-cost-usage.js";
 
@@ -27,7 +27,7 @@ export class SpendingLimitExceededError extends Error {
  * sessions are stopped before incurring additional API charges.
  */
 export async function checkSpendingLimits(params: {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   sessionId?: string;
   sessionEntry?: SessionEntry;
   sessionFile?: string;

@@ -153,7 +153,7 @@ const PluginEntrySchema = z
   })
   .strict();
 
-export const OpenClawSchema = z
+export const DonnaSchema = z
   .object({
     $schema: z.string().optional(),
     meta: z

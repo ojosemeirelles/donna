@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { expectInboundContextContract } from "../../../test/helpers/inbound-contract.js";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 import { defaultRuntime } from "../../runtime.js";
 import type { MsgContext } from "../templating.js";
 import { HEARTBEAT_TOKEN, SILENT_REPLY_TOKEN } from "../tokens.js";
@@ -617,7 +617,7 @@ function createRun(params: {
       sessionId: "sess",
       sessionFile: "/tmp/session.json",
       workspaceDir: "/tmp",
-      config: {} as OpenClawConfig,
+      config: {} as DonnaConfig,
       provider: "openai",
       model: "gpt-test",
       timeoutMs: 10_000,
@@ -1235,7 +1235,7 @@ describe("followup queue drain restart after idle window", () => {
   });
 });
 
-const emptyCfg = {} as OpenClawConfig;
+const emptyCfg = {} as DonnaConfig;
 
 describe("createReplyDispatcher", () => {
   it("drops empty payloads and exact silent tokens without media", async () => {
@@ -1399,7 +1399,7 @@ describe("resolveReplyToMode", () => {
         discord: { replyToMode: "first" },
         slack: { replyToMode: "all" },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const chatTypeCfg = {
       channels: {
         slack: {
@@ -1407,14 +1407,14 @@ describe("resolveReplyToMode", () => {
           replyToModeByChatType: { direct: "all", group: "first" },
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const topLevelFallbackCfg = {
       channels: {
         slack: {
           replyToMode: "first",
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
     const legacyDmCfg = {
       channels: {
         slack: {
@@ -1422,10 +1422,10 @@ describe("resolveReplyToMode", () => {
           dm: { replyToMode: "all" },
         },
       },
-    } as OpenClawConfig;
+    } as DonnaConfig;
 
     const cases: Array<{
-      cfg: OpenClawConfig;
+      cfg: DonnaConfig;
       channel?: "telegram" | "discord" | "slack";
       chatType?: "direct" | "group" | "channel";
       expected: "off" | "all" | "first";

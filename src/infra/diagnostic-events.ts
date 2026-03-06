@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 
 export type DiagnosticSessionState = "idle" | "processing" | "waiting";
 
@@ -176,19 +176,19 @@ type DiagnosticEventsGlobalState = {
 
 function getDiagnosticEventsState(): DiagnosticEventsGlobalState {
   const globalStore = globalThis as typeof globalThis & {
-    __openclawDiagnosticEventsState?: DiagnosticEventsGlobalState;
+    __donnaDiagnosticEventsState?: DiagnosticEventsGlobalState;
   };
-  if (!globalStore.__openclawDiagnosticEventsState) {
-    globalStore.__openclawDiagnosticEventsState = {
+  if (!globalStore.__donnaDiagnosticEventsState) {
+    globalStore.__donnaDiagnosticEventsState = {
       seq: 0,
       listeners: new Set<(evt: DiagnosticEventPayload) => void>(),
       dispatchDepth: 0,
     };
   }
-  return globalStore.__openclawDiagnosticEventsState;
+  return globalStore.__donnaDiagnosticEventsState;
 }
 
-export function isDiagnosticsEnabled(config?: OpenClawConfig): boolean {
+export function isDiagnosticsEnabled(config?: DonnaConfig): boolean {
   return config?.diagnostics?.enabled === true;
 }
 

@@ -1,7 +1,7 @@
 import { createRequire } from "node:module";
 
-declare const __OPENCLAW_VERSION__: string | undefined;
-const CORE_PACKAGE_NAME = "openclaw";
+declare const __DONNA_VERSION__: string | undefined;
+const CORE_PACKAGE_NAME = "donna";
 
 const PACKAGE_JSON_CANDIDATES = [
   "../package.json",
@@ -110,19 +110,19 @@ export function resolveRuntimeServiceVersion(
 
   return (
     firstNonEmpty(
-      env["OPENCLAW_VERSION"],
+      env["DONNA_VERSION"],
       runtimeVersion,
-      env["OPENCLAW_SERVICE_VERSION"],
+      env["DONNA_SERVICE_VERSION"],
       env["npm_package_version"],
     ) ?? fallback
   );
 }
 
-// Single source of truth for the current OpenClaw version.
+// Single source of truth for the current Donna version.
 // - Embedded/bundled builds: injected define or env var.
 // - Dev/npm builds: package.json.
 export const VERSION = resolveBinaryVersion({
   moduleUrl: import.meta.url,
-  injectedVersion: typeof __OPENCLAW_VERSION__ === "string" ? __OPENCLAW_VERSION__ : undefined,
-  bundledVersion: process.env.OPENCLAW_BUNDLED_VERSION,
+  injectedVersion: typeof __DONNA_VERSION__ === "string" ? __DONNA_VERSION__ : undefined,
+  bundledVersion: process.env.DONNA_BUNDLED_VERSION,
 });

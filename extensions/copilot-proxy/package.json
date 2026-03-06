@@ -1,10 +1,10 @@
 {
-  "name": "@openclaw/copilot-proxy",
+  "name": "@donna/copilot-proxy",
   "version": "2026.3.2",
   "private": true,
-  "description": "OpenClaw Copilot Proxy provider plugin",
+  "description": "Donna Copilot Proxy provider plugin",
   "type": "module",
-  "openclaw": {
+  "donna": {
     "extensions": [
       "./index.ts"
     ]

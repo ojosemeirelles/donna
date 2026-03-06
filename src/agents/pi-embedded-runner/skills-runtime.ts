@@ -1,9 +1,9 @@
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 import { loadWorkspaceSkillEntries, type SkillEntry, type SkillSnapshot } from "../skills.js";
 
 export function resolveEmbeddedRunSkillEntries(params: {
   workspaceDir: string;
-  config?: OpenClawConfig;
+  config?: DonnaConfig;
   skillsSnapshot?: SkillSnapshot;
 }): {
   shouldLoadSkillEntries: boolean;

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { OpenClawConfig } from "../../config/types.js";
+import type { DonnaConfig } from "../../config/types.js";
 import { createNoopThreadBindingManager } from "./thread-bindings.js";
 
 const preflightDiscordMessageMock = vi.hoisted(() => vi.fn());
@@ -28,7 +28,7 @@ function createHandlerParams(overrides?: {
   abortSignal?: AbortSignal;
   listenerTimeoutMs?: number;
 }) {
-  const cfg: OpenClawConfig = {
+  const cfg: DonnaConfig = {
     channels: {
       discord: {
         enabled: true,

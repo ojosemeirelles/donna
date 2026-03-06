@@ -1,4 +1,4 @@
-import type { ChannelGroupContext } from "openclaw/plugin-sdk/mattermost";
+import type { ChannelGroupContext } from "donna/plugin-sdk/mattermost";
 import { resolveMattermostAccount } from "./mattermost/accounts.js";
 
 export function resolveMattermostGroupRequireMention(

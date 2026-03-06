@@ -1,10 +1,10 @@
 {
-  "name": "@openclaw/telegram",
+  "name": "@donna/telegram",
   "version": "2026.3.2",
   "private": true,
-  "description": "OpenClaw Telegram channel plugin",
+  "description": "Donna Telegram channel plugin",
   "type": "module",
-  "openclaw": {
+  "donna": {
     "extensions": [
       "./index.ts"
     ]

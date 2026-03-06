@@ -1,9 +1,9 @@
-import type { OpenClawConfig } from "../../../config/config.js";
+import type { DonnaConfig } from "../../../config/config.js";
 import type { RuntimeEnv } from "../../../runtime.js";
 import type { OnboardOptions } from "../../onboard-types.js";
 
 export function applyNonInteractiveSkillsConfig(params: {
-  nextConfig: OpenClawConfig;
+  nextConfig: DonnaConfig;
   opts: OnboardOptions;
   runtime: RuntimeEnv;
 }) {

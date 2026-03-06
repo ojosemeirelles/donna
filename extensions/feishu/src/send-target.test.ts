@@ -1,4 +1,4 @@
-import type { ClawdbotConfig } from "openclaw/plugin-sdk/feishu";
+import type { DonnaConfig } from "donna/plugin-sdk/feishu";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveFeishuSendTarget } from "./send-target.js";
 
@@ -14,7 +14,7 @@ vi.mock("./client.js", () => ({
 }));
 
 describe("resolveFeishuSendTarget", () => {
-  const cfg = {} as ClawdbotConfig;
+  const cfg = {} as DonnaConfig;
   const client = { id: "client" };
 
   beforeEach(() => {

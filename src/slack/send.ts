@@ -5,7 +5,7 @@ import {
   resolveTextChunkLimit,
 } from "../auto-reply/chunk.js";
 import { isSilentReplyText } from "../auto-reply/tokens.js";
-import { loadConfig, type OpenClawConfig } from "../config/config.js";
+import { loadConfig, type DonnaConfig } from "../config/config.js";
 import { resolveMarkdownTableMode } from "../config/markdown-tables.js";
 import { logVerbose } from "../globals.js";
 import {
@@ -45,7 +45,7 @@ export type SlackSendIdentity = {
 };
 
 type SlackSendOpts = {
-  cfg?: OpenClawConfig;
+  cfg?: DonnaConfig;
   token?: string;
   accountId?: string;
   mediaUrl?: string;

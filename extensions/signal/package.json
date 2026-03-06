@@ -1,10 +1,10 @@
 {
-  "name": "@openclaw/signal",
+  "name": "@donna/signal",
   "version": "2026.3.2",
   "private": true,
-  "description": "OpenClaw Signal channel plugin",
+  "description": "Donna Signal channel plugin",
   "type": "module",
-  "openclaw": {
+  "donna": {
     "extensions": [
       "./index.ts"
     ]

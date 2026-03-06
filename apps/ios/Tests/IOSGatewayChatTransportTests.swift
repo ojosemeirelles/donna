@@ -1,6 +1,6 @@
-import OpenClawKit
+import DonnaKit
 import Testing
-@testable import OpenClaw
+@testable import Donna
 
 @Suite struct IOSGatewayChatTransportTests {
     @Test func requestsFailFastWhenGatewayNotConnected() async {

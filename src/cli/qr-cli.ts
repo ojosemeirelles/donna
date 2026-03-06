@@ -41,29 +41,13 @@ function readDevicePairPublicUrlFromConfig(cfg: ReturnType<typeof loadConfig>): 
 }
 
 function readGatewayTokenEnv(env: NodeJS.ProcessEnv): string | undefined {
-  const primary = typeof env.OPENCLAW_GATEWAY_TOKEN === "string" ? env.OPENCLAW_GATEWAY_TOKEN : "";
-  if (primary.trim().length > 0) {
-    return primary.trim();
-  }
-  const legacy = typeof env.CLAWDBOT_GATEWAY_TOKEN === "string" ? env.CLAWDBOT_GATEWAY_TOKEN : "";
-  if (legacy.trim().length > 0) {
-    return legacy.trim();
-  }
-  return undefined;
+  const value = typeof env.DONNA_GATEWAY_TOKEN === "string" ? env.DONNA_GATEWAY_TOKEN : "";
+  return value.trim().length > 0 ? value.trim() : undefined;
 }
 
 function readGatewayPasswordEnv(env: NodeJS.ProcessEnv): string | undefined {
-  const primary =
-    typeof env.OPENCLAW_GATEWAY_PASSWORD === "string" ? env.OPENCLAW_GATEWAY_PASSWORD : "";
-  if (primary.trim().length > 0) {
-    return primary.trim();
-  }
-  const legacy =
-    typeof env.CLAWDBOT_GATEWAY_PASSWORD === "string" ? env.CLAWDBOT_GATEWAY_PASSWORD : "";
-  if (legacy.trim().length > 0) {
-    return legacy.trim();
-  }
-  return undefined;
+  const value = typeof env.DONNA_GATEWAY_PASSWORD === "string" ? env.DONNA_GATEWAY_PASSWORD : "";
+  return value.trim().length > 0 ? value.trim() : undefined;
 }
 
 function shouldResolveLocalGatewayPasswordSecret(
@@ -134,7 +118,7 @@ export function registerQrCli(program: Command) {
     .description("Generate an iOS pairing QR code and setup code")
     .addHelpText(
       "after",
-      () => `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/qr", "docs.openclaw.ai/cli/qr")}\n`,
+      () => `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/qr", "docs.donna.ai/cli/qr")}\n`,
     )
     .option(
       "--remote",
@@ -275,7 +259,7 @@ export function registerQrCli(program: Command) {
 
         const lines: string[] = [
           theme.heading("Pairing QR"),
-          "Scan this with the OpenClaw iOS app (Onboarding -> Scan QR).",
+          "Scan this with the Donna iOS app (Onboarding -> Scan QR).",
           "",
         ];
 
@@ -291,8 +275,8 @@ export function registerQrCli(program: Command) {
           `${theme.muted("Source:")} ${resolved.urlSource}`,
           "",
           "Approve after scan with:",
-          `  ${theme.command("openclaw devices list")}`,
-          `  ${theme.command("openclaw devices approve <requestId>")}`,
+          `  ${theme.command("donna devices list")}`,
+          `  ${theme.command("donna devices approve <requestId>")}`,
         );
 
         defaultRuntime.log(lines.join("\n"));

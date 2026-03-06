@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createJiti } from "jiti";
-import type { OpenClawConfig } from "../config/config.js";
+import type { DonnaConfig } from "../config/config.js";
 import type { GatewayRequestHandler } from "../gateway/server-methods/types.js";
 import { openBoundaryFileSync } from "../infra/boundary-file-read.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
@@ -15,7 +15,7 @@ import {
   resolveMemorySlotDecision,
   type NormalizedPluginsConfig,
 } from "./config-state.js";
-import { discoverOpenClawPlugins } from "./discovery.js";
+import { discoverDonnaPlugins } from "./discovery.js";
 import { initializeGlobalHookRunner } from "./hook-runner-global.js";
 import { loadPluginManifestRegistry } from "./manifest-registry.js";
 import { isPathInside, safeStatSync } from "./path-safety.js";
@@ -25,8 +25,8 @@ import { createPluginRuntime } from "./runtime/index.js";
 import type { PluginRuntime } from "./runtime/types.js";
 import { validateJsonSchemaValue } from "./schema-validator.js";
 import type {
-  OpenClawPluginDefinition,
-  OpenClawPluginModule,
+  DonnaPluginDefinition,
+  DonnaPluginModule,
   PluginDiagnostic,
   PluginLogger,
 } from "./types.js";
@@ -34,7 +34,7 @@ import type {
 export type PluginLoadResult = PluginRegistry;
 
 export type PluginLoadOptions = {
-  config?: OpenClawConfig;
+  config?: DonnaConfig;
   workspaceDir?: string;
   logger?: PluginLogger;
   coreGatewayHandlers?: Record<string, GatewayRequestHandler>;
@@ -186,7 +186,7 @@ const resolvePluginSdkScopedAliasMap = (): Record<string, string> => {
       distFile: entry.distFile,
     });
     if (resolved) {
-      aliasMap[`openclaw/plugin-sdk/${entry.subpath}`] = resolved;
+      aliasMap[`donna/plugin-sdk/${entry.subpath}`] = resolved;
     }
   }
   return aliasMap;
@@ -226,8 +226,8 @@ function validatePluginConfig(params: {
 }
 
 function resolvePluginModuleExport(moduleExport: unknown): {
-  definition?: OpenClawPluginDefinition;
-  register?: OpenClawPluginDefinition["register"];
+  definition?: DonnaPluginDefinition;
+  register?: DonnaPluginDefinition["register"];
 } {
   const resolved =
     moduleExport &&
@@ -237,11 +237,11 @@ function resolvePluginModuleExport(moduleExport: unknown): {
       : moduleExport;
   if (typeof resolved === "function") {
     return {
-      register: resolved as OpenClawPluginDefinition["register"],
+      register: resolved as DonnaPluginDefinition["register"],
     };
   }
   if (resolved && typeof resolved === "object") {
-    const def = resolved as OpenClawPluginDefinition;
+    const def = resolved as DonnaPluginDefinition;
     const register = def.register ?? def.activate;
     return { definition: def, register };
   }
@@ -361,7 +361,7 @@ function matchesPathMatcher(matcher: PathMatcher, sourcePath: string): boolean {
 }
 
 function buildProvenanceIndex(params: {
-  config: OpenClawConfig;
+  config: DonnaConfig;
   normalizedLoadPaths: string[];
 }): PluginProvenanceIndex {
   const loadPathMatcher = createPathMatcher();
@@ -471,7 +471,7 @@ function activatePluginRegistry(registry: PluginRegistry, cacheKey: string): voi
   initializeGlobalHookRunner(registry);
 }
 
-export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegistry {
+export function loadDonnaPlugins(options: PluginLoadOptions = {}): PluginRegistry {
   // Test env: default-disable plugins unless explicitly configured.
   // This keeps unit/gateway suites fast and avoids loading heavyweight plugin deps by accident.
   const cfg = applyTestPluginDefaults(options.config ?? {}, process.env);
@@ -533,7 +533,7 @@ export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegi
     coreGatewayHandlers: options.coreGatewayHandlers as Record<string, GatewayRequestHandler>,
   });
 
-  const discovery = discoverOpenClawPlugins({
+  const discovery = discoverDonnaPlugins({
     workspaceDir: options.workspaceDir,
     extraPaths: normalized.loadPaths,
     cache: options.cache,
@@ -569,7 +569,7 @@ export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegi
     }
     const pluginSdkAlias = resolvePluginSdkAlias();
     const aliasMap = {
-      ...(pluginSdkAlias ? { "openclaw/plugin-sdk": pluginSdkAlias } : {}),
+      ...(pluginSdkAlias ? { "donna/plugin-sdk": pluginSdkAlias } : {}),
       ...resolvePluginSdkScopedAliasMap(),
     };
     jitiLoader = createJiti(import.meta.url, {
@@ -699,9 +699,9 @@ export function loadOpenClawPlugins(options: PluginLoadOptions = {}): PluginRegi
     const safeSource = opened.path;
     fs.closeSync(opened.fd);
 
-    let mod: OpenClawPluginModule | null = null;
+    let mod: DonnaPluginModule | null = null;
     try {
-      mod = getJiti()(safeSource) as OpenClawPluginModule;
+      mod = getJiti()(safeSource) as DonnaPluginModule;
     } catch (err) {
       recordPluginError({
         logger,

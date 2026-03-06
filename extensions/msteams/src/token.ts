@@ -1,4 +1,4 @@
-import type { MSTeamsConfig } from "openclaw/plugin-sdk/msteams";
+import type { MSTeamsConfig } from "donna/plugin-sdk/msteams";
 import {
   hasConfiguredSecretInput,
   normalizeResolvedSecretInputString,

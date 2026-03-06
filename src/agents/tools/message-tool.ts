@@ -12,7 +12,7 @@ import {
   CHANNEL_MESSAGE_ACTION_NAMES,
   type ChannelMessageActionName,
 } from "../../channels/plugins/types.js";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { DonnaConfig } from "../../config/config.js";
 import { loadConfig } from "../../config/config.js";
 import { GATEWAY_CLIENT_IDS, GATEWAY_CLIENT_MODES } from "../../gateway/protocol/client-info.js";
 import { getToolResult, runMessageAction } from "../../infra/outbound/message-action-runner.js";
@@ -463,7 +463,7 @@ const MessageToolSchema = buildMessageToolSchemaFromActions(AllMessageActions, {
 type MessageToolOptions = {
   agentAccountId?: string;
   agentSessionKey?: string;
-  config?: OpenClawConfig;
+  config?: DonnaConfig;
   currentChannelId?: string;
   currentChannelProvider?: string;
   currentThreadTs?: string;
@@ -476,7 +476,7 @@ type MessageToolOptions = {
 };
 
 function resolveMessageToolSchemaActions(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   currentChannelProvider?: string;
   currentChannelId?: string;
 }): string[] {
@@ -508,7 +508,7 @@ function resolveMessageToolSchemaActions(params: {
 }
 
 function resolveIncludeComponents(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   currentChannelProvider?: string;
 }): boolean {
   const currentChannel = normalizeMessageChannel(params.currentChannelProvider);
@@ -520,7 +520,7 @@ function resolveIncludeComponents(params: {
 }
 
 function buildMessageToolSchema(params: {
-  cfg: OpenClawConfig;
+  cfg: DonnaConfig;
   currentChannelProvider?: string;
   currentChannelId?: string;
 }) {
@@ -576,7 +576,7 @@ function filterActionsForContext(params: {
 }
 
 function buildMessageToolDescription(options?: {
-  config?: OpenClawConfig;
+  config?: DonnaConfig;
   currentChannel?: string;
   currentChannelId?: string;
 }): string {

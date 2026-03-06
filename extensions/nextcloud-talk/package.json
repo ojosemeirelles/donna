@@ -1,12 +1,12 @@
 {
-  "name": "@openclaw/nextcloud-talk",
+  "name": "@donna/nextcloud-talk",
   "version": "2026.3.2",
-  "description": "OpenClaw Nextcloud Talk channel plugin",
+  "description": "Donna Nextcloud Talk channel plugin",
   "type": "module",
   "dependencies": {
     "zod": "^4.3.6"
   },
-  "openclaw": {
+  "donna": {
     "extensions": [
       "./index.ts"
     ],
@@ -25,7 +25,7 @@
       "quickstartAllowFrom": true
     },
     "install": {
-      "npmSpec": "@openclaw/nextcloud-talk",
+      "npmSpec": "@donna/nextcloud-talk",
       "localPath": "extensions/nextcloud-talk",
       "defaultChoice": "npm"
     }

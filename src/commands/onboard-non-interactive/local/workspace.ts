@@ -1,10 +1,10 @@
-import type { OpenClawConfig } from "../../../config/config.js";
+import type { DonnaConfig } from "../../../config/config.js";
 import { resolveUserPath } from "../../../utils.js";
 import type { OnboardOptions } from "../../onboard-types.js";
 
 export function resolveNonInteractiveWorkspaceDir(params: {
   opts: OnboardOptions;
-  baseConfig: OpenClawConfig;
+  baseConfig: DonnaConfig;
   defaultWorkspaceDir: string;
 }) {
   const raw = (

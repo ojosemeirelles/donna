@@ -1,9 +1,9 @@
 {
-  "name": "@openclaw/discord",
+  "name": "@donna/discord",
   "version": "2026.3.2",
-  "description": "OpenClaw Discord channel plugin",
+  "description": "Donna Discord channel plugin",
   "type": "module",
-  "openclaw": {
+  "donna": {
     "extensions": [
       "./index.ts"
     ]
