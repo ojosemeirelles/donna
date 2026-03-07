@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donna — Configuração</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #1a1a2e;
+      --surface:   #16213e;
+      --border:    #0f3460;
+      --accent:    #e94560;
+      --accent-h:  #c73652;
+      --text:      #e0e0e0;
+      --muted:     #8888aa;
+      --input-bg:  #0d1b35;
+      --radius:    10px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+
+    /* ── Layout ─────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 32px 48px;
+      gap: 24px;
+    }
+
+    /* ── Progress bar ───────────────────────────────── */
+    #progress-bar {
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      position: fixed;
+      top: 0; left: 0;
+      overflow: hidden;
+    }
+    #progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.35s ease;
+    }
+
+    /* ── Logo / header ──────────────────────────────── */
+    .logo {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #e94560, #7b61ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+
+    .step-title {
+      font-size: 22px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .step-subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      max-width: 380px;
+    }
+
+    /* ── Form elements ──────────────────────────────── */
+    .field {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 15px;
+      padding: 10px 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    .error-msg {
+      color: var(--accent);
+      font-size: 12px;
+      min-height: 16px;
+    }
+
+    /* ── Radio cards ────────────────────────────────── */
+    .channels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .channel-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--input-bg);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      font-size: 14px;
+    }
+    .channel-card:hover { border-color: #4a4a8a; }
+    .channel-card.selected {
+      border-color: var(--accent);
+      background: #1e1040;
+    }
+    .channel-card input { display: none; }
+    .channel-icon { font-size: 20px; }
+
+    /* ── Buttons ────────────────────────────────────── */
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 24px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    button:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-h); }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { color: var(--text); }
+
+    /* ── Done screen ────────────────────────────────── */
+    .done-icon {
+      font-size: 64px;
+      line-height: 1;
+    }
+
+    /* ── Inline row for preferences ─────────────────── */
+    .pref-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    /* ── Step indicator ─────────────────────────────── */
+    .step-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s, width 0.2s;
+    }
+    .dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
+    .dot.done   { background: #4a4a8a; }
+  </style>
+</head>
+<body>
+
+<div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+<div id="app"></div>
+
+<script>
+"use strict";
+
+// ── State ────────────────────────────────────────────────────────────────────
+
+let state = null;
+
+async function loadState() {
+  try { state = await window.donna.wizard.getState(); }
+  catch { state = { currentStep:"welcome", stepIndex:0, totalSteps:5, data:{}, errors:{}, completed:false }; }
+}
+
+// ── Render dispatcher ─────────────────────────────────────────────────────────
+
+function render() {
+  const pct = Math.round((state.stepIndex / (state.totalSteps - 1)) * 100);
+  document.getElementById("progress-fill").style.width = pct + "%";
+  document.getElementById("app").innerHTML = "";
+
+  const stepMap = { welcome, "api-key": apiKey, channel, preferences, done };
+  const fn = stepMap[state.currentStep];
+  if (fn) fn();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v;
+    else if (k.startsWith("on")) node.addEventListener(k.slice(2).toLowerCase(), v);
+    else node.setAttribute(k, v);
+  }
+  for (const child of children.flat()) {
+    if (typeof child === "string") node.append(child);
+    else if (child) node.append(child);
+  }
+  return node;
+}
+
+function app(...children) {
+  document.getElementById("app").append(...children.flat());
+}
+
+function dots() {
+  const steps = ["welcome","api-key","channel","preferences","done"];
+  return el("div", { class: "step-dots" },
+    steps.map((s, i) => el("div", {
+      class: "dot" + (i === state.stepIndex ? " active" : i < state.stepIndex ? " done" : "")
+    }))
+  );
+}
+
+async function advance() {
+  state = await window.donna.wizard.advance();
+  if (state.completed) { await window.donna.wizard.complete(); return; }
+  render();
+}
+
+async function back() {
+  state = await window.donna.wizard.back();
+  render();
+}
+
+async function updateData(patch) {
+  state = await window.donna.wizard.updateData(patch);
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────────
+
+function welcome() {
+  app(
+    el("div", { class: "logo" }, "Donna"),
+    el("div", { class: "step-title" }, "Bem-vinda de volta"),
+    el("div", { class: "step-subtitle" },
+      "Sua secretária inteligente e autônoma. Vamos configurar tudo em menos de 2 minutos."
+    ),
+    dots(),
+    el("div", { class: "btn-row" },
+      el("button", { class: "btn-primary", onClick: advance }, "Começar →")
+    )
+  );
+}
+
+function apiKey() {
+  const inp = el("input", {
+    type: "password",
+    placeholder: "sk-ant-api03-...",
+    value: state.data.apiKey || ""
+  });
+  inp.addEventListener("input", () => updateData({ apiKey: inp.value }));
+
+  app(
+    el("div", { class: "step-title" }, "Chave da API Anthropic"),
+    el("div", { class: "step-subtitle" },
+      "Encontre sua chave em console.anthropic.com → API Keys"
+    ),
+    dots(),
+    el("div", { class: "field" },
+      el("label", {}, "API Key"),
+      inp,
+      el("div", { class: "error-msg" }, state.errors.apiKey || "")
+    ),
+    el("div", { class: "btn-row" },
+      el("button", { class: "btn-secondary", onClick: back }, "← Voltar"),
+      el("button", { class: "btn-primary", onClick: advance }, "Continuar →")
+    )
+  );
+}
+
+function channel() {
+  const channels = [
+    { id: "telegram", icon: "✈️", label: "Telegram" },
+    { id: "whatsapp", icon: "💬", label: "WhatsApp" },
+    { id: "discord",  icon: "🎮", label: "Discord"  },
+    { id: "slack",    icon: "⚡", label: "Slack"    },
+    { id: "none",     icon: "⏭️", label: "Mais tarde" },
+  ];
+
+  const selected = { value: state.data.channel || "none" };
+
+  function makeCard(ch) {
+    const card = el("label", { class: "channel-card" + (selected.value === ch.id ? " selected" : "") },
+      el("span", { class: "channel-icon" }, ch.icon),
+      ch.label
+    );
+    card.addEventListener("click", async () => {
+      selected.value = ch.id;
+      await updateData({ channel: ch.id });
+      document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+    });
+    return card;
+  }
+
+  app(
+    el("div", { class: "step-title" }, "Canal de Mensagens"),
+    el("div", { class: "step-subtitle" }, "Onde você quer conversar com a Donna?"),
+    dots(),
+    el("div", { class: "channels" }, channels.map(makeCard)),
+    el("div", { class: "btn-row" },
+      el("button", { class: "btn-secondary", onClick: back }, "← Voltar"),
+      el("button", { class: "btn-primary", onClick: advance }, "Continuar →")
+    )
+  );
+}
+
+function preferences() {
+  const portInp = el("input", {
+    type: "number",
+    value: String(state.data.port || 18789),
+    min: "1024", max: "65535"
+  });
+  portInp.addEventListener("change", () => updateData({ port: parseInt(portInp.value, 10) }));
+
+  const langSel = el("select", {},
+    el("option", { value: "pt" }, "Português"),
+    el("option", { value: "en" }, "English")
+  );
+  langSel.value = state.data.language || "pt";
+  langSel.addEventListener("change", () => updateData({ language: langSel.value }));
+
+  const themeSel = el("select", {},
+    el("option", { value: "system" }, "Sistema"),
+    el("option", { value: "dark" },   "Escuro"),
+    el("option", { value: "light" },  "Claro")
+  );
+  themeSel.value = state.data.theme || "system";
+  themeSel.addEventListener("change", () => updateData({ theme: themeSel.value }));
+
+  app(
+    el("div", { class: "step-title" }, "Preferências"),
+    el("div", { class: "step-subtitle" }, "Personalize como a Donna funciona"),
+    dots(),
+    el("div", { class: "pref-grid" },
+      el("div", { class: "field" }, el("label", {}, "Idioma"), langSel),
+      el("div", { class: "field" }, el("label", {}, "Tema"),   themeSel)
+    ),
+    el("div", { class: "field" },
+      el("label", {}, "Porta do Gateway"),
+      portInp,
+      el("div", { class: "error-msg" }, state.errors.port || "")
+    ),
+    el("div", { class: "btn-row" },
+      el("button", { class: "btn-secondary", onClick: back }, "← Voltar"),
+      el("button", { class: "btn-primary", onClick: advance }, "Finalizar →")
+    )
+  );
+}
+
+function done() {
+  app(
+    el("div", { class: "done-icon" }, "🎉"),
+    el("div", { class: "step-title" }, "Donna está pronta!"),
+    el("div", { class: "step-subtitle" },
+      "O gateway está iniciando. Você verá o ícone da Donna na barra de menu."
+    ),
+    dots(),
+    el("div", { class: "btn-row" },
+      el("button", { class: "btn-primary", onClick: () => window.donna.wizard.complete() }, "Abrir Donna →")
+    )
+  );
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+
+(async () => {
+  await loadState();
+  render();
+})();
+</script>
+
+</body>
+</html>

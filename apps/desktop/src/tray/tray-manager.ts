@@ -6,19 +6,20 @@
  */
 
 import path from "node:path";
-import { type BrowserWindow, Menu, Tray, app, shell } from "electron";
+import { type BrowserWindow, Menu, Tray, app, nativeImage, shell } from "electron";
 import type { GatewayManager, GatewayStatus } from "../gateway-manager.js";
 
 export type TrayManagerOptions = {
   /** Path to the assets directory. */
   assetsDir: string;
-  /** Reference to the main browser window for show/hide. */
-  mainWindow: BrowserWindow;
+  /** Reference to the main browser window for show/hide (can be set later). */
+  mainWindow: BrowserWindow | null;
   /** GatewayManager instance for status display and controls. */
   gateway: GatewayManager;
 };
 
 const ICON_FILE = "tray-icon.png";
+const ICON_FILE_2X = "tray-icon@2x.png";
 
 /** Returns the human-readable label for a gateway status. */
 export function statusLabel(status: GatewayStatus): string {
@@ -54,16 +55,30 @@ export function buildTrayTooltip(status: GatewayStatus, port: number): string {
  */
 export class TrayManager {
   private tray: Tray | null = null;
-  private readonly options: TrayManagerOptions;
+  private options: TrayManagerOptions;
 
   constructor(options: TrayManagerOptions) {
     this.options = options;
   }
 
+  /** Updates the main window reference after wizard completion. */
+  setMainWindow(win: BrowserWindow): void {
+    this.options = { ...this.options, mainWindow: win };
+  }
+
   /** Creates and shows the tray icon. Call once after app is ready. */
   create(): void {
-    const iconPath = path.join(this.options.assetsDir, ICON_FILE);
-    this.tray = new Tray(iconPath);
+    const icon1x = path.join(this.options.assetsDir, ICON_FILE);
+    const icon2x = path.join(this.options.assetsDir, ICON_FILE_2X);
+    // Build a nativeImage with @1x and @2x representations for Retina displays
+    const img = nativeImage.createFromPath(icon1x);
+    try {
+      const img2x = nativeImage.createFromPath(icon2x);
+      if (!img2x.isEmpty()) {
+        img.addRepresentation({ scaleFactor: 2.0, ...img2x.getSize(), buffer: img2x.toBitmap() });
+      }
+    } catch { /* ignore — @2x is optional */ }
+    this.tray = new Tray(img);
     this.tray.setToolTip(
       buildTrayTooltip(this.options.gateway.getStatus(), this.options.gateway.getPort()),
     );
@@ -97,6 +112,7 @@ export class TrayManager {
 
   private _showMainWindow(): void {
     const win = this.options.mainWindow;
+    if (!win) {return;}
     if (win.isMinimized()) {
       win.restore();
     }

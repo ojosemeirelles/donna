@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Donna</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #1a1a2e; --surface: #16213e; --border: #0f3460;
+      --accent: #e94560; --text: #e0e0e0; --muted: #8888aa;
+    }
+    html, body {
+      height: 100%; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #app {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; gap: 16px;
+    }
+    .logo {
+      font-size: 42px; font-weight: 800; letter-spacing: -2px;
+      background: linear-gradient(135deg, #e94560, #7b61ff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .status {
+      font-size: 14px; color: var(--muted);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #8888aa; transition: background 0.3s;
+    }
+    .dot.running { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+    .dot.error   { background: #e94560; }
+    p { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="logo">Donna</div>
+  <div class="status">
+    <div class="dot" id="status-dot"></div>
+    <span id="status-text">Conectando ao gateway…</span>
+  </div>
+  <p>Use a barra de menu para acessar as opções.</p>
+</div>
+<script>
+(async () => {
+  const dot  = document.getElementById("status-dot");
+  const text = document.getElementById("status-text");
+
+  const labels = {
+    idle:     "Gateway parado",
+    starting: "Iniciando gateway…",
+    running:  "Gateway online",
+    stopped:  "Gateway parado",
+    error:    "Erro no gateway",
+  };
+
+  function update(status) {
+    dot.className = "dot " + status;
+    text.textContent = labels[status] || status;
+  }
+
+  try {
+    const status = await window.donna.gateway.getStatus();
+    update(status);
+    window.donna.gateway.onStatusChange(update);
+  } catch {
+    text.textContent = "Aguardando gateway…";
+  }
+})();
+</script>
+</body>
+</html>

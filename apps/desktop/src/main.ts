@@ -123,10 +123,8 @@ function registerIpcHandlers(): void {
     wizardWindow?.close();
     wizardWindow = null;
     mainWindow = createMainWindow();
-    if (mainWindow) {
-      trayManager = new TrayManager({ assetsDir: ASSETS_DIR, mainWindow, gateway });
-      trayManager.create();
-    }
+    // Update tray to reference the now-created main window
+    trayManager?.setMainWindow(mainWindow);
   });
 
   // App
@@ -165,6 +163,10 @@ if (!app.requestSingleInstanceLock()) {
 
 void app.whenReady().then(async () => {
   registerIpcHandlers();
+
+  // Create tray immediately so the icon appears in the menu bar on launch
+  trayManager = new TrayManager({ assetsDir: ASSETS_DIR, mainWindow: null, gateway });
+  trayManager.create();
 
   // Open wizard on first launch; skip if already configured
   wizardWindow = createWizardWindow();
