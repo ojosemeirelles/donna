@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Donna Desktop — zero-friction Electron installer for macOS and Windows",
+  "author": "Donna Contributors",
   "main": "src/main.ts",
   "scripts": {
     "dev": "electron .",
