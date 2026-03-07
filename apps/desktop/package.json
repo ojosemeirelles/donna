@@ -1,0 +1,24 @@
+{
+  "name": "@donna/desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Donna Desktop — zero-friction Electron installer for macOS and Windows",
+  "main": "src/main.ts",
+  "scripts": {
+    "dev": "electron .",
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "oxlint src test",
+    "package:mac": "electron-builder --mac --config electron-builder.yml",
+    "package:win": "electron-builder --win --config electron-builder.yml",
+    "package:all": "electron-builder --mac --win --config electron-builder.yml"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

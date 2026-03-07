@@ -24,10 +24,28 @@ const lintExts = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 // oxfmt handles JS/TS/JSON only; .md/.mdx are excluded (oxfmt rejects them)
 const formatExts = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json"]);
 
+// Directories excluded from root oxfmt config (.oxfmtrc.jsonc ignorePatterns).
+// Files under these paths are managed by their own toolchains.
+const formatExcludedDirs = [
+  "apps/",
+  "assets/",
+  "dist/",
+  "docs/_layouts/",
+  "node_modules/",
+  "patches/",
+  "vendor/",
+];
+
+const isFormatExcluded = (filePath) =>
+  formatExcludedDirs.some((dir) => filePath.startsWith(dir) || filePath.includes(`/${dir}`));
+
 const shouldSelect = (filePath) => {
   const ext = path.extname(filePath).toLowerCase();
   if (mode === "lint") {
     return lintExts.has(ext);
+  }
+  if (isFormatExcluded(filePath)) {
+    return false;
   }
   return formatExts.has(ext);
 };
