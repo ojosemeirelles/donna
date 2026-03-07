@@ -5,7 +5,7 @@
   "description": "Donna core memory search plugin",
   "type": "module",
   "peerDependencies": {
-    "donna": ">=2026.3.2"
+    "donna": "workspace:*"
   },
   "peerDependenciesMeta": {
     "donna": {
