@@ -91,6 +91,8 @@ USER.md
 
 # Agent credentials and memory (NEVER COMMIT)
 /memory/
+# Donna evolving memory system (stored outside repo at ~/.donna/memory/)
+# These files are managed by the memory-consolidation hook and must NEVER be committed.
 .agent/*.json
 !.agent/workflows/
 /local/
