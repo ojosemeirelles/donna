@@ -7,10 +7,10 @@ This document explains the current state and direction of the project.
 We are still early, so iteration is fast.
 Project overview and developer docs: [`README.md`](README.md)
 Contribution guide: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+Repository: https://github.com/ojosemeirelles/donna
 
 Donna started as a personal playground to learn AI and build something genuinely useful:
 an assistant that can run real tasks on a real computer.
-It evolved through several names and shells: Warelay -> Donna -> Donna -> Donna.
 
 The goal: a personal assistant that is easy to use, supports a wide range of platforms, and respects privacy and security.
 
@@ -58,7 +58,7 @@ Preferred plugin path is npm package distribution plus local extension loading f
 If you build a plugin, host and maintain it in your own repository.
 The bar for adding optional plugins to core is intentionally high.
 Plugin docs: [`docs/tools/plugin.md`](docs/tools/plugin.md)
-Community plugin listing + PR bar: https://docs.donna.ai/plugins/community
+Community plugin listing + PR bar: https://github.com/ojosemeirelles/donna
 
 Memory is a special plugin slot where only one memory plugin can be active at a time.
 Today we ship multiple memory options; over time we plan to converge on one recommended default path.
@@ -66,12 +66,12 @@ Today we ship multiple memory options; over time we plan to converge on one reco
 ### Skills
 
 We still ship some bundled skills for baseline UX.
-New skills should be published to ClawHub first (`clawhub.ai`), not added to core by default.
+New skills should be developed and validated externally before being added to core.
 Core skill additions should be rare and require a strong product or security reason.
 
 ### MCP Support
 
-Donna supports MCP through `mcporter`: https://github.com/steipete/mcporter
+Donna supports MCP through `mcporter`: https://github.com/ojosemeirelles/donna
 
 This keeps MCP integration flexible and decoupled from core runtime:
 
@@ -98,7 +98,7 @@ It is widely known, fast to iterate in, and easy to read, modify, and extend.
 
 ## What We Will Not Merge (For Now)
 
-- New core skills when they can live on ClawHub
+- New core skills that can be developed and distributed as external plugins
 - Full-doc translation sets for all docs (deferred; we plan AI-generated translations later)
 - Commercial service integrations that do not clearly fit the model-provider category
 - Wrapper channels around already supported channels without a clear capability or security gap
