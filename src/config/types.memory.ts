@@ -8,6 +8,29 @@ export type MemoryConfig = {
   backend?: MemoryBackend;
   citations?: MemoryCitationsMode;
   qmd?: MemoryQmdConfig;
+  // -------------------------------------------------------------------------
+  // Donna 3-layer evolving memory system (identity + patterns + episodic)
+  // -------------------------------------------------------------------------
+  /** Enable the Donna native memory system. Default: false. */
+  enabled?: boolean;
+  /** Identity layer: persistent user identity and preferences. */
+  identity?: { enabled?: boolean };
+  /** Pattern layer: behavioral pattern tracking and weekly analysis. */
+  patterns?: {
+    enabled?: boolean;
+    /** Days to retain raw events. Default: 28. */
+    retentionDays?: number;
+    /** Run pattern analysis every Sunday. Default: true. */
+    analyzeOnSunday?: boolean;
+  };
+  /** Episodic layer: daily episode logs with search and summaries. */
+  episodic?: {
+    enabled?: boolean;
+    /** Days to retain raw episode entries. Default: 30. */
+    retentionDays?: number;
+    /** Days to retain episode summaries. Default: 365. */
+    summaryRetentionDays?: number;
+  };
 };
 
 export type MemoryQmdConfig = {
