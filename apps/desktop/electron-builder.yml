@@ -1,0 +1,41 @@
+appId: com.nova.donna
+productName: Donna
+
+directories:
+  output: dist/packages
+
+files:
+  - dist/**/*
+  - src/**/*
+  - package.json
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: assets/icon.icns
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  entitlements: scripts/entitlements.mac.plist
+  entitlementsInherit: scripts/entitlements.mac.plist
+  afterSign: scripts/notarize.js
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: assets/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+publish:
+  provider: github
+  owner: ojosemeirelles
+  repo: donna
