@@ -2,11 +2,11 @@ appId: com.nova.donna
 productName: Donna
 
 directories:
-  output: dist/packages
+  output: release
 
 files:
   - dist/**/*
-  - src/**/*
+  - "!dist/packages/**"
   - package.json
 
 mac:
