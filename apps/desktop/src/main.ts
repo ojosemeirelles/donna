@@ -43,6 +43,7 @@ let mainWindow: BrowserWindow | null = null;
 let wizardWindow: BrowserWindow | null = null;
 let trayManager: TrayManager | null = null;
 let wizardState: WizardState = createInitialWizardState();
+let isQuiting = false;
 
 // ---------------------------------------------------------------------------
 // Window factories
@@ -68,7 +69,7 @@ function createMainWindow(): BrowserWindow {
 
   // Keep app running in tray when window is closed
   win.on("close", (e) => {
-    if (!app.isQuiting) {
+    if (!isQuiting) {
       e.preventDefault();
       win.hide();
     }
@@ -186,7 +187,7 @@ app.on("activate", () => {
 });
 
 app.on("before-quit", () => {
-  (app as unknown as { isQuiting: boolean }).isQuiting = true;
+  isQuiting = true;
   trayManager?.destroy();
   gateway.stop().catch(() => {});
 });
