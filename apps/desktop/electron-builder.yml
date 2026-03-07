@@ -20,7 +20,6 @@ mac:
   hardenedRuntime: true
   entitlements: scripts/entitlements.mac.plist
   entitlementsInherit: scripts/entitlements.mac.plist
-  afterSign: scripts/notarize.js
 
 win:
   target:
