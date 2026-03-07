@@ -116,6 +116,40 @@ export type DonnaConfig = {
   gateway?: GatewayConfig;
   memory?: MemoryConfig;
   spending?: SpendingConfig;
+  tokenIntelligence?: {
+    modelRouter?: {
+      /** Enable automatic complexity-based model selection. Default: true. */
+      enabled?: boolean;
+      thresholds?: {
+        /** Estimated tokens below which haiku is used. Default: 500. */
+        haiku?: number;
+        /** Estimated tokens below which sonnet is used. Default: 2000. */
+        sonnet?: number;
+      };
+    };
+    autoCompact?: {
+      /** Enable automatic session compaction. Default: true. */
+      enabled?: boolean;
+      /** Fraction of context window at which compaction triggers. Default: 0.70. */
+      threshold?: number;
+      /** Number of messages to keep verbatim at the end. Default: 10. */
+      preserveLastN?: number;
+    };
+    promptCache?: {
+      /** Enable prompt cache_control markers on static blocks. Default: true. */
+      enabled?: boolean;
+      /** Interval between heartbeat keep-alive refreshes in ms. Default: 240000 (4 min). */
+      heartbeatIntervalMs?: number;
+      /** Path to persist cache stats JSON. Default: /tmp/donna-cache-stats.json. */
+      statsPath?: string;
+    };
+    contextBudget?: {
+      /** Enable context budget enforcement. Default: true. */
+      enabled?: boolean;
+      /** Maximum tokens for a single tool output before truncation. Default: 2000. */
+      toolOutputLimitTokens?: number;
+    };
+  };
 };
 
 export type ConfigValidationIssue = {
