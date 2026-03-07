@@ -135,7 +135,10 @@ async function readLogSlice(params: {
     return {
       cursor,
       size,
-      lines,
+      // Prefix each line with [LOG] to mark content as untrusted log data.
+      // Prevents log-poisoning: injected content cannot be mistaken for
+      // structured protocol messages when an agent reads back logs.
+      lines: lines.map((line) => `[LOG] ${line}`),
       truncated,
       reset,
     };

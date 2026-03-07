@@ -808,7 +808,7 @@ describe("logs.tail", () => {
       true,
       expect.objectContaining({
         file: newer,
-        lines: ['{"msg":"new"}'],
+        lines: ['[LOG] {"msg":"new"}'],
       }),
       undefined,
     );
