@@ -11,6 +11,32 @@ files:
   - assets/**
   - package.json
 
+extraResources:
+  - from: "../../donna.mjs"
+    to: "donna-core/donna.mjs"
+  - from: "../../dist/"
+    to: "donna-core/dist/"
+    filter:
+      - "**/*"
+  - from: "../../package.json"
+    to: "donna-core/package.json"
+  - from: "../../node_modules/"
+    to: "donna-core/node_modules/"
+    filter:
+      - "**/*"
+      - "!.cache/**"
+      - "!**/test/**"
+      - "!**/tests/**"
+
+# CONVERGENCE NOTE (2026-03-08):
+# The macOS target below is DEPRECATED in favor of the native SwiftUI app
+# at apps/macos/. The SwiftUI app provides 25+ features not available here
+# (Voice Wake, Talk Mode, Canvas, Channels Settings, launchd integration, etc.).
+#
+# This Electron app will be kept for Windows only.
+# See: docs/architecture/desktop-convergence-plan.md
+#
+# Phase 2 of the convergence plan will remove this mac: block entirely.
 mac:
   target:
     - target: dmg

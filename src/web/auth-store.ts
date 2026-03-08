@@ -11,8 +11,10 @@ import type { WebChannel } from "../utils.js";
 import { jidToE164, resolveUserPath } from "../utils.js";
 
 // ---------------------------------------------------------------------------
-// Keychain integration (OS keychain via keytar, gracefully degraded)
+// Keychain integration (OS credential store, gracefully degraded)
 // ---------------------------------------------------------------------------
+
+import { loadCredentialStore } from "../secrets/credential-store-factory.js";
 
 const KEYCHAIN_SERVICE = "donna-whatsapp-creds";
 
@@ -21,52 +23,30 @@ function keychainAccount(authDir: string): string {
   return `wa-creds:${path.resolve(authDir)}`;
 }
 
-// Lazy-load keytar so importing this module never fails in envs without it
-// (e.g. CI, unit tests). Returns null when keytar is unavailable.
-async function loadKeytar(): Promise<{
-  getPassword: (s: string, a: string) => Promise<string | null>;
-  setPassword: (s: string, a: string, p: string) => Promise<void>;
-  deletePassword: (s: string, a: string) => Promise<boolean>;
-} | null> {
-  try {
-    const mod = await import("keytar");
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return (mod.default ?? mod) as never;
-  } catch {
-    return null; // keytar not built or unavailable — fall back to file store
-  }
-}
-
 /** Path to a tiny sentinel file that signals creds live in the OS keychain. */
 export function resolveCredsKeychainMarkerPath(authDir: string): string {
   return path.join(authDir, "creds.keychain");
 }
 
-/** Read WhatsApp credentials JSON from the OS keychain. Returns null when
- *  keytar is unavailable or no entry exists for this authDir. */
+/** Read WhatsApp credentials JSON from the OS credential store. Returns null
+ *  when no entry exists for this authDir. */
 export async function readCredsFromKeychain(authDir: string): Promise<string | null> {
-  const keytar = await loadKeytar();
-  if (!keytar) {
-    return null;
-  }
   try {
-    return await keytar.getPassword(KEYCHAIN_SERVICE, keychainAccount(authDir));
+    const store = await loadCredentialStore();
+    return await store.getPassword(KEYCHAIN_SERVICE, keychainAccount(authDir));
   } catch {
     return null;
   }
 }
 
-/** Write WhatsApp credentials JSON to the OS keychain.
- *  Also writes a tiny sentinel file so sync callers can detect keychain
- *  storage without having to call async keytar.
- *  Returns false when keytar is unavailable (plaintext file kept as-is). */
+/** Write WhatsApp credentials JSON to the OS credential store.
+ *  Also writes a tiny sentinel file so sync callers can detect credential
+ *  store storage without async I/O.
+ *  Returns false when the credential store is unavailable. */
 export async function writeCredsToKeychain(authDir: string, json: string): Promise<boolean> {
-  const keytar = await loadKeytar();
-  if (!keytar) {
-    return false;
-  }
   try {
-    await keytar.setPassword(KEYCHAIN_SERVICE, keychainAccount(authDir), json);
+    const store = await loadCredentialStore();
+    await store.setPassword(KEYCHAIN_SERVICE, keychainAccount(authDir), json);
     // Write sentinel so hasWebCredsSync() can detect this without async I/O.
     const markerPath = resolveCredsKeychainMarkerPath(authDir);
     fsSync.mkdirSync(path.dirname(markerPath), { recursive: true });
@@ -77,16 +57,14 @@ export async function writeCredsToKeychain(authDir: string, json: string): Promi
   }
 }
 
-/** Remove WhatsApp credentials from the OS keychain and delete the sentinel
- *  file. Safe to call even when keytar is unavailable or no entry exists. */
+/** Remove WhatsApp credentials from the OS credential store and delete the
+ *  sentinel file. Safe to call even when no entry exists. */
 export async function deleteCredsFromKeychain(authDir: string): Promise<void> {
-  const keytar = await loadKeytar();
-  if (keytar) {
-    try {
-      await keytar.deletePassword(KEYCHAIN_SERVICE, keychainAccount(authDir));
-    } catch {
-      // best-effort
-    }
+  try {
+    const store = await loadCredentialStore();
+    await store.deletePassword(KEYCHAIN_SERVICE, keychainAccount(authDir));
+  } catch {
+    // best-effort
   }
   try {
     fsSync.unlinkSync(resolveCredsKeychainMarkerPath(authDir));
@@ -126,7 +104,7 @@ export async function secureDeleteFile(filePath: string): Promise<void> {
  *
  *  Called automatically on each gateway startup so that operators who
  *  previously ran without keychain protection are transparently upgraded.
- *  No-ops when keytar is unavailable or no plaintext file is present. */
+ *  No-ops when no plaintext file is present. */
 export async function migrateToKeychain(
   authDir: string = resolveDefaultWebAuthDir(),
 ): Promise<void> {
@@ -144,7 +122,7 @@ export async function migrateToKeychain(
   const stored = await writeCredsToKeychain(resolvedDir, raw);
   if (!stored) {
     return;
-  } // keytar unavailable; leave plaintext in place
+  } // credential store write failed; leave plaintext in place
   await secureDeleteFile(credsPath);
   // Also erase the plaintext backup if it exists
   const backupPath = resolveWebCredsBackupPath(resolvedDir);

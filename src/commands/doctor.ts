@@ -36,7 +36,7 @@ import {
   maybeScanExtraGatewayServices,
 } from "./doctor-gateway-services.js";
 import { noteSourceInstallIssues } from "./doctor-install.js";
-import { noteMemorySearchHealth } from "./doctor-memory-search.js";
+import { noteMemorySchemaVersion, noteMemorySearchHealth } from "./doctor-memory-search.js";
 import {
   noteMacLaunchAgentOverrides,
   noteMacLaunchctlGatewayEnvOverrides,
@@ -291,6 +291,7 @@ export async function doctorCommand(
       })
     : { checked: false, ready: false };
   await noteMemorySearchHealth(cfg, { gatewayMemoryProbe });
+  noteMemorySchemaVersion(cfg);
   await maybeRepairGatewayDaemon({
     cfg,
     runtime,

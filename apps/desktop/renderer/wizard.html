@@ -126,22 +126,25 @@
     .channels {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 8px;
       width: 100%;
-      max-width: 380px;
+      max-width: 420px;
+    }
+    .channels.providers {
+      grid-template-columns: 1fr 1fr 1fr;
     }
 
     .channel-card {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
+      gap: 8px;
+      padding: 10px 12px;
       background: var(--input-bg);
       border: 2px solid var(--border);
       border-radius: var(--radius);
       cursor: pointer;
       transition: border-color 0.2s, background 0.2s;
-      font-size: 14px;
+      font-size: 13px;
     }
     .channel-card:hover { border-color: #4a4a8a; }
     .channel-card.selected {
@@ -212,6 +215,42 @@
     }
     .dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
     .dot.done   { background: #4a4a8a; }
+
+    /* ── Error states ──────────────────────────────── */
+    input.error, select.error {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 2px rgba(233, 69, 96, 0.25);
+    }
+
+    .error-msg.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .error-msg {
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+
+    /* ── Bridge error banner ───────────────────────── */
+    .bridge-error {
+      background: rgba(233, 69, 96, 0.15);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--accent);
+      text-align: center;
+      max-width: 380px;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -222,13 +261,27 @@
 <script>
 "use strict";
 
+// ── Bridge safety ─────────────────────────────────────────────────────────────
+
+const bridgeAvailable = !!(window.donna && window.donna.wizard);
+
+const bridge = bridgeAvailable
+  ? window.donna.wizard
+  : {
+      getState:   async () => ({ currentStep:"welcome", stepIndex:0, totalSteps:6, data:{ language:"pt", port:18789, theme:"system", channel:"none" }, errors:{}, completed:false }),
+      advance:    async () => null,
+      back:       async () => null,
+      updateData: async () => null,
+      complete:   async () => null,
+    };
+
 // ── State ────────────────────────────────────────────────────────────────────
 
 let state = null;
 
 async function loadState() {
-  try { state = await window.donna.wizard.getState(); }
-  catch { state = { currentStep:"welcome", stepIndex:0, totalSteps:5, data:{}, errors:{}, completed:false }; }
+  try { state = await bridge.getState(); }
+  catch { state = { currentStep:"welcome", stepIndex:0, totalSteps:6, data:{ language:"pt", port:18789, theme:"system", channel:"none" }, errors:{}, completed:false }; }
 }
 
 // ── Render dispatcher ─────────────────────────────────────────────────────────
@@ -238,7 +291,7 @@ function render() {
   document.getElementById("progress-fill").style.width = pct + "%";
   document.getElementById("app").innerHTML = "";
 
-  const stepMap = { welcome, "api-key": apiKey, channel, preferences, done };
+  const stepMap = { welcome, "provider": provider, channel, telegram, preferences, done };
   const fn = stepMap[state.currentStep];
   if (fn) fn();
 }
@@ -264,7 +317,7 @@ function app(...children) {
 }
 
 function dots() {
-  const steps = ["welcome","api-key","channel","preferences","done"];
+  const steps = ["welcome","provider","channel","telegram","preferences","done"];
   return el("div", { class: "step-dots" },
     steps.map((s, i) => el("div", {
       class: "dot" + (i === state.stepIndex ? " active" : i < state.stepIndex ? " done" : "")
@@ -273,18 +326,98 @@ function dots() {
 }
 
 async function advance() {
-  state = await window.donna.wizard.advance();
-  if (state.completed) { await window.donna.wizard.complete(); return; }
-  render();
+  try {
+    const result = await bridge.advance();
+    if (result) state = result;
+
+    // Show validation errors with shake
+    if (state.errors && Object.keys(state.errors).length > 0) {
+      for (const [field, msg] of Object.entries(state.errors)) {
+        showFieldError(field, msg);
+      }
+      return;
+    }
+
+    render();
+  } catch {
+    // Bridge call failed — stay on current step
+  }
 }
 
 async function back() {
-  state = await window.donna.wizard.back();
-  render();
+  try {
+    const result = await bridge.back();
+    if (result) state = result;
+    render();
+  } catch {
+    // Bridge call failed — stay on current step
+  }
 }
 
 async function updateData(patch) {
-  state = await window.donna.wizard.updateData(patch);
+  try {
+    const result = await bridge.updateData(patch);
+    if (result) state = result;
+  } catch {
+    // Silently handle bridge errors for data updates
+    state.data = { ...state.data, ...patch };
+  }
+}
+
+// ── Validation helpers ────────────────────────────────────────────────────────
+
+function showFieldError(field, msg) {
+  const inp = document.querySelector(`[data-field="${field}"]`);
+  if (inp) {
+    inp.classList.add("error", "shake");
+    inp.addEventListener("animationend", () => inp.classList.remove("shake"), { once: true });
+  }
+  const errEl = document.querySelector(`[data-error="${field}"]`);
+  if (errEl) {
+    errEl.textContent = msg;
+    errEl.classList.add("visible");
+  }
+}
+
+function clearFieldError(field) {
+  const inp = document.querySelector(`[data-field="${field}"]`);
+  if (inp) inp.classList.remove("error");
+  const errEl = document.querySelector(`[data-error="${field}"]`);
+  if (errEl) {
+    errEl.textContent = "";
+    errEl.classList.remove("visible");
+  }
+}
+
+const PROVIDERS = [
+  { id: "anthropic", name: "Anthropic", icon: "🟠", prefix: "sk-ant-", placeholder: "sk-ant-api03-...", required: true, minLen: 20 },
+  { id: "openai", name: "OpenAI", icon: "🟢", prefix: "sk-", placeholder: "sk-proj-...", required: true, minLen: 20 },
+  { id: "google", name: "Google Gemini", icon: "🔵", prefix: "", placeholder: "AIzaSy...", required: true, minLen: 10 },
+  { id: "openrouter", name: "OpenRouter", icon: "🟣", prefix: "sk-or-", placeholder: "sk-or-v1-...", required: true, minLen: 20 },
+  { id: "ollama", name: "Ollama (local)", icon: "🦙", prefix: "", placeholder: "Sem key necessária", required: false, minLen: 0 },
+  { id: "mistral", name: "Mistral", icon: "🌀", prefix: "", placeholder: "sua-api-key...", required: true, minLen: 10 },
+  { id: "xai", name: "xAI (Grok)", icon: "⚡", prefix: "xai-", placeholder: "xai-...", required: true, minLen: 10 },
+];
+
+function getProvider(id) {
+  return PROVIDERS.find(p => p.id === id) || PROVIDERS[0];
+}
+
+function validateApiKey(value, providerId) {
+  const p = getProvider(providerId || state.data.provider);
+  if (!p.required) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (p.prefix && !trimmed.startsWith(p.prefix)) return `Deve começar com ${p.prefix}`;
+  if (trimmed.length < p.minLen) return "A key é muito curta";
+  return "";
+}
+
+function validatePort(value) {
+  const num = parseInt(value, 10);
+  if (isNaN(num)) return "Porta inválida";
+  if (num < 1024 || num > 65535) return "Porta deve ser entre 1024 e 65535";
+  return "";
 }
 
 // ── Steps ─────────────────────────────────────────────────────────────────────
@@ -303,30 +436,73 @@ function welcome() {
   );
 }
 
-function apiKey() {
-  const inp = el("input", {
-    type: "password",
-    placeholder: "sk-ant-api03-...",
-    value: state.data.apiKey || ""
-  });
-  inp.addEventListener("input", () => updateData({ apiKey: inp.value }));
+function provider() {
+  const selected = { value: state.data.provider || "anthropic" };
+  const currentProvider = () => getProvider(selected.value);
 
-  app(
-    el("div", { class: "step-title" }, "Chave da API Anthropic"),
-    el("div", { class: "step-subtitle" },
-      "Encontre sua chave em console.anthropic.com → API Keys"
-    ),
-    dots(),
-    el("div", { class: "field" },
+  const keyField = el("div", { class: "field", id: "key-field" });
+  const keyError = el("div", { class: "error-msg", "data-error": "apiKey" }, state.errors.apiKey || "");
+
+  function renderKeyInput() {
+    const p = currentProvider();
+    keyField.innerHTML = "";
+    if (!p.required) {
+      keyField.append(
+        el("div", { class: "step-subtitle", style: "color: #4caf50;" },
+          "Ollama roda localmente — sem API key necessária"
+        )
+      );
+      return;
+    }
+    const inp = el("input", {
+      type: "password",
+      placeholder: p.placeholder,
+      value: state.data.apiKey || "",
+      "data-field": "apiKey"
+    });
+    inp.addEventListener("input", () => {
+      updateData({ apiKey: inp.value });
+      const err = validateApiKey(inp.value, selected.value);
+      if (err) showFieldError("apiKey", err);
+      else clearFieldError("apiKey");
+    });
+    keyField.append(
       el("label", {}, "API Key"),
       inp,
-      el("div", { class: "error-msg" }, state.errors.apiKey || "")
-    ),
+      keyError
+    );
+  }
+
+  function makeProviderCard(p) {
+    const card = el("label", {
+      class: "channel-card" + (selected.value === p.id ? " selected" : "")
+    },
+      el("span", { class: "channel-icon" }, p.icon),
+      p.name
+    );
+    card.addEventListener("click", async () => {
+      selected.value = p.id;
+      await updateData({ provider: p.id, apiKey: "" });
+      document.querySelectorAll(".channel-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      renderKeyInput();
+    });
+    return card;
+  }
+
+  app(
+    el("div", { class: "step-title" }, "Escolha o Modelo de IA"),
+    el("div", { class: "step-subtitle" }, "Qual provider você quer usar com a Donna?"),
+    dots(),
+    el("div", { class: "channels providers" }, PROVIDERS.map(makeProviderCard)),
+    keyField,
     el("div", { class: "btn-row" },
       el("button", { class: "btn-secondary", onClick: back }, "← Voltar"),
       el("button", { class: "btn-primary", onClick: advance }, "Continuar →")
     )
   );
+
+  renderKeyInput();
 }
 
 function channel() {
@@ -366,13 +542,94 @@ function channel() {
   );
 }
 
+function telegram() {
+  const tokenInp = el("input", {
+    type: "password",
+    placeholder: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz...",
+    value: state.data.telegramToken || "",
+    "data-field": "telegramToken"
+  });
+
+  const botNameEl = el("div", { class: "step-subtitle", style: "color: #4caf50; min-height: 20px;" },
+    state.data.telegramBotName ? `Bot: @${state.data.telegramBotName}` : ""
+  );
+
+  tokenInp.addEventListener("input", () => {
+    updateData({ telegramToken: tokenInp.value });
+    const val = tokenInp.value.trim();
+    if (!val) {
+      clearFieldError("telegramToken");
+      botNameEl.textContent = "";
+      return;
+    }
+    if (!/^\d{8,}:[A-Za-z0-9_-]{30,}$/.test(val)) {
+      showFieldError("telegramToken", "Token inválido. Formato: 123456789:ABCdef...");
+      botNameEl.textContent = "";
+    } else {
+      clearFieldError("telegramToken");
+      // Validate via main process IPC (avoids leaking token from renderer)
+      if (bridgeAvailable && bridge.validateTelegramToken) {
+        bridge.validateTelegramToken(val)
+          .then(result => {
+            if (result && result.ok && result.username) {
+              botNameEl.textContent = `Bot: @${result.username}`;
+              botNameEl.style.color = "#4caf50";
+              updateData({ telegramBotName: result.username });
+            } else {
+              botNameEl.textContent = result?.error || "Token não reconhecido pelo Telegram";
+              botNameEl.style.color = "var(--accent)";
+            }
+          })
+          .catch(() => {
+            botNameEl.textContent = "Não foi possível verificar";
+            botNameEl.style.color = "var(--muted)";
+          });
+      } else {
+        // Fallback: skip validation in offline/mock mode
+        botNameEl.textContent = "Token será validado ao salvar";
+        botNameEl.style.color = "var(--muted)";
+      }
+    }
+  });
+
+  app(
+    el("div", { class: "step-title" }, "Conectar Telegram"),
+    el("div", { class: "step-subtitle" },
+      "Cole o token do seu bot. Crie um em @BotFather no Telegram."
+    ),
+    dots(),
+    el("div", { class: "field" },
+      el("label", {}, "Bot Token"),
+      tokenInp,
+      el("div", { class: "error-msg", "data-error": "telegramToken" }, state.errors.telegramToken || "")
+    ),
+    botNameEl,
+    el("div", { class: "step-subtitle", style: "font-size: 12px; margin-top: 4px;" },
+      "Opcional — você pode configurar depois."
+    ),
+    el("div", { class: "btn-row" },
+      el("button", { class: "btn-secondary", onClick: back }, "← Voltar"),
+      el("button", { class: "btn-primary", onClick: advance },
+        state.data.telegramToken ? "Continuar →" : "Pular →"
+      )
+    )
+  );
+}
+
 function preferences() {
   const portInp = el("input", {
     type: "number",
     value: String(state.data.port || 18789),
-    min: "1024", max: "65535"
+    min: "1024", max: "65535",
+    "data-field": "port"
   });
-  portInp.addEventListener("change", () => updateData({ port: parseInt(portInp.value, 10) }));
+  portInp.addEventListener("input", () => {
+    const val = parseInt(portInp.value, 10);
+    updateData({ port: val });
+    const err = validatePort(portInp.value);
+    if (err) showFieldError("port", err);
+    else clearFieldError("port");
+  });
 
   const langSel = el("select", {},
     el("option", { value: "pt" }, "Português"),
@@ -400,7 +657,7 @@ function preferences() {
     el("div", { class: "field" },
       el("label", {}, "Porta do Gateway"),
       portInp,
-      el("div", { class: "error-msg" }, state.errors.port || "")
+      el("div", { class: "error-msg", "data-error": "port" }, state.errors.port || "")
     ),
     el("div", { class: "btn-row" },
       el("button", { class: "btn-secondary", onClick: back }, "← Voltar"),
@@ -410,6 +667,23 @@ function preferences() {
 }
 
 function done() {
+  async function handleComplete() {
+    try {
+      await bridge.complete();
+    } catch {
+      // If complete fails, show inline feedback
+      const btn = document.querySelector(".btn-primary");
+      if (btn) {
+        btn.textContent = "Erro — tente novamente";
+        btn.style.opacity = "0.7";
+        setTimeout(() => {
+          btn.textContent = "Abrir Donna →";
+          btn.style.opacity = "1";
+        }, 2000);
+      }
+    }
+  }
+
   app(
     el("div", { class: "done-icon" }, "🎉"),
     el("div", { class: "step-title" }, "Donna está pronta!"),
@@ -418,7 +692,7 @@ function done() {
     ),
     dots(),
     el("div", { class: "btn-row" },
-      el("button", { class: "btn-primary", onClick: () => window.donna.wizard.complete() }, "Abrir Donna →")
+      el("button", { class: "btn-primary", onClick: handleComplete }, "Abrir Donna →")
     )
   );
 }
@@ -428,6 +702,13 @@ function done() {
 (async () => {
   await loadState();
   render();
+  if (!bridgeAvailable) {
+    document.getElementById("app").prepend(
+      el("div", { class: "bridge-error" },
+        "Modo offline — ponte IPC não detectada. Algumas funções podem não funcionar."
+      )
+    );
+  }
 })();
 </script>
 

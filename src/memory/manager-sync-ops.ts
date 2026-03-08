@@ -35,6 +35,8 @@ import {
 } from "./internal.js";
 import { type MemoryFileEntry } from "./internal.js";
 import { ensureMemoryIndexSchema } from "./memory-schema.js";
+import { MigrationRunner } from "./migrations/runner.js";
+import { migrations } from "./migrations/index.js";
 import type { SessionFileEntry } from "./session-files.js";
 import {
   buildSessionEntry,
@@ -344,6 +346,25 @@ export abstract class MemoryManagerSyncOps {
   }
 
   protected ensureSchema() {
+    // Run versioned migrations before the dynamic schema setup.
+    const runner = new MigrationRunner(this.db, migrations);
+    const pending = runner.getPendingMigrations();
+
+    // Auto-backup the database file before applying migrations.
+    if (pending.length > 0) {
+      const dbPath = resolveUserPath(this.settings.store.path);
+      const backupPath = `${dbPath}.pre-migration-v${String(runner.getCurrentVersion()).padStart(3, "0")}.bak`;
+      try {
+        fsSync.copyFileSync(dbPath, backupPath);
+        log.info(`pre-migration backup saved to ${backupPath}`);
+      } catch {
+        // Non-fatal: backup is best-effort (DB may not exist yet on first run).
+        log.warn("pre-migration backup skipped (database file not found)");
+      }
+    }
+
+    runner.runMigrations();
+
     const result = ensureMemoryIndexSchema({
       db: this.db,
       embeddingCacheTable: EMBEDDING_CACHE_TABLE,

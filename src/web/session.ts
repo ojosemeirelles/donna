@@ -85,7 +85,7 @@ async function safeSaveCreds(
       if (stored) {
         await secureDeleteFile(credsPath);
       } else {
-        // keytar unavailable — keep file with restricted permissions
+        // credential store write failed — keep file with restricted permissions
         try {
           fsSync.chmodSync(credsPath, 0o600);
         } catch {

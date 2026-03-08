@@ -50,6 +50,9 @@ import {
 } from "../pi-embedded-helpers.js";
 import { derivePromptTokens, normalizeUsage, type UsageLike } from "../usage.js";
 import { redactRunIdentifier, resolveRunWorkspaceDir } from "../workspace-run.js";
+import { evaluateCompactionNeed } from "../../infra/auto-compact.js";
+import { classifyPromptComplexity } from "../../infra/model-router.js";
+import { isCronSessionKey, isSubagentSessionKey } from "../../routing/session-key.js";
 import { compactEmbeddedPiSessionDirect } from "./compact.js";
 import { resolveGlobalLane, resolveSessionLane } from "./lanes.js";
 import { log } from "./logger.js";
@@ -339,6 +342,33 @@ export async function runEmbeddedPiAgent(
       if (modelResolveOverride?.modelOverride) {
         modelId = modelResolveOverride.modelOverride;
         log.info(`[hooks] model overridden to ${modelId}`);
+      }
+
+      // Model Router: automatic complexity-based model tier selection.
+      // Only applies when no hook already overrode the model, provider is anthropic,
+      // and the feature is not explicitly disabled in config.
+      if (
+        params.config?.tokenIntelligence?.modelRouter?.enabled !== false &&
+        !modelResolveOverride?.modelOverride &&
+        provider === "anthropic"
+      ) {
+        const tier = classifyPromptComplexity(
+          params.prompt,
+          {
+            isCronJob: isCronSessionKey(params.sessionKey),
+            isSubagent: isSubagentSessionKey(params.sessionKey),
+          },
+          params.config?.tokenIntelligence?.modelRouter,
+        );
+        if (tier === "haiku") {
+          modelId = "claude-haiku-4-5-20251001";
+        } else if (tier === "sonnet") {
+          modelId = "claude-sonnet-4-6";
+        }
+        // "opus" → keep modelId as-is
+        log.info(
+          `[model-router] tier=${tier} model=${modelId} prompt=${params.prompt.slice(0, 50)}...`,
+        );
       }
 
       const { model, error, authStorage, modelRegistry } = resolveModel(
@@ -851,6 +881,23 @@ export async function runEmbeddedPiAgent(
           lastTurnTotal = lastAssistantUsage?.total ?? attemptUsage?.total;
           const attemptCompactionCount = Math.max(0, attempt.compactionCount ?? 0);
           autoCompactionCount += attemptCompactionCount;
+
+          // Token Intelligence: proactive compaction check
+          const autoCompactCfg = params.config?.tokenIntelligence?.autoCompact;
+          if (autoCompactCfg?.enabled !== false && lastTurnTotal) {
+            const candidate = evaluateCompactionNeed({
+              currentTokens: lastTurnTotal,
+              contextWindowTokens: model.contextWindow ?? DEFAULT_CONTEXT_TOKENS,
+              config: autoCompactCfg,
+            });
+            if (candidate.shouldCompact) {
+              log.info(
+                `[auto-compact] proactive compaction recommended: ${candidate.reason} ` +
+                  `(${(candidate.usageRatio * 100).toFixed(1)}% of context window)`,
+              );
+            }
+          }
+
           const activeErrorContext = resolveActiveErrorContext({
             lastAssistant,
             provider,

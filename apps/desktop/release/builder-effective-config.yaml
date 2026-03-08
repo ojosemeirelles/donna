@@ -1,0 +1,55 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.nova.donna
+productName: Donna
+files:
+  - filter:
+      - dist/**/*
+      - '!dist/packages/**'
+      - renderer/**
+      - assets/**
+      - package.json
+extraResources:
+  - from: ../../donna.mjs
+    to: donna-core/donna.mjs
+  - from: ../../dist/
+    to: donna-core/dist/
+    filter:
+      - '**/*'
+  - from: ../../package.json
+    to: donna-core/package.json
+  - from: ../../node_modules/
+    to: donna-core/node_modules/
+    filter:
+      - '**/*'
+      - '!.cache/**'
+      - '!**/test/**'
+      - '!**/tests/**'
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+  icon: assets/icon.icns
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  entitlements: scripts/entitlements.mac.plist
+  entitlementsInherit: scripts/entitlements.mac.plist
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: assets/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+publish:
+  provider: github
+  owner: ojosemeirelles
+  repo: donna
+electronVersion: 33.4.11

@@ -1,31 +1,69 @@
 /**
- * WizardState — pure TypeScript state machine for the 5-step setup wizard.
+ * WizardState — pure TypeScript state machine for the 6-step setup wizard.
  *
  * No Electron imports — fully testable without Electron runtime.
  *
  * Steps:
  *   1. welcome      — intro screen
- *   2. api-key      — enter Anthropic API key
+ *   2. provider     — choose LLM provider + enter API key
  *   3. channel      — choose messaging channel (Telegram/WhatsApp/etc.)
- *   4. preferences  — language, port, theme
- *   5. done         — success, open main window
+ *   4. telegram     — Telegram bot token (shown only if channel=telegram)
+ *   5. preferences  — language, port, theme
+ *   6. done         — success, open main window
  */
 
-export type WizardStep = "welcome" | "api-key" | "channel" | "preferences" | "done";
+export type WizardStep = "welcome" | "provider" | "channel" | "telegram" | "preferences" | "done";
 
 export const WIZARD_STEPS: WizardStep[] = [
   "welcome",
-  "api-key",
+  "provider",
   "channel",
+  "telegram",
   "preferences",
   "done",
 ];
 
 export type ChannelChoice = "telegram" | "whatsapp" | "discord" | "slack" | "none";
 
+export type LLMProvider =
+  | "anthropic"
+  | "openai"
+  | "google"
+  | "openrouter"
+  | "ollama"
+  | "mistral"
+  | "xai";
+
+export type ProviderInfo = {
+  id: LLMProvider;
+  name: string;
+  icon: string;
+  keyPrefix: string;
+  keyPlaceholder: string;
+  keyRequired: boolean;
+  keyMinLength: number;
+};
+
+export const LLM_PROVIDERS: ProviderInfo[] = [
+  { id: "anthropic", name: "Anthropic", icon: "🟠", keyPrefix: "sk-ant-", keyPlaceholder: "sk-ant-api03-...", keyRequired: true, keyMinLength: 20 },
+  { id: "openai", name: "OpenAI", icon: "🟢", keyPrefix: "sk-", keyPlaceholder: "sk-proj-...", keyRequired: true, keyMinLength: 20 },
+  { id: "google", name: "Google Gemini", icon: "🔵", keyPrefix: "", keyPlaceholder: "AIzaSy...", keyRequired: true, keyMinLength: 10 },
+  { id: "openrouter", name: "OpenRouter", icon: "🟣", keyPrefix: "sk-or-", keyPlaceholder: "sk-or-v1-...", keyRequired: true, keyMinLength: 20 },
+  { id: "ollama", name: "Ollama (local)", icon: "🦙", keyPrefix: "", keyPlaceholder: "Sem key necessária", keyRequired: false, keyMinLength: 0 },
+  { id: "mistral", name: "Mistral", icon: "🌀", keyPrefix: "", keyPlaceholder: "sua-api-key...", keyRequired: true, keyMinLength: 10 },
+  { id: "xai", name: "xAI (Grok)", icon: "⚡", keyPrefix: "xai-", keyPlaceholder: "xai-...", keyRequired: true, keyMinLength: 10 },
+];
+
+export function getProviderInfo(id: LLMProvider): ProviderInfo {
+  return LLM_PROVIDERS.find((p) => p.id === id) ?? LLM_PROVIDERS[0];
+}
+
 export type WizardData = {
+  provider: LLMProvider;
   apiKey: string;
   channel: ChannelChoice;
+  telegramToken: string;
+  telegramBotName: string;
   language: "pt" | "en";
   port: number;
   theme: "system" | "light" | "dark";
@@ -47,6 +85,7 @@ export function createInitialWizardState(): WizardState {
     stepIndex: 0,
     totalSteps: WIZARD_STEPS.length,
     data: {
+      provider: "anthropic",
       language: "pt",
       port: 18789,
       theme: "system",
@@ -86,11 +125,20 @@ export function canAdvance(state: WizardState): boolean {
     case "welcome": {
       return true;
     }
-    case "api-key": {
-      return isValidApiKey(state.data.apiKey ?? "");
+    case "provider": {
+      const provider = getProviderInfo(state.data.provider ?? "anthropic");
+      if (!provider.keyRequired) {return true;}
+      return isValidProviderKey(state.data.apiKey ?? "", state.data.provider ?? "anthropic");
     }
     case "channel": {
       return state.data.channel !== undefined;
+    }
+    case "telegram": {
+      // Skip validation if not using Telegram (token is optional)
+      if (state.data.channel !== "telegram") {return true;}
+      // If telegram selected, token is optional (can skip)
+      const token = state.data.telegramToken?.trim() ?? "";
+      return token === "" || isValidTelegramToken(token);
     }
     case "preferences": {
       return (
@@ -108,14 +156,30 @@ export function canAdvance(state: WizardState): boolean {
   }
 }
 
-/** Returns true if the API key looks valid (starts with "sk-ant-"). */
+/** Returns true if the API key looks valid for the given provider. */
+export function isValidProviderKey(key: string, provider: LLMProvider): boolean {
+  const info = getProviderInfo(provider);
+  if (!info.keyRequired) {return true;}
+  const trimmed = key.trim();
+  if (trimmed.length < info.keyMinLength) {return false;}
+  if (info.keyPrefix && !trimmed.startsWith(info.keyPrefix)) {return false;}
+  return true;
+}
+
+/** @deprecated Use isValidProviderKey instead. Kept for backward compat. */
 export function isValidApiKey(key: string): boolean {
-  return key.trim().startsWith("sk-ant-") && key.trim().length > 20;
+  return key.trim().length > 10;
 }
 
 /** Returns true if the port number is in the valid range (1024-65535). */
 export function isValidPort(port: number): boolean {
   return Number.isInteger(port) && port >= 1024 && port <= 65535;
+}
+
+/** Returns true if the Telegram bot token matches the expected format. */
+export function isValidTelegramToken(token: string): boolean {
+  // Format: {bot_id}:{alphanumeric_hash} — e.g., 123456789:ABCdefGHIjklMNOpqrsTUVwxyz
+  return /^\d{8,}:[A-Za-z0-9_-]{30,}$/.test(token.trim());
 }
 
 /**
@@ -129,15 +193,24 @@ export function validateStep(
   const errors: Record<string, string> = {};
 
   switch (step) {
-    case "api-key": {
-      if (!data.apiKey || !isValidApiKey(data.apiKey)) {
-        errors.apiKey = "API key must start with sk-ant- and be at least 20 characters";
+    case "provider": {
+      const provider = getProviderInfo(data.provider ?? "anthropic");
+      if (provider.keyRequired && (!data.apiKey || !isValidProviderKey(data.apiKey, data.provider ?? "anthropic"))) {
+        const hint = provider.keyPrefix ? `Deve começar com ${provider.keyPrefix}` : `Mínimo ${provider.keyMinLength} caracteres`;
+        errors.apiKey = `API key inválida. ${hint}`;
       }
       break;
     }
     case "channel": {
       if (!data.channel) {
         errors.channel = "Please select a channel";
+      }
+      break;
+    }
+    case "telegram": {
+      const token = data.telegramToken?.trim() ?? "";
+      if (token && !isValidTelegramToken(token)) {
+        errors.telegramToken = "Token inválido. Formato: 123456789:ABCdefGHI...";
       }
       break;
     }
@@ -165,19 +238,26 @@ export function advanceWizard(state: WizardState): WizardState {
     return { ...state, errors };
   }
 
-  const next = nextStep(state.currentStep);
+  let next = nextStep(state.currentStep);
   if (!next) {
     return { ...state, completed: true, errors: {} };
   }
 
+  // Skip telegram step if channel is not telegram
+  if (next === "telegram" && state.data.channel !== "telegram") {
+    next = nextStep(next);
+    if (!next) {
+      return { ...state, completed: true, errors: {} };
+    }
+  }
+
   const stepIndex = stepIndexOf(next);
-  const completed = next === "done";
 
   return {
     ...state,
     currentStep: next,
     stepIndex,
-    completed,
+    completed: false, // done screen must render before marking completed
     errors: {},
   };
 }
@@ -187,9 +267,17 @@ export function advanceWizard(state: WizardState): WizardState {
  * Returns a new state (immutable update).
  */
 export function goBackWizard(state: WizardState): WizardState {
-  const prev = prevStep(state.currentStep);
+  let prev = prevStep(state.currentStep);
   if (!prev) {
     return state; // already at first step
+  }
+
+  // Skip telegram step if channel is not telegram (mirror advance logic)
+  if (prev === "telegram" && state.data.channel !== "telegram") {
+    prev = prevStep(prev);
+    if (!prev) {
+      return state;
+    }
   }
 
   return {

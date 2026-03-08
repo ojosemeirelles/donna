@@ -18,6 +18,7 @@ import type { RuntimeEnv } from "../runtime.js";
 import { runSecurityAudit } from "../security/audit.js";
 import { renderTable } from "../terminal/table.js";
 import { theme } from "../terminal/theme.js";
+import { EvolutionTracker, getLevelDefinition } from "../evolution/index.js";
 import { formatHealthChannelLines, type HealthSummary } from "./health.js";
 import { resolveControlUiLinks } from "./onboard-helpers.js";
 import { statusAllCommand } from "./status-all.js";
@@ -415,6 +416,17 @@ export async function statusCommand(
     { Item: "Node service", Value: nodeDaemonValue },
     { Item: "Agents", Value: agentsValue },
     { Item: "Memory", Value: memoryValue },
+    { Item: "Evolution", Value: await (async () => {
+      try {
+        const tracker = new EvolutionTracker();
+        await tracker.load();
+        const state = tracker.getState();
+        const def = getLevelDefinition(state.level);
+        return `Lv${state.level} ${def.name} · ${state.stats.totalInteractions} interações · ${state.stats.daysActive} dias`;
+      } catch {
+        return muted("unavailable");
+      }
+    })() },
     { Item: "Probes", Value: probesValue },
     { Item: "Events", Value: eventsValue },
     { Item: "Heartbeat", Value: heartbeatValue },

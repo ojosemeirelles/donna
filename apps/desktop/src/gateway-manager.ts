@@ -1,10 +1,12 @@
 /**
  * GatewayManager — spawns, monitors, and auto-restarts the Donna gateway process.
  *
- * Pure Node.js module (no Electron imports) — fully testable without Electron.
+ * Uses a shell-based approach (`/bin/zsh -c "source ~/.nvm/nvm.sh && ..."`) so
+ * that nvm, pnpm, and all user-level tooling are available — Electron apps do
+ * NOT inherit the interactive-shell PATH.
  *
  * Responsibilities:
- *   1. Spawn `donna gateway run --port <port>` as a child process.
+ *   1. Spawn the gateway via a login shell.
  *   2. Monitor health via HTTP poll every healthCheckIntervalMs.
  *   3. Auto-restart on exit with exponential backoff (up to maxBackoffMs).
  *   4. Emit events for status changes: "starting" | "running" | "stopped" | "error".
@@ -12,6 +14,7 @@
 
 import { EventEmitter } from "node:events";
 import http from "node:http";
+import os from "node:os";
 import { type ChildProcess, spawn } from "node:child_process";
 
 export type GatewayStatus = "idle" | "starting" | "running" | "stopped" | "error";
@@ -19,9 +22,13 @@ export type GatewayStatus = "idle" | "starting" | "running" | "stopped" | "error
 export type GatewayManagerConfig = {
   /** Port the gateway listens on. Default: 18789. */
   port?: number;
-  /** Path to the donna executable. Default: "donna". */
-  execPath?: string;
-  /** Milliseconds between health checks. Default: 5000. */
+  /** Override the full shell command to start the gateway. */
+  shellCommand?: string;
+  /** Is the app running in a packaged Electron context? */
+  isPackaged?: boolean;
+  /** Path to Electron's resourcesPath (for packaged mode). */
+  resourcesPath?: string;
+  /** Milliseconds between health checks. Default: 2000. */
   healthCheckIntervalMs?: number;
   /** Initial delay (ms) before first restart. Default: 1000. */
   initialBackoffMs?: number;
@@ -43,8 +50,10 @@ export function resolveGatewayManagerConfig(
 ): Required<GatewayManagerConfig> {
   return {
     port: raw?.port ?? 18789,
-    execPath: raw?.execPath ?? "donna",
-    healthCheckIntervalMs: raw?.healthCheckIntervalMs ?? 5000,
+    shellCommand: raw?.shellCommand ?? "",
+    isPackaged: raw?.isPackaged ?? false,
+    resourcesPath: raw?.resourcesPath ?? "",
+    healthCheckIntervalMs: raw?.healthCheckIntervalMs ?? 2000,
     initialBackoffMs: raw?.initialBackoffMs ?? 1000,
     maxBackoffMs: raw?.maxBackoffMs ?? 30_000,
     maxRestartAttempts: raw?.maxRestartAttempts ?? 10,
@@ -52,8 +61,23 @@ export function resolveGatewayManagerConfig(
 }
 
 /**
+ * Builds the shell command to launch the gateway.
+ * Sources nvm so node/pnpm are on PATH, then runs donna gateway.
+ */
+export function buildShellCommand(port: number, shellCommandOverride?: string): string {
+  if (shellCommandOverride) {return shellCommandOverride;}
+
+  const home = os.homedir();
+  return [
+    `source ${home}/.nvm/nvm.sh`,
+    `nvm use 22`,
+    `cd ${home}/donna`,
+    `pnpm donna gateway --port ${port} --force`,
+  ].join(" && ");
+}
+
+/**
  * Calculates the next backoff delay using exponential backoff with jitter.
- * Caps at maxBackoffMs.
  */
 export function calculateBackoff(
   attempt: number,
@@ -61,21 +85,22 @@ export function calculateBackoff(
   maxMs: number,
 ): number {
   const base = initialMs * 2 ** (attempt - 1);
-  const jitter = Math.random() * 0.2 * base; // ±20% jitter
+  const jitter = Math.random() * 0.2 * base;
   return Math.min(base + jitter, maxMs);
 }
 
 /**
  * Checks if the Donna gateway is responding at the given port.
- * Returns true if the /health endpoint responds with 2xx, false otherwise.
+ * Accepts ANY HTTP response (including non-200) as "gateway is up".
  */
 export function checkGatewayHealth(port: number, timeoutMs = 3000): Promise<boolean> {
   return new Promise((resolve) => {
     const req = http.get(
       { hostname: "127.0.0.1", port, path: "/health", timeout: timeoutMs },
       (res) => {
-        resolve(res.statusCode !== undefined && res.statusCode >= 200 && res.statusCode < 300);
-        res.resume(); // drain the response
+        // ANY response means the gateway is up
+        resolve(res.statusCode !== undefined);
+        res.resume();
       },
     );
     req.on("error", () => resolve(false));
@@ -134,12 +159,35 @@ export class GatewayManager extends EventEmitter {
     return this.process !== null && this.process.exitCode === null;
   }
 
-  /** Starts the gateway. Resolves when the process is spawned. */
+  /** Starts the gateway. Checks if already running first, then spawns if needed. */
   async start(): Promise<void> {
     this.stopped = false;
     this.restartAttempts = 0;
+
+    // Check if gateway is already running on the port
+    const alreadyUp = await this._isPortResponding();
+    if (alreadyUp) {
+      this.emit("log", `[gateway] Already running on port ${this.config.port} — skipping spawn`);
+      this._setStatus("running");
+      this._startHealthCheck();
+      return;
+    }
+
     await this._spawn();
     this._startHealthCheck();
+  }
+
+  /** Returns true if the port is already responding to HTTP requests. */
+  private async _isPortResponding(): Promise<boolean> {
+    try {
+      await fetch(`http://127.0.0.1:${this.config.port}/health`, {
+        signal: AbortSignal.timeout(2000),
+      });
+      // Any HTTP response = port is up
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -170,11 +218,19 @@ export class GatewayManager extends EventEmitter {
 
   private async _spawn(): Promise<void> {
     this._setStatus("starting");
-    const args = buildGatewayArgs(this.config.port);
 
-    const child = spawn(this.config.execPath, args, {
+    const cmd = buildShellCommand(this.config.port, this.config.shellCommand || undefined);
+    const shell = "/bin/zsh";
+
+    this.emit("log", `[gateway] shell: ${shell} -c "${cmd}"`);
+
+    const child = spawn(shell, ["-c", cmd], {
       stdio: ["ignore", "pipe", "pipe"],
       detached: false,
+      env: {
+        ...process.env,
+        HOME: process.env.HOME || os.homedir(),
+      },
     });
 
     this.process = child;
@@ -214,7 +270,6 @@ export class GatewayManager extends EventEmitter {
         if (healthy && this.status === "starting") {
           this._setStatus("running");
         } else if (!healthy && this.status === "running") {
-          // Gateway stopped responding — wait for exit event to trigger restart
           this._setStatus("starting");
         }
       }

@@ -22,6 +22,7 @@ export type DonnaAPI = {
     back: () => Promise<WizardState>;
     updateData: (patch: Partial<WizardData>) => Promise<WizardState>;
     complete: () => Promise<void>;
+    validateTelegramToken: (token: string) => Promise<{ ok: boolean; username?: string; error?: string }>;
   };
   // App
   app: {
@@ -47,6 +48,7 @@ contextBridge.exposeInMainWorld("donna", {
     back: () => ipcRenderer.invoke("wizard:back"),
     updateData: (patch: Partial<WizardData>) => ipcRenderer.invoke("wizard:update", patch),
     complete: () => ipcRenderer.invoke("wizard:complete"),
+    validateTelegramToken: (token: string) => ipcRenderer.invoke("wizard:validate-telegram", token),
   },
   app: {
     getVersion: () => ipcRenderer.invoke("app:version"),

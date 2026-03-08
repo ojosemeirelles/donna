@@ -1,0 +1,11 @@
+version: 1.0.0
+files:
+  - url: Donna-1.0.0-arm64.dmg
+    sha512: S7Eo7p1g5zIePlaplMboBSSBFWjfcWcficDlsqXHQt6Ngvl7Bq+J9DCE5yHRzd0UsQrbQqxNFsObdurH7aXyxA==
+    size: 468205179
+  - url: Donna-1.0.0.dmg
+    sha512: srpKvyZJmEWKs7HppfSZNiQDSIg4frzmq0QYFsI5pBIKhpa+l/eaaCmyUQJoDXTBMvQaIdfN+n/nYeT9GYzrlA==
+    size: 472391686
+path: Donna-1.0.0-arm64.dmg
+sha512: S7Eo7p1g5zIePlaplMboBSSBFWjfcWcficDlsqXHQt6Ngvl7Bq+J9DCE5yHRzd0UsQrbQqxNFsObdurH7aXyxA==
+releaseDate: '2026-03-08T22:50:02.636Z'

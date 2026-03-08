@@ -51,11 +51,12 @@
 (async () => {
   const dot  = document.getElementById("status-dot");
   const text = document.getElementById("status-text");
+  const GATEWAY_URL = "http://127.0.0.1:18789";
 
   const labels = {
     idle:     "Gateway parado",
     starting: "Iniciando gateway…",
-    running:  "Gateway online",
+    running:  "Gateway online — carregando…",
     stopped:  "Gateway parado",
     error:    "Erro no gateway",
   };
@@ -63,6 +64,14 @@
   function update(status) {
     dot.className = "dot " + status;
     text.textContent = labels[status] || status;
+
+    // When gateway is running, navigate to the gateway web UI
+    if (status === "running") {
+      text.textContent = "Gateway online — carregando interface…";
+      setTimeout(() => {
+        window.location.href = GATEWAY_URL;
+      }, 500);
+    }
   }
 
   try {

@@ -856,6 +856,20 @@ export async function runEmbeddedAttempt(
     const systemPromptOverride = createSystemPromptOverride(appendPrompt);
     let systemPromptText = systemPromptOverride();
 
+    // Token Intelligence: Prompt Cache eligibility assessment
+    {
+      const promptCacheCfg = params.config?.tokenIntelligence?.promptCache;
+      const cacheEnabled = promptCacheCfg?.enabled !== false;
+      if (cacheEnabled && params.provider === "anthropic") {
+        const estTokens = Math.ceil(systemPromptText.length / 4);
+        if (estTokens >= 1024) {
+          log.info(
+            `[prompt-cache] system prompt eligible for caching (${estTokens} est. tokens)`,
+          );
+        }
+      }
+    }
+
     const sessionLock = await acquireSessionWriteLock({
       sessionFile: params.sessionFile,
       maxHoldMs: resolveSessionLockMaxHoldFromTimeout({

@@ -1,4 +1,6 @@
 import crypto from "node:crypto";
+import { EvolutionTracker, evaluateProgression, getLevelDefinition } from "../../evolution/index.js";
+import { getGlobalMemoryOrchestrator } from "../../memory/memory-orchestrator-singleton.js";
 import { resolveSessionAuthProfileOverride } from "../../agents/auth-profiles/session-override.js";
 import type { ExecToolDefaults } from "../../agents/bash-tools.js";
 import {
@@ -459,6 +461,39 @@ export async function runPreparedReply(
     isNewSession,
   });
   const authProfileIdSource = sessionEntry?.authProfileOverrideSource;
+
+  // Memory Orchestrator: inject 3-layer memory context (identity + patterns + episodic)
+  const memoryOrchestrator = getGlobalMemoryOrchestrator();
+  if (memoryOrchestrator?.isEnabled()) {
+    try {
+      const memoryContextBlock = await memoryOrchestrator.onSessionStart(sessionIdFinal);
+      if (memoryContextBlock) {
+        extraSystemPromptParts.push(memoryContextBlock);
+      }
+    } catch {
+      // Memory errors must never break a session (graceful degradation)
+    }
+  }
+
+  // Evolution Engine: track interaction + inject level context
+  try {
+    const evoTracker = EvolutionTracker.getGlobal();
+    await evoTracker.load();
+    evoTracker.recordInteraction();
+    const evoState = evoTracker.getState();
+    const progression = evaluateProgression(evoState.level, evoState.stats);
+    if (progression.shouldLevelUp) {
+      evoTracker.setLevel(progression.nextLevel, progression.currentLevel);
+    }
+    await evoTracker.save();
+    const levelDef = getLevelDefinition(evoTracker.getLevel());
+    extraSystemPromptParts.push(
+      `[Evolution] Nível ${levelDef.level}: ${levelDef.name} — ${levelDef.description}. Capacidades: ${levelDef.unlocks.join(", ")}.`,
+    );
+  } catch {
+    // Evolution errors must never break a session
+  }
+
   const followupRun = {
     prompt: queuedBody,
     messageId: sessionCtx.MessageSidFull ?? sessionCtx.MessageSid,

@@ -8,7 +8,9 @@ import { loadConfig } from "../config/config.js";
 import { resolveStateDir } from "../config/paths.js";
 import { resolveSessionTranscriptsDirForAgent } from "../config/sessions/paths.js";
 import { setVerbose } from "../globals.js";
+import { exportMemory, importMemory } from "../memory/backup.js";
 import { getMemorySearchManager, type MemorySearchManagerResult } from "../memory/index.js";
+import { resolveMemoryDir } from "../memory/memory-orchestrator.js";
 import { listMemoryFiles, normalizeExtraMemoryPaths } from "../memory/internal.js";
 import { defaultRuntime } from "../runtime.js";
 import { formatDocsLink } from "../terminal/links.js";
@@ -585,6 +587,8 @@ export function registerMemoryCli(program: Command) {
           ["donna memory index --force", "Force a full reindex."],
           ['donna memory search --query "deployment notes"', "Search indexed memory entries."],
           ["donna memory status --json", "Output machine-readable JSON."],
+          ["donna memory export --output backup.json", "Export memory to a backup file."],
+          ["donna memory import --input backup.json", "Import memory from a backup file."],
         ])}\n\n${theme.muted("Docs:")} ${formatDocsLink("/cli/memory", "docs.donna.ai/cli/memory")}\n`,
     );
 
@@ -809,4 +813,67 @@ export function registerMemoryCli(program: Command) {
         });
       },
     );
+
+  memory
+    .command("export")
+    .description("Export all memory data to a JSON backup file")
+    .option("--output <path>", "Output file path (default: donna-memory-backup.json)")
+    .option("--agent <id>", "Agent id (default: default agent)")
+    .action(async (opts: { output?: string; agent?: string }) => {
+      const { config: cfg } = await loadMemoryCommandConfig("memory export");
+      const agentId = resolveAgent(cfg, opts.agent);
+      const memoryDir = resolveMemoryDir();
+      const outputPath = path.resolve(opts.output ?? "donna-memory-backup.json");
+
+      try {
+        const backup = await exportMemory(memoryDir, outputPath, agentId);
+        const episodeCount = backup.episodes.length;
+        const summaryCount = backup.summaries.length;
+        const eventCount = backup.patterns.events.length;
+        const hasIdentity = Object.keys(backup.identity).length > 0;
+        defaultRuntime.log(
+          `Memory exported to ${shortenHomePath(outputPath)}\n` +
+            `  Identity: ${hasIdentity ? "yes" : "empty"}\n` +
+            `  Pattern events: ${eventCount}\n` +
+            `  Episodes: ${episodeCount}\n` +
+            `  Summaries: ${summaryCount}`,
+        );
+      } catch (err) {
+        defaultRuntime.error(`Memory export failed: ${formatErrorMessage(err)}`);
+        process.exitCode = 1;
+      }
+    });
+
+  memory
+    .command("import")
+    .description("Import memory data from a JSON backup file")
+    .option("--input <path>", "Input backup file path")
+    .option("--agent <id>", "Agent id (default: default agent)")
+    .action(async (opts: { input?: string; agent?: string }) => {
+      if (!opts.input) {
+        defaultRuntime.error("Missing --input <path>. Provide the backup file path.");
+        process.exitCode = 1;
+        return;
+      }
+      const inputPath = path.resolve(opts.input);
+      const memoryDir = resolveMemoryDir();
+
+      try {
+        const backup = await importMemory(inputPath, memoryDir);
+        const episodeCount = backup.episodes.length;
+        const summaryCount = backup.summaries.length;
+        const eventCount = backup.patterns.events.length;
+        const hasIdentity = Object.keys(backup.identity).length > 0;
+        defaultRuntime.log(
+          `Memory imported from ${shortenHomePath(inputPath)}\n` +
+            `  Identity: ${hasIdentity ? "yes" : "empty"}\n` +
+            `  Pattern events: ${eventCount}\n` +
+            `  Episodes: ${episodeCount}\n` +
+            `  Summaries: ${summaryCount}`,
+        );
+      } catch (err) {
+        defaultRuntime.error(`Memory import failed: ${formatErrorMessage(err)}`);
+        process.exitCode = 1;
+      }
+    });
 }

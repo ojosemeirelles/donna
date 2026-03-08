@@ -7,7 +7,7 @@ import type { DonnaConfig } from "../config/config.js";
 import { resolveMemoryBackendConfig } from "../memory/backend-config.js";
 import { DEFAULT_LOCAL_MODEL } from "../memory/embeddings.js";
 import { note } from "../terminal/note.js";
-import { resolveUserPath } from "../utils.js";
+import { resolveUserPath, shortenHomePath } from "../utils.js";
 
 /**
  * Check whether memory search has a usable embedding provider.
@@ -229,4 +229,49 @@ function buildGatewayProbeWarning(
   return detail
     ? `Gateway memory probe for default agent is not ready: ${detail}`
     : "Gateway memory probe for default agent is not ready.";
+}
+
+/**
+ * Report the memory database schema version via `donna doctor`.
+ * Opens the SQLite database read-only and queries schema_version.
+ * Non-fatal: silently skips if the DB does not exist or cannot be read.
+ */
+export function noteMemorySchemaVersion(cfg: DonnaConfig): void {
+  const resolved = resolveMemorySearchConfig(cfg, resolveDefaultAgentId(cfg));
+  if (!resolved) {
+    return;
+  }
+
+  const dbPath = resolveUserPath(resolved.store.path);
+  try {
+    if (!fsSync.existsSync(dbPath)) {
+      note("Memory database not found (will be created on first index).", "Memory schema");
+      return;
+    }
+
+    // Dynamic import of node:sqlite for read-only schema check.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { DatabaseSync } = require("node:sqlite") as typeof import("node:sqlite");
+    const db = new DatabaseSync(dbPath, { readOnly: true });
+    try {
+      const row = db
+        .prepare("SELECT MAX(version) AS v FROM schema_version")
+        .get() as unknown as { v: number | null } | undefined;
+      const version = row?.v ?? 0;
+      note(
+        `Schema version: ${version} (database: ${shortenHomePath(dbPath)})`,
+        "Memory schema",
+      );
+    } catch {
+      // schema_version table may not exist yet (pre-migration DB).
+      note(
+        `Schema version: 0 (no migrations applied yet)\nDatabase: ${shortenHomePath(dbPath)}`,
+        "Memory schema",
+      );
+    } finally {
+      db.close();
+    }
+  } catch {
+    // node:sqlite unavailable or other error — skip silently.
+  }
 }

@@ -1,8 +1,9 @@
 ---
-summary: "CLI reference for `donna memory` (status/index/search)"
+summary: "CLI reference for `donna memory` (status/index/search/export/import)"
 read_when:
   - You want to index or search semantic memory
   - You’re debugging memory availability or indexing
+  - You want to backup or restore memory data
 title: "memory"
 ---
 
@@ -29,6 +30,10 @@ donna memory search "release checklist"
 donna memory search --query "release checklist"
 donna memory status --agent main
 donna memory index --agent main --verbose
+donna memory export --output backup.json
+donna memory export --output backup.json --agent main
+donna memory import --input backup.json
+donna memory import --input backup.json --agent main
 ```
 
 ## Options
@@ -44,8 +49,21 @@ Common:
 - If both are provided, `--query` wins.
 - If neither is provided, the command exits with an error.
 
+`memory export`:
+
+- `--output <path>`: destination file path for the JSON backup (required).
+- Exports identity, patterns, episodes, and summaries to a single JSON file.
+- The backup format is versioned; future imports can read older exports.
+
+`memory import`:
+
+- `--input <path>`: path to the backup JSON file (required).
+- Overwrites existing memory data in the target agent directory.
+- Creates the memory directory if it does not exist.
+
 Notes:
 
+- A pre-migration backup of the database file is created automatically before schema migrations run.
 - `memory status --deep` probes vector + embedding availability.
 - `memory status --deep --index` runs a reindex if the store is dirty.
 - `memory index --verbose` prints per-phase details (provider, model, sources, batch activity).

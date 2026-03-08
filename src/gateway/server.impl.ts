@@ -3,6 +3,7 @@ import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../agents/agent
 import { getActiveEmbeddedRunCount } from "../agents/pi-embedded-runner/runs.js";
 import { registerSkillsChangeListener } from "../agents/skills/refresh.js";
 import { initSubagentRegistry } from "../agents/subagent-registry.js";
+import { initGlobalMemoryOrchestrator } from "../memory/memory-orchestrator-singleton.js";
 import { getTotalPendingReplies } from "../auto-reply/reply/dispatcher-registry.js";
 import type { CanvasHostServer } from "../canvas-host/server.js";
 import { type ChannelId, listChannelPlugins } from "../channels/plugins/index.js";
@@ -422,6 +423,11 @@ export async function startGatewayServer(
   });
 
   initSubagentRegistry();
+
+  // Initialize Memory Orchestrator (3-layer memory system).
+  // Reads config from memory.enabled, memory.identity, memory.patterns, memory.episodic.
+  initGlobalMemoryOrchestrator(cfgAtStart.memory);
+
   const defaultAgentId = resolveDefaultAgentId(cfgAtStart);
   const defaultWorkspaceDir = resolveAgentWorkspaceDir(cfgAtStart, defaultAgentId);
   const baseMethods = listGatewayMethods();

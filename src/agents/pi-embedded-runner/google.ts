@@ -275,14 +275,78 @@ export function logToolSchemasForGoogle(params: { tools: AgentTool[]; provider: 
   for (const [index, tool] of tools.entries()) {
     const violations = findUnsupportedSchemaKeywords(tool.parameters, `${tool.name}.parameters`);
     if (violations.length > 0) {
-      log.warn("google tool schema has unsupported keywords", {
-        index,
-        tool: tool.name,
-        violations: violations.slice(0, 12),
-        violationCount: violations.length,
-      });
+      log.warn(
+        `[gemini-schema] tool "${tool.name}" has ${violations.length} unsupported keyword(s) that will be silently dropped`,
+        {
+          index,
+          tool: tool.name,
+          violations: violations.slice(0, 20),
+          violationCount: violations.length,
+          truncated: violations.length > 20,
+        },
+      );
     }
   }
+}
+
+// ── Pre-flight safety check for Gemini content policies ─────────────────────
+
+export type GeminiSafetyCheckResult = {
+  pass: boolean;
+  warnings: string[];
+};
+
+/**
+ * Pre-flight check for content that may trigger Gemini's safety policies.
+ * Returns warnings for content patterns known to cause SAFETY blocks,
+ * allowing callers to adjust or log before sending.
+ */
+export function checkGeminiSafetyPreflight(params: {
+  messages: AgentMessage[];
+  modelApi?: string | null;
+}): GeminiSafetyCheckResult {
+  if (!isGoogleModelApi(params.modelApi)) {
+    return { pass: true, warnings: [] };
+  }
+
+  const warnings: string[] = [];
+
+  for (let i = 0; i < params.messages.length; i++) {
+    const msg = params.messages[i] as { role?: unknown; content?: unknown };
+    if (!msg) continue;
+
+    const texts: string[] = [];
+    if (typeof msg.content === "string") {
+      texts.push(msg.content);
+    } else if (Array.isArray(msg.content)) {
+      for (const block of msg.content) {
+        if (block && typeof block === "object" && (block as { type?: string }).type === "text") {
+          texts.push((block as { text: string }).text ?? "");
+        }
+      }
+    }
+
+    for (const text of texts) {
+      // Gemini blocks empty content in some turn positions
+      if (text.trim().length === 0 && msg.role === "user") {
+        warnings.push(`message[${i}]: empty user content may trigger INVALID_ARGUMENT`);
+      }
+      // Very long single-turn content (>100k chars) often triggers RESOURCE_EXHAUSTED
+      if (text.length > 100_000) {
+        warnings.push(
+          `message[${i}]: content length ${text.length} chars may exceed Gemini limits`,
+        );
+      }
+    }
+  }
+
+  if (warnings.length > 0) {
+    log.warn(`[gemini-safety] pre-flight check found ${warnings.length} warning(s)`, {
+      warnings,
+    });
+  }
+
+  return { pass: warnings.length === 0, warnings };
 }
 
 // Event emitter for unhandled compaction failures that escape try-catch blocks.

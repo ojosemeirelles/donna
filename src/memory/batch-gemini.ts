@@ -265,6 +265,43 @@ async function waitForGeminiBatch(params: {
   }
 }
 
+const BATCH_MAX_RETRIES = 3;
+const BATCH_INITIAL_BACKOFF_MS = 1000;
+
+async function submitGeminiBatchWithRetry(params: {
+  gemini: GeminiEmbeddingClient;
+  requests: GeminiBatchRequest[];
+  agentId: string;
+  debug?: (message: string, data?: Record<string, unknown>) => void;
+}): Promise<GeminiBatchStatus> {
+  let lastError: Error | undefined;
+  for (let attempt = 0; attempt < BATCH_MAX_RETRIES; attempt++) {
+    try {
+      return await submitGeminiBatch({
+        gemini: params.gemini,
+        requests: params.requests,
+        agentId: params.agentId,
+      });
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      // Don't retry 404s (endpoint not available) or client errors (400-499 except 429)
+      const msg = lastError.message;
+      const statusMatch = msg.match(/\b(4\d{2})\b/);
+      const statusCode = statusMatch ? Number(statusMatch[1]) : 0;
+      if (statusCode >= 400 && statusCode < 500 && statusCode !== 429) {
+        throw lastError;
+      }
+      const backoffMs = BATCH_INITIAL_BACKOFF_MS * 2 ** attempt;
+      params.debug?.(`gemini batch submit attempt ${attempt + 1}/${BATCH_MAX_RETRIES} failed, retrying in ${backoffMs}ms`, {
+        error: lastError.message,
+        attempt: attempt + 1,
+      });
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+    }
+  }
+  throw lastError ?? new Error("gemini batch submit failed after retries");
+}
+
 export async function runGeminiEmbeddingBatches(
   params: {
     gemini: GeminiEmbeddingClient;
@@ -278,10 +315,11 @@ export async function runGeminiEmbeddingBatches(
       debugLabel: "memory embeddings: gemini batch submit",
     }),
     runGroup: async ({ group, groupIndex, groups, byCustomId }) => {
-      const batchInfo = await submitGeminiBatch({
+      const batchInfo = await submitGeminiBatchWithRetry({
         gemini: params.gemini,
         requests: group,
         agentId: params.agentId,
+        debug: params.debug,
       });
       const batchName = batchInfo.name ?? "";
       if (!batchName) {
