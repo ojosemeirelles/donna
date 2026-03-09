@@ -8,16 +8,16 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 //                              CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 const DEFAULT_CONFIG = {
-  storePath: '.aiox/gotchas.json',
+  storePath: ".aiox/gotchas.json",
   maxGotchas: 500,
   minConfidence: 0.5,
   autoQueryBeforeExecution: true,
@@ -47,8 +47,8 @@ const DEFAULT_CONFIG = {
  */
 
 const GOTCHA_SCHEMA = {
-  required: ['pattern', 'context', 'reason'],
-  optional: ['error', 'alternative', 'keywords', 'source'],
+  required: ["pattern", "context", "reason"],
+  optional: ["error", "alternative", "keywords", "source"],
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -86,18 +86,18 @@ class GotchaRegistry {
     }
 
     if (!fs.existsSync(this.storePath)) {
-      this._gotchas = { gotchas: [], metadata: { version: '1.0.0', lastUpdated: null } };
+      this._gotchas = { gotchas: [], metadata: { version: "1.0.0", lastUpdated: null } };
       return this._gotchas;
     }
 
     try {
-      const content = fs.readFileSync(this.storePath, 'utf-8');
+      const content = fs.readFileSync(this.storePath, "utf-8");
       this._gotchas = JSON.parse(content);
       this._buildIndex();
       return this._gotchas;
     } catch (error) {
-      console.error('Failed to load gotchas:', error.message);
-      this._gotchas = { gotchas: [], metadata: { version: '1.0.0', lastUpdated: null } };
+      console.error("Failed to load gotchas:", error.message);
+      this._gotchas = { gotchas: [], metadata: { version: "1.0.0", lastUpdated: null } };
       return this._gotchas;
     }
   }
@@ -122,11 +122,11 @@ class GotchaRegistry {
     // Enforce max gotchas limit (remove oldest low-confidence ones)
     if (this._gotchas.gotchas.length > this.config.maxGotchas) {
       this._gotchas.gotchas = this._gotchas.gotchas
-        .sort((a, b) => b.confidence - a.confidence)
+        .toSorted((a, b) => b.confidence - a.confidence)
         .slice(0, this.config.maxGotchas);
     }
 
-    fs.writeFileSync(this.storePath, JSON.stringify(this._gotchas, null, 2), 'utf-8');
+    fs.writeFileSync(this.storePath, JSON.stringify(this._gotchas, null, 2), "utf-8");
     this._buildIndex();
   }
 
@@ -212,7 +212,7 @@ class GotchaRegistry {
       confidence: 0.7, // Start with moderate confidence
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      source: gotcha.source || 'manual',
+      source: gotcha.source || "manual",
     };
 
     this._gotchas.gotchas.push(newGotcha);
@@ -280,7 +280,7 @@ class GotchaRegistry {
    */
   _generateId() {
     const timestamp = Date.now().toString(36);
-    const random = crypto.randomBytes(4).toString('hex');
+    const random = crypto.randomBytes(4).toString("hex");
     return `gotcha-${timestamp}-${random}`;
   }
 
@@ -355,7 +355,7 @@ class GotchaRegistry {
     return scored
       .filter((g) => g.relevance >= this.config.relevanceThreshold)
       .filter((g) => g.confidence >= this.config.minConfidence)
-      .sort((a, b) => b.relevance * b.confidence - a.relevance * a.confidence)
+      .toSorted((a, b) => b.relevance * b.confidence - a.relevance * a.confidence)
       .slice(0, 5);
   }
 
@@ -367,7 +367,7 @@ class GotchaRegistry {
    */
   getGotchasForSequence(sequence) {
     return this.queryGotchas({
-      pattern: sequence.join(' '),
+      pattern: sequence.join(" "),
       action: sequence[sequence.length - 1],
     });
   }
@@ -393,11 +393,11 @@ class GotchaRegistry {
       );
     }
 
-    if (options.sortBy === 'occurrences') {
+    if (options.sortBy === "occurrences") {
       gotchas.sort((a, b) => b.occurrences - a.occurrences);
-    } else if (options.sortBy === 'confidence') {
+    } else if (options.sortBy === "confidence") {
       gotchas.sort((a, b) => b.confidence - a.confidence);
-    } else if (options.sortBy === 'recent') {
+    } else if (options.sortBy === "recent") {
       gotchas.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
     }
 
@@ -440,13 +440,13 @@ class GotchaRegistry {
 
     // Update allowed fields
     const allowedFields = [
-      'pattern',
-      'context',
-      'error',
-      'reason',
-      'alternative',
-      'keywords',
-      'confidence',
+      "pattern",
+      "context",
+      "error",
+      "reason",
+      "alternative",
+      "keywords",
+      "confidence",
     ];
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
@@ -524,7 +524,7 @@ class GotchaRegistry {
       totalOccurrences: gotchas.reduce((sum, g) => sum + g.occurrences, 0),
       topContexts: this._getTopContexts(gotchas, 5),
       recentlyUpdated: gotchas
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .toSorted((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
         .slice(0, 5)
         .map((g) => ({ id: g.id, pattern: g.pattern, updatedAt: g.updatedAt })),
     };
@@ -538,12 +538,12 @@ class GotchaRegistry {
     const contextCounts = new Map();
 
     for (const gotcha of gotchas) {
-      const context = gotcha.context.split(' ')[0]; // First word as category
+      const context = gotcha.context.split(" ")[0]; // First word as category
       contextCounts.set(context, (contextCounts.get(context) || 0) + 1);
     }
 
     return Array.from(contextCounts.entries())
-      .sort((a, b) => b[1] - a[1])
+      .toSorted((a, b) => b[1] - a[1])
       .slice(0, limit)
       .map(([context, count]) => ({ context, count }));
   }
@@ -577,7 +577,7 @@ class GotchaRegistry {
       `   Confidence: ${(gotcha.confidence * 100).toFixed(0)}% (${gotcha.occurrences} occurrences)`,
     );
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -589,20 +589,20 @@ class GotchaRegistry {
     this.load();
 
     const lines = [
-      '# Gotchas Registry',
-      '',
-      `*Last updated: ${this._gotchas.metadata.lastUpdated || 'Never'}*`,
-      '',
+      "# Gotchas Registry",
+      "",
+      `*Last updated: ${this._gotchas.metadata.lastUpdated || "Never"}*`,
+      "",
       `Total gotchas: ${this._gotchas.gotchas.length}`,
-      '',
-      '---',
-      '',
+      "",
+      "---",
+      "",
     ];
 
     // Group by context
     const byContext = new Map();
     for (const gotcha of this._gotchas.gotchas) {
-      const context = gotcha.context.split(' ')[0];
+      const context = gotcha.context.split(" ")[0];
       if (!byContext.has(context)) {
         byContext.set(context, []);
       }
@@ -611,34 +611,34 @@ class GotchaRegistry {
 
     for (const [context, gotchas] of byContext) {
       lines.push(`## ${context}`);
-      lines.push('');
+      lines.push("");
 
-      for (const gotcha of gotchas.sort((a, b) => b.confidence - a.confidence)) {
+      for (const gotcha of gotchas.toSorted((a, b) => b.confidence - a.confidence)) {
         lines.push(`### ${gotcha.pattern}`);
-        lines.push('');
+        lines.push("");
         lines.push(`**Reason:** ${gotcha.reason}`);
-        lines.push('');
+        lines.push("");
 
         if (gotcha.error) {
           lines.push(`**Error:** \`${gotcha.error}\``);
-          lines.push('');
+          lines.push("");
         }
 
         if (gotcha.alternative) {
           lines.push(`**Alternative:** ${gotcha.alternative}`);
-          lines.push('');
+          lines.push("");
         }
 
         lines.push(
           `*Confidence: ${(gotcha.confidence * 100).toFixed(0)}% | Occurrences: ${gotcha.occurrences}*`,
         );
-        lines.push('');
-        lines.push('---');
-        lines.push('');
+        lines.push("");
+        lines.push("---");
+        lines.push("");
       }
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 }
 

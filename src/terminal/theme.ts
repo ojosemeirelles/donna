@@ -14,8 +14,12 @@ export type TerminalTheme = "dark" | "light";
  */
 export function getTerminalTheme(): TerminalTheme {
   const explicit = process.env.DONNA_THEME?.trim().toLowerCase();
-  if (explicit === "light") return "light";
-  if (explicit === "dark") return "dark";
+  if (explicit === "light") {
+    return "light";
+  }
+  if (explicit === "dark") {
+    return "dark";
+  }
 
   // COLORFGBG is set by many terminals (xterm, rxvt, etc.)
   // Format: "foreground;background" where bg is an ANSI color index.

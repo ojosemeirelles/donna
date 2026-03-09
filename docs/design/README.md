@@ -18,7 +18,7 @@ of truth that can be consumed by Web (Lit/CSS), Terminal (Node), SwiftUI
 |----------|---------|
 | **color** | `primary`, `surface`, `on-surface`, `success`, `error` |
 | **color-light** | Light-mode overrides for all color tokens |
-| **color-terminal** | LOBSTER_PALETTE values for CLI output |
+| **color-terminal** | DONNA_PALETTE values for CLI output |
 | **spacing** | `xs` (4px) through `2xl` (48px) |
 | **typography** | `body`, `heading`, `caption`, `mono` font stacks and weights |
 | **radius** | `sm` (6px) through `full` (9999px) |
@@ -46,14 +46,14 @@ Light theme activates automatically with `[data-theme="light"]` on a parent elem
 
 ### Terminal (Node.js)
 
-Use `src/terminal/palette.ts` (the LOBSTER_PALETTE) directly.
+Use `src/terminal/palette.ts` (the DONNA_PALETTE) directly.
 The `color-terminal` section in `tokens.json` documents the same values:
 
 ```ts
-import { LOBSTER_PALETTE } from "./src/terminal/palette.ts";
+import { DONNA_PALETTE } from "./src/terminal/palette.ts";
 
-// LOBSTER_PALETTE.accent  => #FF5A2D (tokens.json color-terminal.accent)
-// LOBSTER_PALETTE.success => #2FBF71 (tokens.json color-terminal.success)
+// DONNA_PALETTE.accent  => #FF5A2D (tokens.json color-terminal.accent)
+// DONNA_PALETTE.success => #2FBF71 (tokens.json color-terminal.success)
 ```
 
 ### SwiftUI (iOS / macOS)
@@ -108,7 +108,7 @@ val DonnaDarkColors = darkColorScheme(
 ### Known inconsistencies
 
 1. **Primary/accent colors differ between Web and Terminal.** Web uses `#ff5c5c` (pinkish red),
-   Terminal uses `#FF5A2D` (orange-red). Both are "lobster" variants; the terminal palette
+   Terminal uses `#FF5A2D` (orange-red). Both are Donna brand variants; the terminal palette
    is optimized for ANSI contrast.
 2. **Info color diverges.** Web uses standard blue (`#3b82f6`), Terminal uses warm
    orange (`#FF8A5B`) for better terminal readability.

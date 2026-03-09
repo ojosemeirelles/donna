@@ -1,10 +1,10 @@
-const fs = require('fs').promises;
-const path = require('path');
-const chalk = require('chalk');
-const { parse } = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
-const generate = require('@babel/generator').default;
-const t = require('@babel/types');
+const fs = require("fs").promises;
+const path = require("path");
+const chalk = require("chalk");
+const { parse } = require("@babel/parser");
+const traverse = require("@babel/traverse").default;
+const generate = require("@babel/generator").default;
+const t = require("@babel/types");
 
 /**
  * Automated refactoring suggestion system
@@ -24,93 +24,93 @@ class RefactoringSuggester {
    */
   initializePatterns() {
     // Method extraction pattern
-    this.refactoringPatterns.set('extract_method', {
-      name: 'Extract Method',
-      description: 'Extract long methods into smaller, focused methods',
+    this.refactoringPatterns.set("extract_method", {
+      name: "Extract Method",
+      description: "Extract long methods into smaller, focused methods",
       detector: this.detectLongMethods.bind(this),
       suggester: this.suggestMethodExtraction.bind(this),
-      priority: 'high',
+      priority: "high",
     });
 
     // Variable extraction pattern
-    this.refactoringPatterns.set('extract_variable', {
-      name: 'Extract Variable',
-      description: 'Extract complex expressions into named variables',
+    this.refactoringPatterns.set("extract_variable", {
+      name: "Extract Variable",
+      description: "Extract complex expressions into named variables",
       detector: this.detectComplexExpressions.bind(this),
       suggester: this.suggestVariableExtraction.bind(this),
-      priority: 'medium',
+      priority: "medium",
     });
 
     // Parameter object pattern
-    this.refactoringPatterns.set('introduce_parameter_object', {
-      name: 'Introduce Parameter Object',
-      description: 'Group related parameters into an object',
+    this.refactoringPatterns.set("introduce_parameter_object", {
+      name: "Introduce Parameter Object",
+      description: "Group related parameters into an object",
       detector: this.detectLongParameterLists.bind(this),
       suggester: this.suggestParameterObject.bind(this),
-      priority: 'medium',
+      priority: "medium",
     });
 
     // Replace conditional with polymorphism
-    this.refactoringPatterns.set('replace_conditional', {
-      name: 'Replace Conditional with Polymorphism',
-      description: 'Replace complex conditionals with polymorphic behavior',
+    this.refactoringPatterns.set("replace_conditional", {
+      name: "Replace Conditional with Polymorphism",
+      description: "Replace complex conditionals with polymorphic behavior",
       detector: this.detectComplexConditionals.bind(this),
       suggester: this.suggestPolymorphism.bind(this),
-      priority: 'high',
+      priority: "high",
     });
 
     // Inline temp pattern
-    this.refactoringPatterns.set('inline_temp', {
-      name: 'Inline Temporary Variable',
-      description: 'Replace temporary variables used only once',
+    this.refactoringPatterns.set("inline_temp", {
+      name: "Inline Temporary Variable",
+      description: "Replace temporary variables used only once",
       detector: this.detectSingleUseTempVariables.bind(this),
       suggester: this.suggestInlineTemp.bind(this),
-      priority: 'low',
+      priority: "low",
     });
 
     // Remove dead code
-    this.refactoringPatterns.set('remove_dead_code', {
-      name: 'Remove Dead Code',
-      description: 'Remove unreachable or unused code',
+    this.refactoringPatterns.set("remove_dead_code", {
+      name: "Remove Dead Code",
+      description: "Remove unreachable or unused code",
       detector: this.detectDeadCode.bind(this),
       suggester: this.suggestDeadCodeRemoval.bind(this),
-      priority: 'high',
+      priority: "high",
     });
 
     // Consolidate duplicate code
-    this.refactoringPatterns.set('consolidate_duplicates', {
-      name: 'Consolidate Duplicate Code',
-      description: 'Extract duplicate code into shared functions',
+    this.refactoringPatterns.set("consolidate_duplicates", {
+      name: "Consolidate Duplicate Code",
+      description: "Extract duplicate code into shared functions",
       detector: this.detectDuplicateCode.bind(this),
       suggester: this.suggestCodeConsolidation.bind(this),
-      priority: 'high',
+      priority: "high",
     });
 
     // Simplify nested conditionals
-    this.refactoringPatterns.set('simplify_conditionals', {
-      name: 'Simplify Nested Conditionals',
-      description: 'Flatten deeply nested if-else chains',
+    this.refactoringPatterns.set("simplify_conditionals", {
+      name: "Simplify Nested Conditionals",
+      description: "Flatten deeply nested if-else chains",
       detector: this.detectNestedConditionals.bind(this),
       suggester: this.suggestConditionalSimplification.bind(this),
-      priority: 'medium',
+      priority: "medium",
     });
 
     // Replace magic numbers
-    this.refactoringPatterns.set('replace_magic_numbers', {
-      name: 'Replace Magic Numbers',
-      description: 'Replace hard-coded numbers with named constants',
+    this.refactoringPatterns.set("replace_magic_numbers", {
+      name: "Replace Magic Numbers",
+      description: "Replace hard-coded numbers with named constants",
       detector: this.detectMagicNumbers.bind(this),
       suggester: this.suggestConstantExtraction.bind(this),
-      priority: 'low',
+      priority: "low",
     });
 
     // Decompose complex class
-    this.refactoringPatterns.set('decompose_class', {
-      name: 'Decompose Complex Class',
-      description: 'Split large classes into smaller, focused classes',
+    this.refactoringPatterns.set("decompose_class", {
+      name: "Decompose Complex Class",
+      description: "Split large classes into smaller, focused classes",
       detector: this.detectLargeClasses.bind(this),
       suggester: this.suggestClassDecomposition.bind(this),
-      priority: 'high',
+      priority: "high",
     });
   }
 
@@ -119,22 +119,22 @@ class RefactoringSuggester {
    */
   async analyzeCode(filePath, options = {}) {
     console.log(chalk.blue(`🔍 Analyzing: ${filePath}`));
-    
+
     try {
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(filePath, "utf-8");
       const fileType = path.extname(filePath);
-      
-      if (!['.js', '.jsx', '.ts', '.tsx'].includes(fileType)) {
+
+      if (![".js", ".jsx", ".ts", ".tsx"].includes(fileType)) {
         return {
           filePath,
           suggestions: [],
-          error: 'Unsupported file type',
+          error: "Unsupported file type",
         };
       }
 
       // Parse code
       const ast = this.parseCode(content, filePath);
-      
+
       // Calculate code metrics
       const metrics = this.calculateCodeMetrics(ast, content);
       this.codeMetrics.set(filePath, metrics);
@@ -173,7 +173,9 @@ class RefactoringSuggester {
       this.suggestions.sort((a, b) => {
         const priorityOrder = { high: 3, medium: 2, low: 1 };
         const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority];
-        if (priorityDiff !== 0) return priorityDiff;
+        if (priorityDiff !== 0) {
+          return priorityDiff;
+        }
         return (b.impact || 0) - (a.impact || 0);
       });
 
@@ -182,7 +184,6 @@ class RefactoringSuggester {
         metrics,
         suggestions: this.suggestions,
       };
-
     } catch (error) {
       return {
         filePath,
@@ -197,16 +198,16 @@ class RefactoringSuggester {
    */
   parseCode(content, filePath) {
     const parserOptions = {
-      sourceType: 'module',
+      sourceType: "module",
       plugins: [
-        'jsx',
-        'typescript',
-        'decorators-legacy',
-        'classProperties',
-        'asyncGenerators',
-        'dynamicImport',
-        'optionalChaining',
-        'nullishCoalescingOperator',
+        "jsx",
+        "typescript",
+        "decorators-legacy",
+        "classProperties",
+        "asyncGenerators",
+        "dynamicImport",
+        "optionalChaining",
+        "nullishCoalescingOperator",
       ],
       errorRecovery: true,
     };
@@ -225,7 +226,7 @@ class RefactoringSuggester {
    */
   calculateCodeMetrics(ast, content) {
     const metrics = {
-      lines: content.split('\n').length,
+      lines: content.split("\n").length,
       functions: 0,
       classes: 0,
       complexity: 0,
@@ -243,7 +244,7 @@ class RefactoringSuggester {
       ArrowFunctionExpression: () => metrics.functions++,
       ClassDeclaration: () => metrics.classes++,
       ImportDeclaration: () => metrics.imports++,
-      
+
       IfStatement: {
         enter: () => {
           metrics.complexity++;
@@ -252,18 +253,18 @@ class RefactoringSuggester {
         },
         exit: () => currentNesting--,
       },
-      
-      SwitchStatement: () => metrics.complexity += 2,
+
+      SwitchStatement: () => (metrics.complexity += 2),
       ForStatement: () => metrics.complexity++,
       WhileStatement: () => metrics.complexity++,
       DoWhileStatement: () => metrics.complexity++,
       ConditionalExpression: () => metrics.complexity++,
       LogicalExpression: (path) => {
-        if (path.node.operator === '&&' || path.node.operator === '||') {
+        if (path.node.operator === "&&" || path.node.operator === "||") {
           metrics.complexity++;
         }
       },
-      
+
       Comment: () => metrics.comments++,
     });
 
@@ -277,7 +278,7 @@ class RefactoringSuggester {
     const methodSizeThreshold = 30; // lines
 
     traverse(ast, {
-      'FunctionDeclaration|FunctionExpression|ArrowFunctionExpression': (path) => {
+      "FunctionDeclaration|FunctionExpression|ArrowFunctionExpression": (path) => {
         const start = path.node.loc.start.line;
         const end = path.node.loc.end.line;
         const methodLines = end - start + 1;
@@ -285,7 +286,7 @@ class RefactoringSuggester {
         if (methodLines > methodSizeThreshold) {
           const methodName = this.getMethodName(path);
           longMethods.push({
-            type: 'long_method',
+            type: "long_method",
             node: path.node,
             path: path,
             name: methodName,
@@ -310,7 +311,7 @@ class RefactoringSuggester {
         const complexity = this.calculateExpressionComplexity(path.node);
         if (complexity > complexityThreshold) {
           complexExpressions.push({
-            type: 'complex_expression',
+            type: "complex_expression",
             node: path.node,
             path: path,
             complexity: complexity,
@@ -329,17 +330,17 @@ class RefactoringSuggester {
     const parameterThreshold = 4;
 
     traverse(ast, {
-      'FunctionDeclaration|FunctionExpression|ArrowFunctionExpression': (path) => {
+      "FunctionDeclaration|FunctionExpression|ArrowFunctionExpression": (path) => {
         const params = path.node.params;
         if (params.length > parameterThreshold) {
           const methodName = this.getMethodName(path);
           longParameterLists.push({
-            type: 'long_parameter_list',
+            type: "long_parameter_list",
             node: path.node,
             path: path,
             name: methodName,
             parameterCount: params.length,
-            parameters: params.map(p => p.name || 'unknown'),
+            parameters: params.map((p) => p.name || "unknown"),
             startLine: path.node.loc?.start.line,
           });
         }
@@ -358,7 +359,7 @@ class RefactoringSuggester {
         const branches = this.countConditionalBranches(path);
         if (branches > branchThreshold) {
           complexConditionals.push({
-            type: 'complex_conditional',
+            type: "complex_conditional",
             node: path.node,
             path: path,
             branches: branches,
@@ -367,12 +368,12 @@ class RefactoringSuggester {
           });
         }
       },
-      
+
       SwitchStatement: (path) => {
         const cases = path.node.cases.length;
         if (cases > branchThreshold) {
           complexConditionals.push({
-            type: 'complex_switch',
+            type: "complex_switch",
             node: path.node,
             path: path,
             cases: cases,
@@ -393,7 +394,7 @@ class RefactoringSuggester {
     // First pass: collect all variable declarations and usages
     traverse(ast, {
       VariableDeclarator: (path) => {
-        if (path.node.id.type === 'Identifier') {
+        if (path.node.id.type === "Identifier") {
           const varName = path.node.id.name;
           if (!varUsage.has(varName)) {
             varUsage.set(varName, {
@@ -403,7 +404,7 @@ class RefactoringSuggester {
           }
         }
       },
-      
+
       Identifier: (path) => {
         if (path.isReferencedIdentifier()) {
           const varName = path.node.name;
@@ -418,7 +419,7 @@ class RefactoringSuggester {
     for (const [varName, usage] of varUsage) {
       if (usage.uses.length === 1 && usage.declaration.node.init) {
         singleUseVars.push({
-          type: 'single_use_temp',
+          type: "single_use_temp",
           name: varName,
           declaration: usage.declaration,
           use: usage.uses[0],
@@ -435,43 +436,43 @@ class RefactoringSuggester {
 
     traverse(ast, {
       // Unreachable code after return/throw
-      'ReturnStatement|ThrowStatement': (path) => {
+      "ReturnStatement|ThrowStatement": (path) => {
         const parent = path.parent;
-        if (parent.type === 'BlockStatement') {
+        if (parent.type === "BlockStatement") {
           const siblings = parent.body;
           const currentIndex = siblings.indexOf(path.node);
-          
+
           for (let i = currentIndex + 1; i < siblings.length; i++) {
             deadCode.push({
-              type: 'unreachable_code',
+              type: "unreachable_code",
               node: siblings[i],
-              reason: 'after_return_throw',
+              reason: "after_return_throw",
               startLine: siblings[i].loc?.start.line,
             });
           }
         }
       },
-      
+
       // Unused functions
       FunctionDeclaration: (path) => {
         const functionName = path.node.id?.name;
         if (functionName && !this.isFunctionUsed(functionName, ast)) {
           deadCode.push({
-            type: 'unused_function',
+            type: "unused_function",
             node: path.node,
             name: functionName,
             startLine: path.node.loc?.start.line,
           });
         }
       },
-      
+
       // Always false conditions
       IfStatement: (path) => {
-        if (path.node.test.type === 'BooleanLiteral' && !path.node.test.value) {
+        if (path.node.test.type === "BooleanLiteral" && !path.node.test.value) {
           deadCode.push({
-            type: 'dead_branch',
+            type: "dead_branch",
             node: path.node.consequent,
-            reason: 'always_false',
+            reason: "always_false",
             startLine: path.node.loc?.start.line,
           });
         }
@@ -490,11 +491,11 @@ class RefactoringSuggester {
       BlockStatement: (path) => {
         if (path.node.body.length >= minBlockSize) {
           const blockHash = this.hashCodeBlock(path.node);
-          
+
           if (codeBlocks.has(blockHash)) {
             const original = codeBlocks.get(blockHash);
             duplicates.push({
-              type: 'duplicate_code',
+              type: "duplicate_code",
               original: original,
               duplicate: path,
               startLine: path.node.loc?.start.line,
@@ -518,7 +519,7 @@ class RefactoringSuggester {
     const checkNesting = (path, depth = 0) => {
       if (depth > nestingThreshold) {
         nestedConditionals.push({
-          type: 'nested_conditional',
+          type: "nested_conditional",
           node: path.node,
           path: path,
           depth: depth,
@@ -528,14 +529,19 @@ class RefactoringSuggester {
       }
 
       // Check nested ifs
-      traverse(path.node, {
-        IfStatement: (innerPath) => {
-          if (innerPath.node !== path.node) {
-            checkNesting(innerPath, depth + 1);
-            innerPath.skip();
-          }
+      traverse(
+        path.node,
+        {
+          IfStatement: (innerPath) => {
+            if (innerPath.node !== path.node) {
+              checkNesting(innerPath, depth + 1);
+              innerPath.skip();
+            }
+          },
         },
-      }, path.scope, path);
+        path.scope,
+        path,
+      );
     };
 
     traverse(ast, {
@@ -552,19 +558,24 @@ class RefactoringSuggester {
     traverse(ast, {
       NumericLiteral: (path) => {
         const value = path.node.value;
-        
+
         // Skip common/obvious numbers
-        if (ignoredNumbers.has(value)) return;
-        
+        if (ignoredNumbers.has(value)) {
+          return;
+        }
+
         // Skip array indices
-        if (path.parent.type === 'MemberExpression' && path.parent.computed) return;
-        
+        if (path.parent.type === "MemberExpression" && path.parent.computed) {
+          return;
+        }
+
         // Skip in constant declarations
-        if (path.findParent(p => p.isVariableDeclarator() && 
-            p.parent.kind === 'const')) return;
+        if (path.findParent((p) => p.isVariableDeclarator() && p.parent.kind === "const")) {
+          return;
+        }
 
         magicNumbers.push({
-          type: 'magic_number',
+          type: "magic_number",
           node: path.node,
           path: path,
           value: value,
@@ -584,16 +595,16 @@ class RefactoringSuggester {
 
     traverse(ast, {
       ClassDeclaration: (path) => {
-        const methods = path.node.body.body.filter(m => 
-          m.type === 'ClassMethod' || m.type === 'ClassProperty',
+        const methods = path.node.body.body.filter(
+          (m) => m.type === "ClassMethod" || m.type === "ClassProperty",
         );
-        
-        const methodCount = methods.filter(m => m.type === 'ClassMethod').length;
-        const propertyCount = methods.filter(m => m.type === 'ClassProperty').length;
+
+        const methodCount = methods.filter((m) => m.type === "ClassMethod").length;
+        const propertyCount = methods.filter((m) => m.type === "ClassProperty").length;
 
         if (methodCount > methodThreshold || propertyCount > propertyThreshold) {
           largeClasses.push({
-            type: 'large_class',
+            type: "large_class",
             node: path.node,
             path: path,
             name: path.node.id?.name,
@@ -614,7 +625,7 @@ class RefactoringSuggester {
 
   async suggestMethodExtraction(detection, ast, content) {
     const suggestion = {
-      type: 'extract_method',
+      type: "extract_method",
       description: `Extract method '${detection.name}' (${detection.lines} lines)`,
       location: {
         start: detection.startLine,
@@ -630,8 +641,8 @@ class RefactoringSuggester {
 
   async suggestVariableExtraction(detection, ast, content) {
     const suggestion = {
-      type: 'extract_variable',
-      description: 'Extract complex expression into variable',
+      type: "extract_variable",
+      description: "Extract complex expression into variable",
       location: {
         start: detection.startLine,
         end: detection.endLine,
@@ -646,14 +657,14 @@ class RefactoringSuggester {
 
   async suggestParameterObject(detection, ast, content) {
     const suggestion = {
-      type: 'introduce_parameter_object',
+      type: "introduce_parameter_object",
       description: `Group ${detection.parameterCount} parameters in '${detection.name}'`,
       location: {
         start: detection.startLine,
         end: detection.startLine,
       },
       impact: Math.min(7, detection.parameterCount - 3),
-      details: `Method has ${detection.parameterCount} parameters: ${detection.parameters.join(', ')}. Consider grouping related parameters into an object.`,
+      details: `Method has ${detection.parameterCount} parameters: ${detection.parameters.join(", ")}. Consider grouping related parameters into an object.`,
       suggestedRefactoring: this.generateParameterObjectSuggestion(detection),
     };
 
@@ -662,14 +673,14 @@ class RefactoringSuggester {
 
   async suggestPolymorphism(detection, ast, content) {
     const suggestion = {
-      type: 'replace_conditional',
-      description: `Replace ${detection.type === 'complex_switch' ? 'switch' : 'conditional'} with polymorphism`,
+      type: "replace_conditional",
+      description: `Replace ${detection.type === "complex_switch" ? "switch" : "conditional"} with polymorphism`,
       location: {
         start: detection.startLine,
         end: detection.endLine,
       },
       impact: Math.min(8, detection.branches || detection.cases),
-      details: `Complex ${detection.type === 'complex_switch' ? 'switch' : 'conditional'} with ${detection.branches || detection.cases} branches. Consider using polymorphism or strategy pattern.`,
+      details: `Complex ${detection.type === "complex_switch" ? "switch" : "conditional"} with ${detection.branches || detection.cases} branches. Consider using polymorphism or strategy pattern.`,
       suggestedRefactoring: this.generatePolymorphismSuggestion(detection),
     };
 
@@ -678,7 +689,7 @@ class RefactoringSuggester {
 
   async suggestInlineTemp(detection, ast, content) {
     const suggestion = {
-      type: 'inline_temp',
+      type: "inline_temp",
       description: `Inline temporary variable '${detection.name}'`,
       location: {
         start: detection.startLine,
@@ -694,16 +705,16 @@ class RefactoringSuggester {
 
   async suggestDeadCodeRemoval(detection, ast, content) {
     const suggestion = {
-      type: 'remove_dead_code',
-      description: `Remove ${detection.type.replace('_', ' ')}${detection.name ? `: ${detection.name}` : ''}`,
+      type: "remove_dead_code",
+      description: `Remove ${detection.type.replace("_", " ")}${detection.name ? `: ${detection.name}` : ""}`,
       location: {
         start: detection.startLine,
         end: detection.node.loc?.end.line || detection.startLine,
       },
       impact: 5,
-      details: `${detection.type === 'unreachable_code' ? 'Code is unreachable' : detection.type === 'unused_function' ? 'Function is never called' : 'Code is dead'}`,
+      details: `${detection.type === "unreachable_code" ? "Code is unreachable" : detection.type === "unused_function" ? "Function is never called" : "Code is dead"}`,
       suggestedRefactoring: {
-        action: 'delete',
+        action: "delete",
         lines: [detection.startLine, detection.node.loc?.end.line || detection.startLine],
       },
     };
@@ -713,14 +724,14 @@ class RefactoringSuggester {
 
   async suggestCodeConsolidation(detection, ast, content) {
     const suggestion = {
-      type: 'consolidate_duplicates',
+      type: "consolidate_duplicates",
       description: `Extract duplicate code block (${detection.lines} lines)`,
       location: {
         start: detection.startLine,
         end: detection.endLine,
       },
       impact: Math.min(9, detection.lines),
-      details: 'Found duplicate code block. Extract into a shared function.',
+      details: "Found duplicate code block. Extract into a shared function.",
       suggestedRefactoring: this.generateConsolidationSuggestion(detection),
     };
 
@@ -729,7 +740,7 @@ class RefactoringSuggester {
 
   async suggestConditionalSimplification(detection, ast, content) {
     const suggestion = {
-      type: 'simplify_conditionals',
+      type: "simplify_conditionals",
       description: `Simplify nested conditionals (depth: ${detection.depth})`,
       location: {
         start: detection.startLine,
@@ -745,7 +756,7 @@ class RefactoringSuggester {
 
   async suggestConstantExtraction(detection, ast, content) {
     const suggestion = {
-      type: 'replace_magic_numbers',
+      type: "replace_magic_numbers",
       description: `Replace magic number ${detection.value}`,
       location: {
         start: detection.startLine,
@@ -761,7 +772,7 @@ class RefactoringSuggester {
 
   async suggestClassDecomposition(detection, ast, content) {
     const suggestion = {
-      type: 'decompose_class',
+      type: "decompose_class",
       description: `Decompose large class '${detection.name}' (${detection.totalMembers} members)`,
       location: {
         start: detection.startLine,
@@ -781,134 +792,144 @@ class RefactoringSuggester {
     if (path.node.id) {
       return path.node.id.name;
     }
-    
+
     // Check if it's a method in a class
-    if (path.parent.type === 'ClassMethod') {
+    if (path.parent.type === "ClassMethod") {
       return path.parent.key.name;
     }
-    
+
     // Check if it's assigned to a variable
-    if (path.parent.type === 'VariableDeclarator') {
+    if (path.parent.type === "VariableDeclarator") {
       return path.parent.id.name;
     }
-    
+
     // Check if it's a property
-    if (path.parent.type === 'ObjectProperty') {
+    if (path.parent.type === "ObjectProperty") {
       return path.parent.key.name || path.parent.key.value;
     }
-    
-    return 'anonymous';
+
+    return "anonymous";
   }
 
   calculateMethodComplexity(path) {
     let complexity = 1;
-    
-    traverse(path.node, {
-      IfStatement: () => complexity++,
-      ConditionalExpression: () => complexity++,
-      SwitchCase: () => complexity++,
-      WhileStatement: () => complexity++,
-      ForStatement: () => complexity++,
-      DoWhileStatement: () => complexity++,
-      LogicalExpression: (innerPath) => {
-        if (innerPath.node.operator === '&&' || innerPath.node.operator === '||') {
-          complexity++;
-        }
+
+    traverse(
+      path.node,
+      {
+        IfStatement: () => complexity++,
+        ConditionalExpression: () => complexity++,
+        SwitchCase: () => complexity++,
+        WhileStatement: () => complexity++,
+        ForStatement: () => complexity++,
+        DoWhileStatement: () => complexity++,
+        LogicalExpression: (innerPath) => {
+          if (innerPath.node.operator === "&&" || innerPath.node.operator === "||") {
+            complexity++;
+          }
+        },
       },
-    }, path.scope, path);
-    
+      path.scope,
+      path,
+    );
+
     return complexity;
   }
 
   calculateExpressionComplexity(node, depth = 0) {
-    if (!node) return depth;
-    
+    if (!node) {
+      return depth;
+    }
+
     let maxDepth = depth;
-    
+
     // Check different expression types
-    if (node.type === 'CallExpression') {
+    if (node.type === "CallExpression") {
       maxDepth = Math.max(maxDepth, this.calculateExpressionComplexity(node.callee, depth + 1));
       for (const arg of node.arguments) {
         maxDepth = Math.max(maxDepth, this.calculateExpressionComplexity(arg, depth + 1));
       }
-    } else if (node.type === 'MemberExpression') {
+    } else if (node.type === "MemberExpression") {
       maxDepth = Math.max(maxDepth, this.calculateExpressionComplexity(node.object, depth + 1));
-    } else if (node.type === 'ConditionalExpression') {
-      maxDepth = Math.max(maxDepth, 
+    } else if (node.type === "ConditionalExpression") {
+      maxDepth = Math.max(
+        maxDepth,
         this.calculateExpressionComplexity(node.test, depth + 1),
         this.calculateExpressionComplexity(node.consequent, depth + 1),
         this.calculateExpressionComplexity(node.alternate, depth + 1),
       );
-    } else if (node.type === 'BinaryExpression' || node.type === 'LogicalExpression') {
-      maxDepth = Math.max(maxDepth,
+    } else if (node.type === "BinaryExpression" || node.type === "LogicalExpression") {
+      maxDepth = Math.max(
+        maxDepth,
         this.calculateExpressionComplexity(node.left, depth + 1),
         this.calculateExpressionComplexity(node.right, depth + 1),
       );
     }
-    
+
     return maxDepth;
   }
 
   countConditionalBranches(path) {
     let branches = 1; // Initial if branch
-    
+
     let current = path.node;
     while (current.alternate) {
       branches++;
-      if (current.alternate.type === 'IfStatement') {
+      if (current.alternate.type === "IfStatement") {
         current = current.alternate;
       } else {
         break;
       }
     }
-    
+
     return branches;
   }
 
   isFunctionUsed(functionName, ast) {
     let used = false;
-    
+
     traverse(ast, {
       CallExpression: (path) => {
-        if (path.node.callee.type === 'Identifier' && 
-            path.node.callee.name === functionName) {
+        if (path.node.callee.type === "Identifier" && path.node.callee.name === functionName) {
           used = true;
           path.stop();
         }
       },
       Identifier: (path) => {
-        if (path.node.name === functionName && 
-            path.isReferencedIdentifier() &&
-            !path.isFunction()) {
+        if (
+          path.node.name === functionName &&
+          path.isReferencedIdentifier() &&
+          !path.isFunction()
+        ) {
           used = true;
           path.stop();
         }
       },
     });
-    
+
     return used;
   }
 
   hashCodeBlock(node) {
     // Simple hash based on code structure
     const code = generate(node, { compact: true }).code;
-    return code.replace(/\s+/g, ' ').trim();
+    return code.replace(/\s+/g, " ").trim();
   }
 
   // Suggestion generators
 
   generateMethodExtractionSuggestion(detection) {
     return {
-      action: 'extract_method',
+      action: "extract_method",
       extractedMethods: [
         {
           name: `extracted${detection.name.charAt(0).toUpperCase() + detection.name.slice(1)}Part1`,
-          description: 'Extract first logical section',
+          description: "Extract first logical section",
           suggestedLines: [detection.startLine + 5, detection.startLine + 15],
         },
         {
           name: `extracted${detection.name.charAt(0).toUpperCase() + detection.name.slice(1)}Part2`,
-          description: 'Extract second logical section',
+          description: "Extract second logical section",
           suggestedLines: [detection.startLine + 16, detection.endLine - 5],
         },
       ],
@@ -917,15 +938,15 @@ class RefactoringSuggester {
 
   generateVariableExtractionSuggestion(detection) {
     return {
-      action: 'extract_variable',
-      variableName: 'extractedExpression',
+      action: "extract_variable",
+      variableName: "extractedExpression",
       insertBefore: detection.startLine,
     };
   }
 
   generateParameterObjectSuggestion(detection) {
     return {
-      action: 'introduce_parameter_object',
+      action: "introduce_parameter_object",
       objectName: `${detection.name}Options`,
       groupedParameters: detection.parameters.slice(2), // Keep first 2 params separate
       keepParameters: detection.parameters.slice(0, 2),
@@ -934,16 +955,16 @@ class RefactoringSuggester {
 
   generatePolymorphismSuggestion(detection) {
     return {
-      action: 'replace_with_polymorphism',
+      action: "replace_with_polymorphism",
       strategyPattern: true,
-      suggestedClasses: ['BaseHandler', 'TypeAHandler', 'TypeBHandler'],
-      interfaceMethod: 'handle',
+      suggestedClasses: ["BaseHandler", "TypeAHandler", "TypeBHandler"],
+      interfaceMethod: "handle",
     };
   }
 
   generateInlineTempSuggestion(detection) {
     return {
-      action: 'inline_variable',
+      action: "inline_variable",
       variableName: detection.name,
       declarationLine: detection.declaration.node.loc?.start.line,
       usageLine: detection.use.node.loc?.start.line,
@@ -952,8 +973,8 @@ class RefactoringSuggester {
 
   generateConsolidationSuggestion(detection) {
     return {
-      action: 'extract_shared_function',
-      functionName: 'extractedSharedFunction',
+      action: "extract_shared_function",
+      functionName: "extractedSharedFunction",
       originalLocations: [
         {
           start: detection.original.node.loc?.start.line,
@@ -969,40 +990,40 @@ class RefactoringSuggester {
 
   generateConditionalSimplificationSuggestion(detection) {
     return {
-      action: 'simplify_nested_conditionals',
-      techniques: ['early_return', 'guard_clauses', 'extract_condition'],
-      suggestedStructure: 'Use guard clauses for edge cases and early returns',
+      action: "simplify_nested_conditionals",
+      techniques: ["early_return", "guard_clauses", "extract_condition"],
+      suggestedStructure: "Use guard clauses for edge cases and early returns",
     };
   }
 
   generateConstantExtractionSuggestion(detection) {
     const constantName = this.suggestConstantName(detection.value, detection.context);
     return {
-      action: 'extract_constant',
+      action: "extract_constant",
       constantName: constantName,
       value: detection.value,
-      scope: 'module', // or 'class' depending on context
+      scope: "module", // or 'class' depending on context
     };
   }
 
   generateClassDecompositionSuggestion(detection) {
     return {
-      action: 'decompose_class',
+      action: "decompose_class",
       suggestedClasses: [
         {
           name: `${detection.name}Core`,
-          description: 'Core functionality',
-          methods: 'Core business logic methods',
+          description: "Core functionality",
+          methods: "Core business logic methods",
         },
         {
           name: `${detection.name}Utils`,
-          description: 'Utility methods',
-          methods: 'Helper and utility methods',
+          description: "Utility methods",
+          methods: "Helper and utility methods",
         },
         {
           name: `${detection.name}Config`,
-          description: 'Configuration and setup',
-          methods: 'Configuration-related methods',
+          description: "Configuration and setup",
+          methods: "Configuration-related methods",
         },
       ],
     };
@@ -1011,14 +1032,14 @@ class RefactoringSuggester {
   suggestConstantName(value, context) {
     // Generate meaningful constant names based on value and context
     const contextMap = {
-      'BinaryExpression': 'THRESHOLD',
-      'IfStatement': 'CONDITION',
-      'ForStatement': 'LIMIT',
-      'CallExpression': 'PARAMETER',
+      BinaryExpression: "THRESHOLD",
+      IfStatement: "CONDITION",
+      ForStatement: "LIMIT",
+      CallExpression: "PARAMETER",
     };
-    
-    const baseContext = contextMap[context] || 'VALUE';
-    return `${baseContext}_${Math.abs(value).toString().replace('.', '_')}`;
+
+    const baseContext = contextMap[context] || "VALUE";
+    return `${baseContext}_${Math.abs(value).toString().replace(".", "_")}`;
   }
 
   /**
@@ -1026,11 +1047,11 @@ class RefactoringSuggester {
    */
   async applySuggestion(suggestion, options = {}) {
     console.log(chalk.blue(`🔧 Applying ${suggestion.type} refactoring...`));
-    
+
     try {
       // This would integrate with the actual refactoring implementation
       // For now, it's a placeholder showing the structure
-      
+
       const result = {
         success: false,
         changes: [],
@@ -1038,16 +1059,16 @@ class RefactoringSuggester {
       };
 
       switch (suggestion.type) {
-        case 'extract_method':
+        case "extract_method":
           result.changes = await this.applyMethodExtraction(suggestion);
           break;
-        case 'extract_variable':
+        case "extract_variable":
           result.changes = await this.applyVariableExtraction(suggestion);
           break;
-        case 'inline_temp':
+        case "inline_temp":
           result.changes = await this.applyInlineTemp(suggestion);
           break;
-        case 'remove_dead_code':
+        case "remove_dead_code":
           result.changes = await this.applyDeadCodeRemoval(suggestion);
           break;
         default:
@@ -1056,7 +1077,6 @@ class RefactoringSuggester {
 
       result.success = true;
       return result;
-
     } catch (error) {
       console.error(chalk.red(`Failed to apply refactoring: ${error.message}`));
       return {
@@ -1070,35 +1090,43 @@ class RefactoringSuggester {
   // Placeholder methods for applying refactorings
   async applyMethodExtraction(suggestion) {
     // Implementation would use AST transformation
-    return [{
-      type: 'extract_method',
-      file: suggestion.filePath,
-      description: `Extracted method from lines ${suggestion.location.start}-${suggestion.location.end}`,
-    }];
+    return [
+      {
+        type: "extract_method",
+        file: suggestion.filePath,
+        description: `Extracted method from lines ${suggestion.location.start}-${suggestion.location.end}`,
+      },
+    ];
   }
 
   async applyVariableExtraction(suggestion) {
-    return [{
-      type: 'extract_variable',
-      file: suggestion.filePath,
-      description: `Extracted variable at line ${suggestion.location.start}`,
-    }];
+    return [
+      {
+        type: "extract_variable",
+        file: suggestion.filePath,
+        description: `Extracted variable at line ${suggestion.location.start}`,
+      },
+    ];
   }
 
   async applyInlineTemp(suggestion) {
-    return [{
-      type: 'inline_temp',
-      file: suggestion.filePath,
-      description: `Inlined variable at line ${suggestion.location.start}`,
-    }];
+    return [
+      {
+        type: "inline_temp",
+        file: suggestion.filePath,
+        description: `Inlined variable at line ${suggestion.location.start}`,
+      },
+    ];
   }
 
   async applyDeadCodeRemoval(suggestion) {
-    return [{
-      type: 'remove_dead_code',
-      file: suggestion.filePath,
-      description: `Removed dead code at lines ${suggestion.location.start}-${suggestion.location.end}`,
-    }];
+    return [
+      {
+        type: "remove_dead_code",
+        file: suggestion.filePath,
+        description: `Removed dead code at lines ${suggestion.location.start}-${suggestion.location.end}`,
+      },
+    ];
   }
 
   /**
@@ -1117,20 +1145,20 @@ class RefactoringSuggester {
     };
 
     let totalImpact = 0;
-    
+
     for (const suggestion of this.suggestions) {
       // By type
       stats.byType[suggestion.type] = (stats.byType[suggestion.type] || 0) + 1;
-      
+
       // By priority
       stats.byPriority[suggestion.priority]++;
-      
+
       // Impact
       totalImpact += suggestion.impact || 0;
     }
 
-    stats.averageImpact = stats.totalSuggestions > 0 ? 
-      (totalImpact / stats.totalSuggestions).toFixed(2) : 0;
+    stats.averageImpact =
+      stats.totalSuggestions > 0 ? (totalImpact / stats.totalSuggestions).toFixed(2) : 0;
 
     return stats;
   }

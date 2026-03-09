@@ -1,26 +1,30 @@
 #!/usr/bin/env node
 
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs");
+const path = require("path");
+const yaml = require("js-yaml");
 
-const CORE_CONFIG_FILE = '.aiox-core/core-config.yaml';
-const SETTINGS_FILE = '.claude/settings.json';
-const TOOLS = ['Edit', 'Write'];
+const CORE_CONFIG_FILE = ".aiox-core/core-config.yaml";
+const SETTINGS_FILE = ".claude/settings.json";
+const TOOLS = ["Edit", "Write"];
 
 /**
  * Validate that a boundary path does not escape the project root via traversal.
  * Rejects paths containing '..' segments or absolute paths.
  */
 function validateBoundaryPath(p) {
-  const segments = p.replace(/\\/g, '/').split('/');
-  if (segments.some(function(s) { return s === '..'; })) {
-    throw new Error('Path traversal detected in boundary config: ' + p);
+  const segments = p.replace(/\\/g, "/").split("/");
+  if (
+    segments.some(function (s) {
+      return s === "..";
+    })
+  ) {
+    throw new Error("Path traversal detected in boundary config: " + p);
   }
   if (path.isAbsolute(p)) {
-    throw new Error('Absolute path not allowed in boundary config: ' + p);
+    throw new Error("Absolute path not allowed in boundary config: " + p);
   }
 }
 
@@ -34,7 +38,7 @@ function readBoundaryConfig(projectRoot) {
     throw new Error(`core-config.yaml not found at ${configPath}`);
   }
 
-  const content = fs.readFileSync(configPath, 'utf8');
+  const content = fs.readFileSync(configPath, "utf8");
   const config = yaml.load(content);
 
   if (!config || !config.boundary) {
@@ -49,8 +53,12 @@ function readBoundaryConfig(projectRoot) {
     exceptions: Array.isArray(boundary.exceptions) ? boundary.exceptions : [],
   };
 
-  for (const p of result.protected) { validateBoundaryPath(p); }
-  for (const p of result.exceptions) { validateBoundaryPath(p); }
+  for (const p of result.protected) {
+    validateBoundaryPath(p);
+  }
+  for (const p of result.exceptions) {
+    validateBoundaryPath(p);
+  }
 
   return result;
 }
@@ -59,9 +67,9 @@ function readBoundaryConfig(projectRoot) {
  * Check if an exception path falls within a given directory.
  */
 function isChildOf(exceptionPath, parentDir) {
-  const clean = exceptionPath.replace(/\/\*\*$/, '');
-  const parts = clean.split('/');
-  const parentParts = parentDir.split('/');
+  const clean = exceptionPath.replace(/\/\*\*$/, "");
+  const parts = clean.split("/");
+  const parentParts = parentDir.split("/");
 
   if (parts.length <= parentParts.length) {
     return false;
@@ -84,7 +92,7 @@ function expandOneLevel(dirRelative, projectRoot) {
   const dirAbsolute = path.join(projectRoot, dirRelative);
 
   if (!fs.existsSync(dirAbsolute)) {
-    return { dirs: [dirRelative + '/**'], files: [] };
+    return { dirs: [dirRelative + "/**"], files: [] };
   }
 
   const entries = fs.readdirSync(dirAbsolute, { withFileTypes: true });
@@ -92,7 +100,7 @@ function expandOneLevel(dirRelative, projectRoot) {
   const files = [];
 
   for (const entry of entries) {
-    const entryRelative = dirRelative + '/' + entry.name;
+    const entryRelative = dirRelative + "/" + entry.name;
     if (entry.isDirectory()) {
       dirs.push(entryRelative);
     } else {
@@ -114,17 +122,17 @@ function expandSubdirWithExceptions(subdirPath, exceptions, projectRoot) {
   const dirAbsolute = path.join(projectRoot, subdirPath);
 
   if (!fs.existsSync(dirAbsolute)) {
-    return [subdirPath + '/**'];
+    return [subdirPath + "/**"];
   }
 
   const entries = fs.readdirSync(dirAbsolute, { withFileTypes: true });
   const result = [];
 
   for (const entry of entries) {
-    const entryRelative = subdirPath + '/' + entry.name;
-    const entryGlob = entry.isDirectory() ? entryRelative + '/**' : entryRelative;
+    const entryRelative = subdirPath + "/" + entry.name;
+    const entryGlob = entry.isDirectory() ? entryRelative + "/**" : entryRelative;
 
-    const isCoveredByException = exceptions.some(function(exc) {
+    const isCoveredByException = exceptions.some(function (exc) {
       return exc === entryGlob || exc === entryRelative;
     });
 
@@ -149,15 +157,15 @@ function expandProtectedPaths(protectedPaths, exceptions, projectRoot) {
   const allPaths = [];
 
   for (const globPath of protectedPaths) {
-    if (globPath === '.aiox-core/core/**') {
-      const { dirs, files } = expandOneLevel('.aiox-core/core', projectRoot);
+    if (globPath === ".aiox-core/core/**") {
+      const { dirs, files } = expandOneLevel(".aiox-core/core", projectRoot);
 
       // Separate dirs into regular (no exceptions inside) and special (has exceptions)
       const regularDirs = [];
       const specialDirEntries = [];
 
       for (const dir of dirs) {
-        const relevantExceptions = exceptions.filter(function(exc) {
+        const relevantExceptions = exceptions.filter(function (exc) {
           return isChildOf(exc, dir);
         });
 
@@ -166,7 +174,7 @@ function expandProtectedPaths(protectedPaths, exceptions, projectRoot) {
           const expanded = expandSubdirWithExceptions(dir, relevantExceptions, projectRoot);
           specialDirEntries.push(...expanded);
         } else {
-          regularDirs.push(dir + '/**');
+          regularDirs.push(dir + "/**");
         }
       }
 
@@ -186,7 +194,7 @@ function expandProtectedPaths(protectedPaths, exceptions, projectRoot) {
  * Keep exception paths as-is (no expansion needed).
  */
 function expandExceptionPaths(exceptionPaths) {
-  return [...exceptionPaths].sort();
+  return [...exceptionPaths].toSorted();
 }
 
 /**
@@ -202,7 +210,7 @@ function generatePermissions(boundary, projectRoot) {
   const deny = [];
   for (const denyPath of denyPaths) {
     for (const tool of TOOLS) {
-      deny.push(tool + '(' + denyPath + ')');
+      deny.push(tool + "(" + denyPath + ")");
     }
   }
 
@@ -211,11 +219,11 @@ function generatePermissions(boundary, projectRoot) {
   const allow = [];
   for (const allowPath of allowPaths) {
     for (const tool of TOOLS) {
-      allow.push(tool + '(' + allowPath + ')');
+      allow.push(tool + "(" + allowPath + ")");
     }
   }
 
-  allow.push('Read(.aiox-core/**)');
+  allow.push("Read(.aiox-core/**)");
 
   return { deny, allow };
 }
@@ -224,7 +232,7 @@ function generatePermissions(boundary, projectRoot) {
  * Write settings.json preserving user sections outside permissions.
  */
 function writeSettingsJson(projectRoot, permissions) {
-  const claudeDir = path.join(projectRoot, '.claude');
+  const claudeDir = path.join(projectRoot, ".claude");
   const fullSettingsPath = path.join(projectRoot, SETTINGS_FILE);
 
   if (!fs.existsSync(claudeDir)) {
@@ -234,10 +242,10 @@ function writeSettingsJson(projectRoot, permissions) {
   let existing = {};
   if (fs.existsSync(fullSettingsPath)) {
     try {
-      const content = fs.readFileSync(fullSettingsPath, 'utf8');
+      const content = fs.readFileSync(fullSettingsPath, "utf8");
       existing = JSON.parse(content);
     } catch {
-      console.warn('WARNING: Existing settings.json is invalid JSON, starting fresh.');
+      console.warn("WARNING: Existing settings.json is invalid JSON, starting fresh.");
       existing = {};
     }
   }
@@ -250,18 +258,24 @@ function writeSettingsJson(projectRoot, permissions) {
     delete updated.permissions;
   }
 
-  const newContent = JSON.stringify(updated, null, 2) + '\n';
+  const newContent = JSON.stringify(updated, null, 2) + "\n";
 
   if (fs.existsSync(fullSettingsPath)) {
-    const currentContent = fs.readFileSync(fullSettingsPath, 'utf8');
+    const currentContent = fs.readFileSync(fullSettingsPath, "utf8");
     if (currentContent === newContent) {
-      console.log('PASS: settings.json already up to date, no changes needed.');
+      console.log("PASS: settings.json already up to date, no changes needed.");
       return;
     }
   }
 
-  fs.writeFileSync(fullSettingsPath, newContent, 'utf8');
-  console.log('PASS: settings.json updated with ' + permissions.deny.length + ' deny rules and ' + permissions.allow.length + ' allow rules.');
+  fs.writeFileSync(fullSettingsPath, newContent, "utf8");
+  console.log(
+    "PASS: settings.json updated with " +
+      permissions.deny.length +
+      " deny rules and " +
+      permissions.allow.length +
+      " allow rules.",
+  );
 }
 
 /**
@@ -282,7 +296,7 @@ if (require.main === module) {
   try {
     generate(projectRoot);
   } catch (error) {
-    console.error('ERROR: ' + error.message);
+    console.error("ERROR: " + error.message);
     process.exit(1);
   }
 }

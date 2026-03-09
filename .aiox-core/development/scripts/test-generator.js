@@ -1,6 +1,6 @@
-const fs = require('fs').promises;
-const path = require('path');
-const chalk = require('chalk');
+const fs = require("fs").promises;
+const path = require("path");
+const chalk = require("chalk");
 
 /**
  * Test generator for AIOX-FULLSTACK automated test generation
@@ -15,7 +15,7 @@ class TestGenerator {
       total_generated: 0,
       successful: 0,
       failed: 0,
-      generation_time: 0
+      generation_time: 0,
     };
   }
 
@@ -25,17 +25,16 @@ class TestGenerator {
   async initialize() {
     try {
       if (!this.templateSystem) {
-        throw new Error('Template system not provided');
+        throw new Error("Template system not provided");
       }
 
       // Ensure template system is initialized
-      if (typeof this.templateSystem.initialize === 'function') {
+      if (typeof this.templateSystem.initialize === "function") {
         await this.templateSystem.initialize();
       }
 
-      console.log(chalk.green('✅ Test generator initialized'));
+      console.log(chalk.green("✅ Test generator initialized"));
       return true;
-
     } catch (_error) {
       console.error(chalk.red(`Failed to initialize test generator: ${error.message}`));
       throw error;
@@ -47,7 +46,7 @@ class TestGenerator {
    */
   async generateTestFile(component, testFile, config) {
     const startTime = Date.now();
-    
+
     try {
       console.log(chalk.blue(`🧪 Generating ${testFile.test_type} test for ${component.name}`));
 
@@ -64,9 +63,8 @@ class TestGenerator {
       this.updateGenerationStats(true, Date.now() - startTime);
 
       console.log(chalk.green(`✅ Generated ${testFile.test_type} test for ${component.name}`));
-      
-      return processedContent;
 
+      return processedContent;
     } catch (_error) {
       this.updateGenerationStats(false, Date.now() - startTime);
       console.error(chalk.red(`Failed to generate test for ${component.name}: ${error.message}`));
@@ -87,19 +85,18 @@ class TestGenerator {
     for (const testFile of testSuite.test_files) {
       try {
         const testContent = await this.generateTestFile(component, testFile, config);
-        
+
         generatedFiles.push({
           file_path: testFile.file_path,
           test_type: testFile.test_type,
           content: testContent,
-          test_count: testFile.test_count
+          test_count: testFile.test_count,
         });
-
       } catch (_error) {
         errors.push({
           file_path: testFile.file_path,
           test_type: testFile.test_type,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -108,11 +105,13 @@ class TestGenerator {
       component_id: component.id,
       generated_files: generatedFiles,
       errors: errors,
-      success_rate: generatedFiles.length / testSuite.test_files.length
+      success_rate: generatedFiles.length / testSuite.test_files.length,
     };
 
     console.log(chalk.green(`✅ Test suite generated for ${component.name}`));
-    console.log(chalk.gray(`   Generated: ${generatedFiles.length}/${testSuite.test_files.length} files`));
+    console.log(
+      chalk.gray(`   Generated: ${generatedFiles.length}/${testSuite.test_files.length} files`),
+    );
     console.log(chalk.gray(`   Success rate: ${Math.round(result.success_rate * 100)}%`));
 
     return result;
@@ -146,9 +145,9 @@ class TestGenerator {
 
       // Add component-specific test cases
       const additionalTestCases = await this.generateAdditionalTestCases(
-        componentAnalysis, 
-        testFile.test_type, 
-        config
+        componentAnalysis,
+        testFile.test_type,
+        config,
       );
 
       if (additionalTestCases.length > 0) {
@@ -166,7 +165,6 @@ class TestGenerator {
       if (setupTeardown) {
         enhancedContent = this.injectSetupTeardown(enhancedContent, setupTeardown);
       }
-
     } catch (_error) {
       console.warn(chalk.yellow(`Failed to enhance test content: ${error.message}`));
       // Return base content if enhancement fails
@@ -190,7 +188,7 @@ class TestGenerator {
       dependencies: [],
       async_operations: false,
       error_handling: false,
-      configuration: null
+      configuration: null,
     };
 
     try {
@@ -199,28 +197,27 @@ class TestGenerator {
       }
 
       // Read component file
-      const content = await fs.readFile(component.filePath, 'utf-8');
-      
-      if (component.type === 'util') {
+      const content = await fs.readFile(component.filePath, "utf-8");
+
+      if (component.type === "util") {
         // Analyze JavaScript utility
         analysis.exports = this.extractExports(content);
         analysis.functions = this.extractFunctions(content);
         analysis.classes = this.extractClasses(content);
         analysis.dependencies = this.extractDependencies(content);
-        analysis.async_operations = content.includes('async') || content.includes('await');
-        analysis.error_handling = content.includes('try') || content.includes('catch');
-      } else if (component.type === 'agent') {
+        analysis.async_operations = content.includes("async") || content.includes("await");
+        analysis.error_handling = content.includes("try") || content.includes("catch");
+      } else if (component.type === "agent") {
         // Analyze agent markdown
         analysis.configuration = this.extractAgentConfig(content);
-      } else if (component.type === 'workflow') {
+      } else if (component.type === "workflow") {
         // Analyze workflow YAML
         analysis.configuration = this.extractWorkflowConfig(content);
-      } else if (component.type === 'task') {
+      } else if (component.type === "task") {
         // Analyze task markdown with embedded JavaScript
         analysis.functions = this.extractFunctions(content);
         analysis.configuration = this.extractTaskConfig(content);
       }
-
     } catch (_error) {
       console.warn(chalk.yellow(`Failed to analyze component ${component.id}: ${error.message}`));
     }
@@ -236,7 +233,7 @@ class TestGenerator {
 
     // Generate test cases for exported functions
     for (const func of componentAnalysis.functions) {
-      if (func.visibility === 'public') {
+      if (func.visibility === "public") {
         additionalCases.push(...this.generateFunctionTestCases(func, _testType, config));
       }
     }
@@ -267,35 +264,31 @@ class TestGenerator {
     // Basic functionality test
     testCases.push({
       name: `should execute ${func.name} successfully`,
-      type: 'functionality',
-      setup: func.async ? 'const result = await ' : 'const result = ',
+      type: "functionality",
+      setup: func.async ? "const result = await " : "const result = ",
       assertions: [
         `expect(result).toBeDefined();`,
-        func.async ? `expect(typeof result).toBe('object');` : `expect(result).toBeTruthy();`
-      ]
+        func.async ? `expect(typeof result).toBe('object');` : `expect(result).toBeTruthy();`,
+      ],
     });
 
     // Parameter validation test
     if (func.parameters && func.parameters.length > 0) {
       testCases.push({
         name: `should handle invalid parameters for ${func.name}`,
-        type: 'validation',
+        type: "validation",
         setup: `const invalidCall = () => ${func.name}();`,
-        assertions: [
-          `expect(invalidCall).toThrow();`
-        ]
+        assertions: [`expect(invalidCall).toThrow();`],
       });
     }
 
     // Edge case tests for complex functions
-    if (config.qualityLevel === 'comprehensive') {
+    if (config.qualityLevel === "comprehensive") {
       testCases.push({
         name: `should handle edge cases for ${func.name}`,
-        type: 'edge_case',
+        type: "edge_case",
         setup: `// Edge case testing for ${func.name}`,
-        assertions: [
-          `// Add edge case assertions here`
-        ]
+        assertions: [`// Add edge case assertions here`],
       });
     }
 
@@ -311,23 +304,21 @@ class TestGenerator {
     // Constructor test
     testCases.push({
       name: `should instantiate ${cls.name} correctly`,
-      type: 'instantiation',
+      type: "instantiation",
       setup: `const instance = new ${cls.name}();`,
       assertions: [
         `expect(instance).toBeInstanceOf(${cls.name});`,
-        `expect(instance).toBeDefined();`
-      ]
+        `expect(instance).toBeDefined();`,
+      ],
     });
 
     // Method tests
     for (const method of cls.methods || []) {
       testCases.push({
         name: `should execute ${cls.name}.${method.name} correctly`,
-        type: 'method',
-        setup: `const instance = new ${cls.name}();\nconst result = ${method.async ? 'await ' : ''}instance.${method.name}();`,
-        assertions: [
-          `expect(result).toBeDefined();`
-        ]
+        type: "method",
+        setup: `const instance = new ${cls.name}();\nconst result = ${method.async ? "await " : ""}instance.${method.name}();`,
+        assertions: [`expect(result).toBeDefined();`],
       });
     }
 
@@ -340,22 +331,17 @@ class TestGenerator {
   generateAsyncTestCases(_testType, config) {
     return [
       {
-        name: 'should handle async operations correctly',
-        type: 'async',
-        setup: '// Async operation test setup',
-        assertions: [
-          '// Add async-specific assertions',
-          'expect(result).resolves.toBeDefined();'
-        ]
+        name: "should handle async operations correctly",
+        type: "async",
+        setup: "// Async operation test setup",
+        assertions: ["// Add async-specific assertions", "expect(result).resolves.toBeDefined();"],
       },
       {
-        name: 'should handle async operation timeouts',
-        type: 'timeout',
-        setup: '// Timeout test setup',
-        assertions: [
-          'expect(longRunningOperation).rejects.toThrow("timeout");'
-        ]
-      }
+        name: "should handle async operation timeouts",
+        type: "timeout",
+        setup: "// Timeout test setup",
+        assertions: ['expect(longRunningOperation).rejects.toThrow("timeout");'],
+      },
     ];
   }
 
@@ -365,14 +351,14 @@ class TestGenerator {
   generateErrorHandlingTestCases(_testType, config) {
     return [
       {
-        name: 'should handle errors gracefully',
-        type: 'error_handling',
-        setup: '// Error simulation setup',
+        name: "should handle errors gracefully",
+        type: "error_handling",
+        setup: "// Error simulation setup",
         assertions: [
-          'expect(errorHandlerFunction).not.toThrow();',
-          'expect(result.error).toBeDefined();'
-        ]
-      }
+          "expect(errorHandlerFunction).not.toThrow();",
+          "expect(result.error).toBeDefined();",
+        ],
+      },
     ];
   }
 
@@ -381,11 +367,11 @@ class TestGenerator {
    */
   async optimizeForFramework(content, framework) {
     switch (framework) {
-      case 'jest':
+      case "jest":
         return this.optimizeForJest(content);
-      case 'mocha':
+      case "mocha":
         return this.optimizeForMocha(content);
-      case 'vitest':
+      case "vitest":
         return this.optimizeForVitest(content);
       default:
         return content;
@@ -400,15 +386,15 @@ class TestGenerator {
     let optimized = content;
 
     // Add jest-specific expect extensions if needed
-    if (content.includes('toBeInstanceOf') && !content.includes('expect.extend')) {
+    if (content.includes("toBeInstanceOf") && !content.includes("expect.extend")) {
       optimized = `const { expect } = require('@jest/globals');\n\n${optimized}`;
     }
 
     // Add performance timing for slow tests
-    if (content.includes('async') && content.length > 5000) {
+    if (content.includes("async") && content.length > 5000) {
       optimized = optimized.replace(
         /describe\('([^']+)', \(\) => \{/,
-        "describe('$1', () => {\n  jest.setTimeout(10000);\n"
+        "describe('$1', () => {\n  jest.setTimeout(10000);\n",
       );
     }
 
@@ -423,10 +409,10 @@ class TestGenerator {
     let optimized = content;
 
     // Set timeout for async tests
-    if (content.includes('async')) {
+    if (content.includes("async")) {
       optimized = optimized.replace(
         /describe\('([^']+)', function\(\) \{/,
-        "describe('$1', function() {\n  this.timeout(5000);\n"
+        "describe('$1', function() {\n  this.timeout(5000);\n",
       );
     }
 
@@ -441,8 +427,8 @@ class TestGenerator {
     let optimized = content;
 
     // Use vi mock utilities
-    optimized = optimized.replace(/jest\.mock/g, 'vi.mock');
-    optimized = optimized.replace(/jest\.spyOn/g, 'vi.spyOn');
+    optimized = optimized.replace(/jest\.mock/g, "vi.mock");
+    optimized = optimized.replace(/jest\.spyOn/g, "vi.spyOn");
 
     return optimized;
   }
@@ -477,7 +463,10 @@ class TestGenerator {
     // Replace component variables
     result = result.replace(/\${data\.component\.name}/g, component.name);
     result = result.replace(/\${data\.component\.type}/g, component.type);
-    result = result.replace(/\${this\.toClassName\(data\.component\.name\)}/g, this.toClassName(component.name));
+    result = result.replace(
+      /\${this\.toClassName\(data\.component\.name\)}/g,
+      this.toClassName(component.name),
+    );
 
     // Replace config variables
     result = result.replace(/\${data\.config\.framework}/g, config.framework);
@@ -494,13 +483,16 @@ class TestGenerator {
     let formatted = content;
 
     // Fix indentation
-    formatted = formatted.replace(/\n {2,}/g, match => '\n' + '  '.repeat(Math.floor(match.length / 2)));
+    formatted = formatted.replace(
+      /\n {2,}/g,
+      (match) => "\n" + "  ".repeat(Math.floor(match.length / 2)),
+    );
 
     // Remove excessive blank lines
-    formatted = formatted.replace(/\n{3,}/g, '\n\n');
+    formatted = formatted.replace(/\n{3,}/g, "\n\n");
 
     // Ensure proper spacing around blocks
-    formatted = formatted.replace(/}\n{/g, '}\n\n{');
+    formatted = formatted.replace(/}\n{/g, "}\n\n{");
 
     return formatted.trim();
   }
@@ -527,26 +519,29 @@ ${content}`;
   async validateTestSyntax(content, framework) {
     try {
       // Basic syntax validation
-      if (framework === 'jest' || framework === 'vitest') {
+      if (framework === "jest" || framework === "vitest") {
         // Check for required Jest/Vitest patterns
-        if (!content.includes('describe(') && !content.includes('test(') && !content.includes('it(')) {
-          throw new Error('No test cases found');
+        if (
+          !content.includes("describe(") &&
+          !content.includes("test(") &&
+          !content.includes("it(")
+        ) {
+          throw new Error("No test cases found");
         }
-      } else if (framework === 'mocha') {
+      } else if (framework === "mocha") {
         // Check for required Mocha patterns
-        if (!content.includes('describe(') && !content.includes('it(')) {
-          throw new Error('No test cases found');
+        if (!content.includes("describe(") && !content.includes("it(")) {
+          throw new Error("No test cases found");
         }
       }
 
       // Check for balanced brackets
       const openBrackets = (content.match(/\{/g) || []).length;
       const closeBrackets = (content.match(/\}/g) || []).length;
-      
-      if (openBrackets !== closeBrackets) {
-        throw new Error('Unbalanced brackets in generated test');
-      }
 
+      if (openBrackets !== closeBrackets) {
+        throw new Error("Unbalanced brackets in generated test");
+      }
     } catch (_error) {
       console.warn(chalk.yellow(`Test syntax validation warning: ${error.message}`));
     }
@@ -555,49 +550,65 @@ ${content}`;
   // Helper methods for content injection and analysis
 
   injectAdditionalTestCases(content, testCases) {
-    if (testCases.length === 0) return content;
-
-    const additionalTests = testCases.map(testCase => {
-      let caseContent = `  it('${testCase.name}', async () => {\n`;
-      
-      if (testCase.setup) {
-        caseContent += `    ${testCase.setup}\n\n`;
-      }
-      
-      caseContent += testCase.assertions.map(assertion => `    ${assertion}`).join('\n');
-      caseContent += '\n  });';
-      
-      return caseContent;
-    }).join('\n\n');
-
-    // Find insertion point (before closing of describe block)
-    const insertionPoint = content.lastIndexOf('});');
-    if (insertionPoint !== -1) {
-      return content.slice(0, insertionPoint) + '\n\n' + additionalTests + '\n\n' + content.slice(insertionPoint);
+    if (testCases.length === 0) {
+      return content;
     }
 
-    return content + '\n\n' + additionalTests;
+    const additionalTests = testCases
+      .map((testCase) => {
+        let caseContent = `  it('${testCase.name}', async () => {\n`;
+
+        if (testCase.setup) {
+          caseContent += `    ${testCase.setup}\n\n`;
+        }
+
+        caseContent += testCase.assertions.map((assertion) => `    ${assertion}`).join("\n");
+        caseContent += "\n  });";
+
+        return caseContent;
+      })
+      .join("\n\n");
+
+    // Find insertion point (before closing of describe block)
+    const insertionPoint = content.lastIndexOf("});");
+    if (insertionPoint !== -1) {
+      return (
+        content.slice(0, insertionPoint) +
+        "\n\n" +
+        additionalTests +
+        "\n\n" +
+        content.slice(insertionPoint)
+      );
+    }
+
+    return content + "\n\n" + additionalTests;
   }
 
   injectDynamicImports(content, imports) {
-    if (!imports) return content;
+    if (!imports) {
+      return content;
+    }
 
-    const importSection = imports.join('\n');
+    const importSection = imports.join("\n");
     const existingImports = content.match(/^(const|import|require).*$/gm);
-    
+
     if (existingImports && existingImports.length > 0) {
       // Add after existing imports
       const lastImportIndex = content.lastIndexOf(existingImports[existingImports.length - 1]);
       const insertionPoint = lastImportIndex + existingImports[existingImports.length - 1].length;
-      return content.slice(0, insertionPoint) + '\n' + importSection + content.slice(insertionPoint);
+      return (
+        content.slice(0, insertionPoint) + "\n" + importSection + content.slice(insertionPoint)
+      );
     } else {
       // Add at the beginning
-      return importSection + '\n\n' + content;
+      return importSection + "\n\n" + content;
     }
   }
 
   injectSetupTeardown(content, setupTeardown) {
-    if (!setupTeardown) return content;
+    if (!setupTeardown) {
+      return content;
+    }
 
     let injected = content;
 
@@ -605,7 +616,8 @@ ${content}`;
     const describeMatch = content.match(/describe\([^{]+\{/);
     if (describeMatch) {
       const insertionPoint = describeMatch.index + describeMatch[0].length;
-      injected = content.slice(0, insertionPoint) + '\n' + setupTeardown + content.slice(insertionPoint);
+      injected =
+        content.slice(0, insertionPoint) + "\n" + setupTeardown + content.slice(insertionPoint);
     }
 
     return injected;
@@ -615,19 +627,19 @@ ${content}`;
 
   extractExports(content) {
     const exports = [];
-    
+
     // Extract module.exports
     const moduleExports = content.match(/module\.exports\s*=\s*([^;]+)/);
     if (moduleExports) {
-      exports.push({ type: 'module.exports', value: moduleExports[1] });
+      exports.push({ type: "module.exports", value: moduleExports[1] });
     }
 
     // Extract named exports
     const namedExports = content.match(/exports\.(\w+)/g);
     if (namedExports) {
-      namedExports.forEach(exp => {
-        const name = exp.replace('exports.', '');
-        exports.push({ type: 'named', name: name });
+      namedExports.forEach((exp) => {
+        const name = exp.replace("exports.", "");
+        exports.push({ type: "named", name: name });
       });
     }
 
@@ -636,18 +648,18 @@ ${content}`;
 
   extractFunctions(content) {
     const functions = [];
-    
+
     // Extract function declarations
     const functionDeclarations = content.match(/(?:async\s+)?function\s+(\w+)\s*\([^)]*\)/g);
     if (functionDeclarations) {
-      functionDeclarations.forEach(func => {
+      functionDeclarations.forEach((func) => {
         const match = func.match(/(?:async\s+)?function\s+(\w+)\s*\(([^)]*)\)/);
         if (match) {
           functions.push({
             name: match[1],
-            parameters: match[2] ? match[2].split(',').map(p => p.trim()) : [],
-            async: func.includes('async'),
-            visibility: 'public'
+            parameters: match[2] ? match[2].split(",").map((p) => p.trim()) : [],
+            async: func.includes("async"),
+            visibility: "public",
           });
         }
       });
@@ -656,14 +668,14 @@ ${content}`;
     // Extract arrow functions
     const arrowFunctions = content.match(/(\w+)\s*=\s*(?:async\s+)?\([^)]*\)\s*=>/g);
     if (arrowFunctions) {
-      arrowFunctions.forEach(func => {
+      arrowFunctions.forEach((func) => {
         const match = func.match(/(\w+)\s*=\s*(async\s+)?\(([^)]*)\)\s*=>/);
         if (match) {
           functions.push({
             name: match[1],
-            parameters: match[3] ? match[3].split(',').map(p => p.trim()) : [],
+            parameters: match[3] ? match[3].split(",").map((p) => p.trim()) : [],
             async: !!match[2],
-            visibility: 'public'
+            visibility: "public",
           });
         }
       });
@@ -674,22 +686,24 @@ ${content}`;
 
   extractClasses(content) {
     const classes = [];
-    
+
     const classDeclarations = content.match(/class\s+(\w+)(?:\s+extends\s+\w+)?\s*\{[^}]*\}/g);
     if (classDeclarations) {
-      classDeclarations.forEach(cls => {
+      classDeclarations.forEach((cls) => {
         const nameMatch = cls.match(/class\s+(\w+)/);
         if (nameMatch) {
           const methods = cls.match(/(\w+)\s*\([^)]*\)\s*\{/g) || [];
           classes.push({
             name: nameMatch[1],
-            methods: methods.map(method => {
-              const methodMatch = method.match(/(\w+)\s*\(/);
-              return {
-                name: methodMatch ? methodMatch[1] : 'unknown',
-                async: method.includes('async')
-              };
-            }).filter(m => m.name !== 'constructor')
+            methods: methods
+              .map((method) => {
+                const methodMatch = method.match(/(\w+)\s*\(/);
+                return {
+                  name: methodMatch ? methodMatch[1] : "unknown",
+                  async: method.includes("async"),
+                };
+              })
+              .filter((m) => m.name !== "constructor"),
           });
         }
       });
@@ -700,15 +714,15 @@ ${content}`;
 
   extractDependencies(content) {
     const dependencies = [];
-    
+
     const requires = content.match(/require\(['"]([^'"]+)['"]\)/g);
     if (requires) {
-      requires.forEach(req => {
+      requires.forEach((req) => {
         const match = req.match(/require\(['"]([^'"]+)['"]\)/);
         if (match) {
           dependencies.push({
             name: match[1],
-            type: match[1].startsWith('./') || match[1].startsWith('../') ? 'local' : 'external'
+            type: match[1].startsWith("./") || match[1].startsWith("../") ? "local" : "external",
           });
         }
       });
@@ -721,7 +735,7 @@ ${content}`;
     const yamlMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
     if (yamlMatch) {
       try {
-        const yaml = require('js-yaml');
+        const yaml = require("js-yaml");
         return yaml.load(yamlMatch[1]);
       } catch (_error) {
         return null;
@@ -732,7 +746,7 @@ ${content}`;
 
   extractWorkflowConfig(content) {
     try {
-      const yaml = require('js-yaml');
+      const yaml = require("js-yaml");
       return yaml.load(content);
     } catch (_error) {
       return null;
@@ -749,13 +763,13 @@ ${content}`;
 
     // Add imports for dependencies
     for (const dep of componentAnalysis.dependencies) {
-      if (dep.type === 'local') {
+      if (dep.type === "local") {
         imports.push(`const ${this.toVariableName(dep.name)} = require('${dep.name}');`);
       }
     }
 
     // Add framework-specific test utilities
-    if (config.framework === 'jest') {
+    if (config.framework === "jest") {
       if (componentAnalysis.async_operations) {
         imports.push(`const { jest } = require('@jest/globals');`);
       }
@@ -766,32 +780,36 @@ ${content}`;
 
   generateSetupTeardown(componentAnalysis, testType) {
     const setup = [];
-    
-    if (componentAnalysis.type === 'util' && componentAnalysis.classes.length > 0) {
+
+    if (componentAnalysis.type === "util" && componentAnalysis.classes.length > 0) {
       setup.push(`  let instance;\n`);
-      setup.push(`  beforeEach(() => {\n    instance = new ${componentAnalysis.classes[0].name}();\n  });\n`);
-      setup.push(`  afterEach(() => {\n    if (instance && instance.cleanup) instance.cleanup();\n  });\n`);
+      setup.push(
+        `  beforeEach(() => {\n    instance = new ${componentAnalysis.classes[0].name}();\n  });\n`,
+      );
+      setup.push(
+        `  afterEach(() => {\n    if (instance && instance.cleanup) instance.cleanup();\n  });\n`,
+      );
     }
 
-    return setup.length > 0 ? setup.join('\n') : null;
+    return setup.length > 0 ? setup.join("\n") : null;
   }
 
   // Utility methods
 
   validateGenerationInputs(component, testFile, config) {
     if (!component || !component.name) {
-      throw new Error('Invalid component: missing name');
+      throw new Error("Invalid component: missing name");
     }
 
     if (!testFile || !testFile.test_type) {
-      throw new Error('Invalid test file: missing test_type');
+      throw new Error("Invalid test file: missing test_type");
     }
 
     if (!config || !config.framework) {
-      throw new Error('Invalid config: missing framework');
+      throw new Error("Invalid config: missing framework");
     }
 
-    const validFrameworks = ['jest', 'mocha', 'vitest'];
+    const validFrameworks = ["jest", "mocha", "vitest"];
     if (!validFrameworks.includes(config.framework)) {
       throw new Error(`Unsupported framework: ${config.framework}`);
     }
@@ -808,13 +826,14 @@ ${content}`;
   }
 
   toClassName(name) {
-    return name.split('-')
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('');
+    return name
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join("");
   }
 
   toVariableName(_path) {
-    return path.split('/').pop().replace(/[-\.]/g, '_');
+    return path.split("/").pop().replace(/[-.]/g, "_");
   }
 
   /**
@@ -823,12 +842,14 @@ ${content}`;
   getGenerationStats() {
     return {
       ...this.generationStats,
-      success_rate: this.generationStats.total_generated > 0 
-        ? this.generationStats.successful / this.generationStats.total_generated 
-        : 0,
-      average_generation_time: this.generationStats.total_generated > 0
-        ? this.generationStats.generation_time / this.generationStats.total_generated
-        : 0
+      success_rate:
+        this.generationStats.total_generated > 0
+          ? this.generationStats.successful / this.generationStats.total_generated
+          : 0,
+      average_generation_time:
+        this.generationStats.total_generated > 0
+          ? this.generationStats.generation_time / this.generationStats.total_generated
+          : 0,
     };
   }
 
@@ -837,7 +858,7 @@ ${content}`;
    */
   clearCache() {
     this.generationCache.clear();
-    console.log(chalk.gray('Test generation cache cleared'));
+    console.log(chalk.gray("Test generation cache cleared"));
   }
 }
 

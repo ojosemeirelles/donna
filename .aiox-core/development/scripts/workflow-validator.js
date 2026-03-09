@@ -18,26 +18,26 @@
  * @version 1.0.0
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
 /**
  * Error codes for workflow validation
  * @enum {string}
  */
 const WorkflowValidationErrorCodes = {
-  WF_FILE_NOT_FOUND: 'WF_FILE_NOT_FOUND',
-  WF_YAML_PARSE_ERROR: 'WF_YAML_PARSE_ERROR',
-  WF_MISSING_REQUIRED_FIELD: 'WF_MISSING_REQUIRED_FIELD',
-  WF_INVALID_SEQUENCE: 'WF_INVALID_SEQUENCE',
-  WF_AGENT_NOT_FOUND: 'WF_AGENT_NOT_FOUND',
-  WF_ARTIFACT_CHAIN_BROKEN: 'WF_ARTIFACT_CHAIN_BROKEN',
-  WF_CIRCULAR_DEPENDENCY: 'WF_CIRCULAR_DEPENDENCY',
-  WF_INVALID_CONDITIONAL: 'WF_INVALID_CONDITIONAL',
-  WF_MISSING_HANDOFF: 'WF_MISSING_HANDOFF',
-  WF_INVALID_MERMAID: 'WF_INVALID_MERMAID',
-  WF_AGENT_AMBIGUOUS: 'WF_AGENT_AMBIGUOUS',
+  WF_FILE_NOT_FOUND: "WF_FILE_NOT_FOUND",
+  WF_YAML_PARSE_ERROR: "WF_YAML_PARSE_ERROR",
+  WF_MISSING_REQUIRED_FIELD: "WF_MISSING_REQUIRED_FIELD",
+  WF_INVALID_SEQUENCE: "WF_INVALID_SEQUENCE",
+  WF_AGENT_NOT_FOUND: "WF_AGENT_NOT_FOUND",
+  WF_ARTIFACT_CHAIN_BROKEN: "WF_ARTIFACT_CHAIN_BROKEN",
+  WF_CIRCULAR_DEPENDENCY: "WF_CIRCULAR_DEPENDENCY",
+  WF_INVALID_CONDITIONAL: "WF_INVALID_CONDITIONAL",
+  WF_MISSING_HANDOFF: "WF_MISSING_HANDOFF",
+  WF_INVALID_MERMAID: "WF_INVALID_MERMAID",
+  WF_AGENT_AMBIGUOUS: "WF_AGENT_AMBIGUOUS",
 };
 
 /**
@@ -54,7 +54,8 @@ class WorkflowValidator {
   constructor(options = {}) {
     this.verbose = options.verbose || false;
     this.strict = options.strict || false;
-    this.agentsPath = options.agentsPath || path.join(process.cwd(), '.aiox-core', 'development', 'agents');
+    this.agentsPath =
+      options.agentsPath || path.join(process.cwd(), ".aiox-core", "development", "agents");
     this.squadAgentsPath = options.squadAgentsPath || null;
   }
 
@@ -89,7 +90,7 @@ class WorkflowValidator {
       result.errors.push({
         code: WorkflowValidationErrorCodes.WF_FILE_NOT_FOUND,
         message: `Workflow file not found: ${workflowPath}`,
-        suggestion: 'Check the file path or create the workflow first',
+        suggestion: "Check the file path or create the workflow first",
       });
       return result;
     }
@@ -144,7 +145,7 @@ class WorkflowValidator {
       result.valid = false;
     }
 
-    this._log(`Validation complete: ${result.valid ? 'VALID' : 'INVALID'}`);
+    this._log(`Validation complete: ${result.valid ? "VALID" : "INVALID"}`);
     return result;
   }
 
@@ -157,14 +158,14 @@ class WorkflowValidator {
     const result = { valid: true, errors: [], warnings: [], suggestions: [], data: null };
 
     try {
-      const content = await fs.readFile(workflowPath, 'utf-8');
+      const content = await fs.readFile(workflowPath, "utf-8");
       const data = yaml.load(content);
-      if (!data || typeof data !== 'object') {
+      if (!data || typeof data !== "object") {
         result.valid = false;
         result.errors.push({
           code: WorkflowValidationErrorCodes.WF_YAML_PARSE_ERROR,
-          message: 'Workflow file is empty or not a valid YAML object',
-          suggestion: 'Ensure the file contains valid YAML with a workflow: root key',
+          message: "Workflow file is empty or not a valid YAML object",
+          suggestion: "Ensure the file contains valid YAML with a workflow: root key",
         });
       } else {
         result.data = data;
@@ -174,7 +175,7 @@ class WorkflowValidator {
       result.errors.push({
         code: WorkflowValidationErrorCodes.WF_YAML_PARSE_ERROR,
         message: `YAML parse error: ${error.message}`,
-        suggestion: 'Fix YAML syntax — check indentation, colons, and special characters',
+        suggestion: "Fix YAML syntax — check indentation, colons, and special characters",
       });
     }
 
@@ -197,13 +198,13 @@ class WorkflowValidator {
         code: WorkflowValidationErrorCodes.WF_MISSING_REQUIRED_FIELD,
         message: 'Missing top-level "workflow:" key',
         file: filename,
-        suggestion: 'Add workflow: as the root key containing id, name, and sequence',
+        suggestion: "Add workflow: as the root key containing id, name, and sequence",
       });
       return result;
     }
 
     const wf = workflow.workflow;
-    const requiredFields = ['id', 'name'];
+    const requiredFields = ["id", "name"];
 
     for (const field of requiredFields) {
       if (!wf[field]) {
@@ -223,12 +224,13 @@ class WorkflowValidator {
         code: WorkflowValidationErrorCodes.WF_MISSING_REQUIRED_FIELD,
         message: 'Missing or empty "sequence:" array',
         file: filename,
-        suggestion: 'Add sequence: with at least one step entry containing agent and creates/action',
+        suggestion:
+          "Add sequence: with at least one step entry containing agent and creates/action",
       });
     }
 
     // Warnings for recommended fields
-    const recommendedFields = ['description', 'type'];
+    const recommendedFields = ["description", "type"];
     for (const field of recommendedFields) {
       if (!wf[field]) {
         result.warnings.push({
@@ -251,7 +253,9 @@ class WorkflowValidator {
   validatePhaseSequence(sequence) {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
 
-    if (!Array.isArray(sequence)) return result;
+    if (!Array.isArray(sequence)) {
+      return result;
+    }
 
     // Check that each step has an agent or is a control flow entry
     for (let i = 0; i < sequence.length; i++) {
@@ -266,7 +270,7 @@ class WorkflowValidator {
         result.warnings.push({
           code: WorkflowValidationErrorCodes.WF_INVALID_SEQUENCE,
           message: `Step ${i + 1} has no "agent:" field`,
-          suggestion: 'Each step should specify an agent responsible for that phase',
+          suggestion: "Each step should specify an agent responsible for that phase",
         });
       }
 
@@ -275,8 +279,9 @@ class WorkflowValidator {
       if (!hasAction) {
         result.warnings.push({
           code: WorkflowValidationErrorCodes.WF_INVALID_SEQUENCE,
-          message: `Step ${i + 1} (agent: ${step.agent || 'unknown'}) has no action (creates/updates/validates/action)`,
-          suggestion: 'Add creates:, updates:, validates:, or action: to define what this step does',
+          message: `Step ${i + 1} (agent: ${step.agent || "unknown"}) has no action (creates/updates/validates/action)`,
+          suggestion:
+            "Add creates:, updates:, validates:, or action: to define what this step does",
         });
       }
     }
@@ -298,13 +303,15 @@ class WorkflowValidator {
   async validateAgentReferences(sequence) {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
 
-    if (!Array.isArray(sequence)) return result;
+    if (!Array.isArray(sequence)) {
+      return result;
+    }
 
     const agents = new Set();
     for (const step of sequence) {
       if (step.agent) {
         // Handle compound agents like "analyst/pm"
-        const agentNames = step.agent.split('/').map(a => a.trim());
+        const agentNames = step.agent.split("/").map((a) => a.trim());
         for (const a of agentNames) {
           agents.add(a);
         }
@@ -312,28 +319,35 @@ class WorkflowValidator {
     }
 
     // Skip meta-agent names
-    const metaAgents = new Set(['various']);
+    const metaAgents = new Set(["various"]);
 
     for (const agent of agents) {
-      if (metaAgents.has(agent)) continue;
+      if (metaAgents.has(agent)) {
+        continue;
+      }
 
       // Parse explicit prefix (e.g., "core:architect" or "squad:validator")
       let explicitContext = null;
       let agentName = agent;
-      if (agent.includes(':')) {
-        const parts = agent.split(':');
-        if (parts[0] === 'core' || parts[0] === 'squad') {
+      if (agent.includes(":")) {
+        const parts = agent.split(":");
+        if (parts[0] === "core" || parts[0] === "squad") {
           explicitContext = parts[0];
-          agentName = parts.slice(1).join(':');
+          agentName = parts.slice(1).join(":");
         }
       }
 
       // Sanitize agent name to prevent path traversal
-      if (!agentName || agentName.includes('..') || agentName.includes('/') || agentName.includes('\\')) {
+      if (
+        !agentName ||
+        agentName.includes("..") ||
+        agentName.includes("/") ||
+        agentName.includes("\\")
+      ) {
         result.warnings.push({
           code: WorkflowValidationErrorCodes.WF_AGENT_NOT_FOUND,
           message: `Agent "${agent}" has an invalid name`,
-          suggestion: 'Use simple agent identifiers without path segments',
+          suggestion: "Use simple agent identifiers without path segments",
         });
         continue;
       }
@@ -343,7 +357,7 @@ class WorkflowValidator {
         const coreFile = path.join(this.agentsPath, `${agentName}.md`);
         const squadFile = path.join(this.squadAgentsPath, `${agentName}.md`);
 
-        if (explicitContext === 'core') {
+        if (explicitContext === "core") {
           const coreExists = await this._checkFileExists(coreFile);
           if (!coreExists.exists) {
             result.warnings.push({
@@ -352,7 +366,7 @@ class WorkflowValidator {
               suggestion: `Create ${agentName}.md in core agents/ or check the agent name`,
             });
           }
-        } else if (explicitContext === 'squad') {
+        } else if (explicitContext === "squad") {
           const squadExists = await this._checkFileExists(squadFile);
           if (!squadExists.exists) {
             result.warnings.push({
@@ -405,7 +419,9 @@ class WorkflowValidator {
   validateArtifactFlow(sequence) {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
 
-    if (!Array.isArray(sequence)) return result;
+    if (!Array.isArray(sequence)) {
+      return result;
+    }
 
     const createdArtifacts = new Set();
 
@@ -421,12 +437,16 @@ class WorkflowValidator {
       if (step.requires) {
         const required = step.requires;
         // Handle both string and special values
-        if (typeof required === 'string' && !required.startsWith('all_') && !required.startsWith('sharded_')) {
+        if (
+          typeof required === "string" &&
+          !required.startsWith("all_") &&
+          !required.startsWith("sharded_")
+        ) {
           if (!createdArtifacts.has(required)) {
             result.warnings.push({
               code: WorkflowValidationErrorCodes.WF_ARTIFACT_CHAIN_BROKEN,
-              message: `Step ${i + 1} (agent: ${step.agent || 'unknown'}) requires "${required}" but no prior step creates it`,
-              suggestion: 'Add a creates: entry in a preceding step or fix the artifact name',
+              message: `Step ${i + 1} (agent: ${step.agent || "unknown"}) requires "${required}" but no prior step creates it`,
+              suggestion: "Add a creates: entry in a preceding step or fix the artifact name",
             });
           }
         }
@@ -444,7 +464,9 @@ class WorkflowValidator {
   detectCircularDeps(sequence) {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
 
-    if (!Array.isArray(sequence)) return result;
+    if (!Array.isArray(sequence)) {
+      return result;
+    }
 
     const artifactToStep = new Map();
 
@@ -463,7 +485,7 @@ class WorkflowValidator {
 
     for (let i = 0; i < sequence.length; i++) {
       const step = sequence[i];
-      if (step.requires && typeof step.requires === 'string') {
+      if (step.requires && typeof step.requires === "string") {
         const creatorStep = artifactToStep.get(step.requires);
         if (creatorStep !== undefined && creatorStep !== i) {
           // Step i depends on creatorStep
@@ -480,9 +502,11 @@ class WorkflowValidator {
       visited.add(node);
       inStack.add(node);
 
-      for (const neighbor of (edges.get(node) || [])) {
+      for (const neighbor of edges.get(node) || []) {
         if (!visited.has(neighbor)) {
-          if (hasCycle(neighbor)) return true;
+          if (hasCycle(neighbor)) {
+            return true;
+          }
         } else if (inStack.has(neighbor)) {
           return true;
         }
@@ -498,8 +522,8 @@ class WorkflowValidator {
           result.valid = false;
           result.errors.push({
             code: WorkflowValidationErrorCodes.WF_CIRCULAR_DEPENDENCY,
-            message: 'Circular dependency detected in artifact requires/creates chain',
-            suggestion: 'Review the requires/creates relationships and break the cycle',
+            message: "Circular dependency detected in artifact requires/creates chain",
+            suggestion: "Review the requires/creates relationships and break the cycle",
           });
           break;
         }
@@ -517,17 +541,20 @@ class WorkflowValidator {
   validateConditionalLogic(sequence) {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
 
-    if (!Array.isArray(sequence)) return result;
+    if (!Array.isArray(sequence)) {
+      return result;
+    }
 
     for (let i = 0; i < sequence.length; i++) {
       const step = sequence[i];
       if (step.condition) {
         // Conditions should be descriptive identifiers
-        if (typeof step.condition !== 'string' || step.condition.trim().length === 0) {
+        if (typeof step.condition !== "string" || step.condition.trim().length === 0) {
           result.warnings.push({
             code: WorkflowValidationErrorCodes.WF_INVALID_CONDITIONAL,
             message: `Step ${i + 1} has empty or invalid condition`,
-            suggestion: 'Conditions should be descriptive identifiers (e.g., "architecture_suggests_prd_changes")',
+            suggestion:
+              'Conditions should be descriptive identifiers (e.g., "architecture_suggests_prd_changes")',
           });
         }
       }
@@ -545,14 +572,18 @@ class WorkflowValidator {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
 
     const wf = workflow.workflow;
-    if (!wf || !wf.sequence || !Array.isArray(wf.sequence)) return result;
+    if (!wf || !wf.sequence || !Array.isArray(wf.sequence)) {
+      return result;
+    }
 
     // Count agent transitions (where one agent hands off to another)
     let transitionCount = 0;
     let prevAgent = null;
     for (const step of wf.sequence) {
       if (step.agent && step.agent !== prevAgent) {
-        if (prevAgent) transitionCount++;
+        if (prevAgent) {
+          transitionCount++;
+        }
         prevAgent = step.agent;
       }
     }
@@ -562,7 +593,7 @@ class WorkflowValidator {
       result.warnings.push({
         code: WorkflowValidationErrorCodes.WF_MISSING_HANDOFF,
         message: `Workflow has ${transitionCount} agent transitions but no handoff_prompts section`,
-        suggestion: 'Add handoff_prompts: with guidance for each agent transition',
+        suggestion: "Add handoff_prompts: with guidance for each agent transition",
       });
     }
 
@@ -578,15 +609,17 @@ class WorkflowValidator {
     const result = { valid: true, errors: [], warnings: [], suggestions: [] };
 
     const wf = workflow.workflow;
-    if (!wf || !wf.flow_diagram) return result;
+    if (!wf || !wf.flow_diagram) {
+      return result;
+    }
 
     const diagram = wf.flow_diagram;
 
     // Basic checks
-    if (!diagram.includes('graph') && !diagram.includes('flowchart')) {
+    if (!diagram.includes("graph") && !diagram.includes("flowchart")) {
       result.warnings.push({
         code: WorkflowValidationErrorCodes.WF_INVALID_MERMAID,
-        message: 'Mermaid diagram missing graph/flowchart declaration',
+        message: "Mermaid diagram missing graph/flowchart declaration",
         suggestion: 'Start diagram with "graph TD" or "flowchart TD"',
       });
     }
@@ -598,7 +631,7 @@ class WorkflowValidator {
       result.warnings.push({
         code: WorkflowValidationErrorCodes.WF_INVALID_MERMAID,
         message: `Mermaid diagram has unbalanced brackets (${openBrackets} open, ${closeBrackets} close)`,
-        suggestion: 'Check for missing [ or ] in node definitions',
+        suggestion: "Check for missing [ or ] in node definitions",
       });
     }
 
@@ -615,30 +648,30 @@ class WorkflowValidator {
     const lines = [];
 
     lines.push(`Validating workflow: ${workflowPath}`);
-    lines.push('');
+    lines.push("");
 
     if (result.errors.length > 0) {
       lines.push(`Errors: ${result.errors.length}`);
       for (const err of result.errors) {
-        const filePart = err.file ? ` (${err.file})` : '';
+        const filePart = err.file ? ` (${err.file})` : "";
         lines.push(`  - [${err.code}]${filePart}: ${err.message}`);
         if (err.suggestion) {
           lines.push(`    Suggestion: ${err.suggestion}`);
         }
       }
-      lines.push('');
+      lines.push("");
     }
 
     if (result.warnings.length > 0) {
       lines.push(`Warnings: ${result.warnings.length}`);
       for (const warn of result.warnings) {
-        const filePart = warn.file ? ` (${warn.file})` : '';
+        const filePart = warn.file ? ` (${warn.file})` : "";
         lines.push(`  - [${warn.code}]${filePart}: ${warn.message}`);
         if (warn.suggestion) {
           lines.push(`    Suggestion: ${warn.suggestion}`);
         }
       }
-      lines.push('');
+      lines.push("");
     }
 
     if (result.suggestions.length > 0) {
@@ -646,20 +679,20 @@ class WorkflowValidator {
       for (const sug of result.suggestions) {
         lines.push(`  - ${sug}`);
       }
-      lines.push('');
+      lines.push("");
     }
 
     if (result.valid) {
       if (result.warnings.length > 0) {
-        lines.push('Result: VALID (with warnings)');
+        lines.push("Result: VALID (with warnings)");
       } else {
-        lines.push('Result: VALID');
+        lines.push("Result: VALID");
       }
     } else {
-      lines.push('Result: INVALID');
+      lines.push("Result: INVALID");
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   // ============ Private Helper Methods ============

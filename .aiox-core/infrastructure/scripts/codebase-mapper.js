@@ -22,9 +22,9 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const fsPromises = require('fs').promises;
-const path = require('path');
+const fs = require("fs");
+const fsPromises = require("fs").promises;
+const path = require("path");
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 //                              CONFIGURATION
@@ -32,83 +32,95 @@ const path = require('path');
 
 const CONFIG = {
   // AC3: Output path
-  outputPath: '.aiox/codebase-map.json',
+  outputPath: ".aiox/codebase-map.json",
   // Schema version
-  schemaVersion: '1.0',
+  schemaVersion: "1.0",
   // Default max depth
   defaultMaxDepth: 5,
   // AC7: Directories to exclude
   excludeDirs: [
-    'node_modules',
-    '.git',
-    'dist',
-    'build',
-    'out',
-    '.next',
-    '.nuxt',
-    '.svelte-kit',
-    'coverage',
-    '.cache',
-    '.parcel-cache',
-    '.turbo',
-    '__pycache__',
-    '.pytest_cache',
-    'venv',
-    '.venv',
-    'env',
-    '.env',
-    'vendor',
-    'tmp',
-    'temp',
-    'logs',
+    "node_modules",
+    ".git",
+    "dist",
+    "build",
+    "out",
+    ".next",
+    ".nuxt",
+    ".svelte-kit",
+    "coverage",
+    ".cache",
+    ".parcel-cache",
+    ".turbo",
+    "__pycache__",
+    ".pytest_cache",
+    "venv",
+    ".venv",
+    "env",
+    ".env",
+    "vendor",
+    "tmp",
+    "temp",
+    "logs",
   ],
   // File patterns to exclude
   excludeFiles: [
-    '*.log',
-    '*.lock',
-    '*.map',
-    '.DS_Store',
-    'Thumbs.db',
-    '*.min.js',
-    '*.min.css',
-    '*.chunk.js',
-    '*.bundle.js',
+    "*.log",
+    "*.lock",
+    "*.map",
+    ".DS_Store",
+    "Thumbs.db",
+    "*.min.js",
+    "*.min.css",
+    "*.chunk.js",
+    "*.bundle.js",
   ],
   // File extensions to analyze for patterns
   codeExtensions: [
-    '.js', '.mjs', '.cjs',
-    '.ts', '.tsx', '.jsx',
-    '.py', '.rb', '.go',
-    '.java', '.kt', '.scala',
-    '.rs', '.cpp', '.c', '.h',
-    '.vue', '.svelte',
+    ".js",
+    ".mjs",
+    ".cjs",
+    ".ts",
+    ".tsx",
+    ".jsx",
+    ".py",
+    ".rb",
+    ".go",
+    ".java",
+    ".kt",
+    ".scala",
+    ".rs",
+    ".cpp",
+    ".c",
+    ".h",
+    ".vue",
+    ".svelte",
   ],
   // Config file names to detect
   configFiles: [
-    'package.json',
-    'tsconfig.json',
-    'vite.config.ts',
-    'vite.config.js',
-    'next.config.js',
-    'next.config.mjs',
-    'nuxt.config.ts',
-    'webpack.config.js',
-    '.eslintrc',
-    '.eslintrc.js',
-    '.prettierrc',
-    'jest.config.js',
-    'vitest.config.ts',
-    'turbo.json',
-    'pnpm-workspace.yaml',
-    'lerna.json',
-    'nx.json',
-    'docker-compose.yml',
-    'Dockerfile',
-    '.env.example',
-    'pyproject.toml',
-    'Cargo.toml',
-    'go.mod',
-    'Gemfile',
+    "package.json",
+    "tsconfig.json",
+    "vite.config.ts",
+    "vite.config.js",
+    "next.config.js",
+    "next.config.mjs",
+    "nuxt.config.ts",
+    "webpack.config.js",
+    ".eslintrc",
+    ".eslintrc.js",
+    ".prettierrc",
+    "jest.config.js",
+    "vitest.config.ts",
+    "turbo.json",
+    "pnpm-workspace.yaml",
+    "lerna.json",
+    "nx.json",
+    "docker-compose.yml",
+    "Dockerfile",
+    ".env.example",
+    "pyproject.toml",
+    "Cargo.toml",
+    "go.mod",
+    "Gemfile",
   ],
 };
 
@@ -122,95 +134,95 @@ const CONFIG = {
 const PatternDetectors = {
   // State management patterns
   stateManagement: {
-    'zustand': {
+    zustand: {
       patterns: [/import.*from ['"]zustand['"]/, /create\s*\(/],
-      files: ['**/stores/**', '**/store/**'],
+      files: ["**/stores/**", "**/store/**"],
     },
-    'redux': {
+    redux: {
       patterns: [/import.*from ['"]@reduxjs\/toolkit['"]/, /createSlice\(/, /configureStore\(/],
-      files: ['**/store/**', '**/slices/**', '**/reducers/**'],
+      files: ["**/store/**", "**/slices/**", "**/reducers/**"],
     },
-    'mobx': {
+    mobx: {
       patterns: [/import.*from ['"]mobx['"]/, /@observable/, /@action/],
-      files: ['**/stores/**'],
+      files: ["**/stores/**"],
     },
-    'vuex': {
+    vuex: {
       patterns: [/import.*from ['"]vuex['"]/, /createStore\(/],
-      files: ['**/store/**'],
+      files: ["**/store/**"],
     },
-    'pinia': {
+    pinia: {
       patterns: [/import.*from ['"]pinia['"]/, /defineStore\(/],
-      files: ['**/stores/**'],
+      files: ["**/stores/**"],
     },
-    'context-api': {
+    "context-api": {
       patterns: [/createContext\(/, /useContext\(/],
-      files: ['**/contexts/**', '**/context/**'],
+      files: ["**/contexts/**", "**/context/**"],
     },
   },
 
   // API patterns
   apiPatterns: {
-    'fetch-wrapper': {
+    "fetch-wrapper": {
       patterns: [/export.*fetch/, /async.*fetch\(/],
-      files: ['**/lib/api.*', '**/utils/api.*', '**/services/api.*'],
+      files: ["**/lib/api.*", "**/utils/api.*", "**/services/api.*"],
     },
-    'axios': {
+    axios: {
       patterns: [/import.*from ['"]axios['"]/, /axios\.create\(/],
-      files: ['**/lib/axios.*', '**/services/**'],
+      files: ["**/lib/axios.*", "**/services/**"],
     },
-    'react-query': {
+    "react-query": {
       patterns: [/import.*from ['"]@tanstack\/react-query['"]/, /useQuery\(/, /useMutation\(/],
-      files: ['**/hooks/**', '**/queries/**'],
+      files: ["**/hooks/**", "**/queries/**"],
     },
-    'swr': {
+    swr: {
       patterns: [/import.*from ['"]swr['"]/, /useSWR\(/],
-      files: ['**/hooks/**'],
+      files: ["**/hooks/**"],
     },
-    'trpc': {
+    trpc: {
       patterns: [/import.*from ['"]@trpc\//, /trpc\.router\(/],
-      files: ['**/trpc/**', '**/server/routers/**'],
+      files: ["**/trpc/**", "**/server/routers/**"],
     },
-    'graphql': {
+    graphql: {
       patterns: [/import.*from ['"]@apollo\/client['"]/, /gql`/, /useQuery\(/],
-      files: ['**/graphql/**', '**/*.graphql'],
+      files: ["**/graphql/**", "**/*.graphql"],
     },
   },
 
   // Testing patterns
   testingPatterns: {
-    'jest': {
+    jest: {
       patterns: [/describe\(/, /it\(/, /test\(/, /expect\(/],
-      files: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*'],
+      files: ["**/__tests__/**", "**/*.test.*", "**/*.spec.*"],
     },
-    'vitest': {
+    vitest: {
       patterns: [/import.*from ['"]vitest['"]/, /vi\.fn\(/],
-      files: ['**/__tests__/**', '**/*.test.*', '**/*.spec.*'],
+      files: ["**/__tests__/**", "**/*.test.*", "**/*.spec.*"],
     },
-    'react-testing-library': {
+    "react-testing-library": {
       patterns: [/import.*from ['"]@testing-library\/react['"]/, /render\(/, /screen\./],
-      files: ['**/__tests__/**', '**/*.test.*'],
+      files: ["**/__tests__/**", "**/*.test.*"],
     },
-    'cypress': {
+    cypress: {
       patterns: [/cy\./, /describe\(/, /it\(/],
-      files: ['**/cypress/**', '**/*.cy.*'],
+      files: ["**/cypress/**", "**/*.cy.*"],
     },
-    'playwright': {
+    playwright: {
       patterns: [/import.*from ['"]@playwright\/test['"]/, /test\(/, /expect\(/],
-      files: ['**/e2e/**', '**/*.spec.ts'],
+      files: ["**/e2e/**", "**/*.spec.ts"],
     },
   },
 
   // Error handling patterns
   errorHandling: {
-    'try-catch-toast': {
+    "try-catch-toast": {
       patterns: [/try\s*{[\s\S]*catch[\s\S]*toast\./],
       files: null,
     },
-    'error-boundary': {
+    "error-boundary": {
       patterns: [/ErrorBoundary/, /componentDidCatch/],
-      files: ['**/components/**'],
+      files: ["**/components/**"],
     },
-    'global-error-handler': {
+    "global-error-handler": {
       patterns: [/window\.onerror/, /process\.on\(['"]uncaughtException['"]\)/],
       files: null,
     },
@@ -273,7 +285,7 @@ class CodebaseMapper {
    */
   async _scanRecursive(dirPath, depth) {
     const result = {
-      type: 'directory',
+      type: "directory",
       purpose: this._inferPurpose(path.basename(dirPath)),
       children: {},
       files: [],
@@ -340,8 +352,8 @@ class CodebaseMapper {
     // Only read code files for pattern analysis
     if (CONFIG.codeExtensions.includes(ext) && stats.size < 500000) {
       try {
-        const content = await fsPromises.readFile(fullPath, 'utf-8');
-        fileInfo.lineCount = content.split('\n').length;
+        const content = await fsPromises.readFile(fullPath, "utf-8");
+        fileInfo.lineCount = content.split("\n").length;
         fileInfo.hasTests = /\.(test|spec)\.(js|ts|jsx|tsx)$/.test(relativePath);
         fileInfo.isComponent = /\.(jsx|tsx|vue|svelte)$/.test(ext);
 
@@ -363,7 +375,7 @@ class CodebaseMapper {
    * @private
    */
   _isExcluded(name) {
-    return this.excludeDirs.includes(name) || name.startsWith('.');
+    return this.excludeDirs.includes(name) || name.startsWith(".");
   }
 
   /**
@@ -371,8 +383,8 @@ class CodebaseMapper {
    * @private
    */
   _isExcludedFile(name) {
-    return CONFIG.excludeFiles.some(pattern => {
-      if (pattern.startsWith('*')) {
+    return CONFIG.excludeFiles.some((pattern) => {
+      if (pattern.startsWith("*")) {
         return name.endsWith(pattern.slice(1));
       }
       return name === pattern;
@@ -385,42 +397,42 @@ class CodebaseMapper {
    */
   _inferPurpose(dirName) {
     const purposes = {
-      src: 'Application source code',
-      lib: 'Library/utility code',
-      utils: 'Utility functions',
-      helpers: 'Helper functions',
-      components: 'UI components',
-      pages: 'Page components/routes',
-      views: 'View components',
-      stores: 'State management stores',
-      store: 'State management',
-      hooks: 'Custom React/Vue hooks',
-      composables: 'Vue composables',
-      services: 'Service layer/API clients',
-      api: 'API routes/endpoints',
-      server: 'Server-side code',
-      client: 'Client-side code',
-      public: 'Static assets',
-      assets: 'Media/static files',
-      styles: 'CSS/styling files',
-      types: 'TypeScript type definitions',
-      interfaces: 'Interface definitions',
-      models: 'Data models/schemas',
-      schemas: 'Data schemas',
-      config: 'Configuration files',
-      tests: 'Test files',
-      __tests__: 'Jest test files',
-      e2e: 'End-to-end tests',
-      cypress: 'Cypress tests',
-      docs: 'Documentation',
-      scripts: 'Build/utility scripts',
-      bin: 'CLI/executable scripts',
-      migrations: 'Database migrations',
-      seeders: 'Database seeders',
-      middleware: 'Middleware functions',
-      plugins: 'Plugin/extension code',
-      locales: 'i18n/localization files',
-      i18n: 'Internationalization',
+      src: "Application source code",
+      lib: "Library/utility code",
+      utils: "Utility functions",
+      helpers: "Helper functions",
+      components: "UI components",
+      pages: "Page components/routes",
+      views: "View components",
+      stores: "State management stores",
+      store: "State management",
+      hooks: "Custom React/Vue hooks",
+      composables: "Vue composables",
+      services: "Service layer/API clients",
+      api: "API routes/endpoints",
+      server: "Server-side code",
+      client: "Client-side code",
+      public: "Static assets",
+      assets: "Media/static files",
+      styles: "CSS/styling files",
+      types: "TypeScript type definitions",
+      interfaces: "Interface definitions",
+      models: "Data models/schemas",
+      schemas: "Data schemas",
+      config: "Configuration files",
+      tests: "Test files",
+      __tests__: "Jest test files",
+      e2e: "End-to-end tests",
+      cypress: "Cypress tests",
+      docs: "Documentation",
+      scripts: "Build/utility scripts",
+      bin: "CLI/executable scripts",
+      migrations: "Database migrations",
+      seeders: "Database seeders",
+      middleware: "Middleware functions",
+      plugins: "Plugin/extension code",
+      locales: "i18n/localization files",
+      i18n: "Internationalization",
     };
 
     return purposes[dirName.toLowerCase()] || null;
@@ -436,7 +448,7 @@ class CodebaseMapper {
    */
   async detectPatterns() {
     if (!this.quiet) {
-      console.log('Detecting patterns...');
+      console.log("Detecting patterns...");
     }
 
     const patterns = {
@@ -450,11 +462,13 @@ class CodebaseMapper {
     const sampleFiles = this._getSampleFiles();
 
     for (const [filePath, fileInfo] of sampleFiles) {
-      if (!fileInfo.imports) continue;
+      if (!fileInfo.imports) {
+        continue;
+      }
 
       try {
         const fullPath = path.join(this.rootPath, filePath);
-        const content = await fsPromises.readFile(fullPath, 'utf-8');
+        const content = await fsPromises.readFile(fullPath, "utf-8");
 
         // Detect state management
         if (!patterns.stateManagement) {
@@ -502,8 +516,8 @@ class CodebaseMapper {
 
     // Try to infer patterns from directory structure
     if (!patterns.stateManagement) {
-      if (this._hasDirectory('stores')) {
-        patterns.stateManagement = 'store-based (inferred from directory)';
+      if (this._hasDirectory("stores")) {
+        patterns.stateManagement = "store-based (inferred from directory)";
       }
     }
 
@@ -516,7 +530,7 @@ class CodebaseMapper {
    * @private
    */
   _matchesPattern(content, patterns) {
-    return patterns.some(pattern => pattern.test(content));
+    return patterns.some((pattern) => pattern.test(content));
   }
 
   /**
@@ -530,7 +544,9 @@ class CodebaseMapper {
     for (const [filePath, fileInfo] of this._fileIndex) {
       if (CONFIG.codeExtensions.includes(fileInfo.extension)) {
         samples.push([filePath, fileInfo]);
-        if (samples.length >= maxSamples) break;
+        if (samples.length >= maxSamples) {
+          break;
+        }
       }
     }
 
@@ -543,9 +559,13 @@ class CodebaseMapper {
    */
   _hasDirectory(name) {
     const checkRecursive = (obj) => {
-      if (obj.children && obj.children[name]) return true;
+      if (obj.children && obj.children[name]) {
+        return true;
+      }
       for (const child of Object.values(obj.children || {})) {
-        if (checkRecursive(child)) return true;
+        if (checkRecursive(child)) {
+          return true;
+        }
       }
       return false;
     };
@@ -562,7 +582,7 @@ class CodebaseMapper {
    */
   async detectConventions() {
     if (!this.quiet) {
-      console.log('Detecting conventions...');
+      console.log("Detecting conventions...");
     }
 
     const conventions = {
@@ -575,20 +595,20 @@ class CodebaseMapper {
     };
 
     // Detect from config files
-    const eslintConfig = this._configFiles.find(f => f.name.startsWith('.eslintrc'));
-    const prettierConfig = this._configFiles.find(f => f.name.startsWith('.prettierrc'));
+    const eslintConfig = this._configFiles.find((f) => f.name.startsWith(".eslintrc"));
+    const prettierConfig = this._configFiles.find((f) => f.name.startsWith(".prettierrc"));
 
     if (eslintConfig || prettierConfig) {
-      conventions.linting = eslintConfig ? 'ESLint' : 'Prettier';
+      conventions.linting = eslintConfig ? "ESLint" : "Prettier";
     }
 
     // Detect TypeScript usage
-    const tsConfig = this._configFiles.find(f => f.name === 'tsconfig.json');
+    const tsConfig = this._configFiles.find((f) => f.name === "tsconfig.json");
     if (tsConfig) {
-      conventions.language = 'TypeScript';
-      conventions.typeChecking = 'strict'; // Default assumption
+      conventions.language = "TypeScript";
+      conventions.typeChecking = "strict"; // Default assumption
     } else {
-      conventions.language = 'JavaScript';
+      conventions.language = "JavaScript";
     }
 
     this._conventions = conventions;
@@ -611,14 +631,14 @@ class CodebaseMapper {
       const fileName = path.basename(filePath, path.extname(filePath));
 
       // Skip test files and index files
-      if (fileName === 'index' || fileName.includes('.test') || fileName.includes('.spec')) {
+      if (fileName === "index" || fileName.includes(".test") || fileName.includes(".spec")) {
         continue;
       }
 
       if (/^[a-z][a-zA-Z0-9]*$/.test(fileName)) {
-        if (fileName.includes('-')) {
+        if (fileName.includes("-")) {
           namingPatterns.kebabCase++;
-        } else if (fileName.includes('_')) {
+        } else if (fileName.includes("_")) {
           namingPatterns.snakeCase++;
         } else {
           namingPatterns.camelCase++;
@@ -632,13 +652,12 @@ class CodebaseMapper {
       }
     }
 
-    const dominant = Object.entries(namingPatterns)
-      .sort((a, b) => b[1] - a[1])[0];
+    const dominant = Object.entries(namingPatterns).toSorted((a, b) => b[1] - a[1])[0];
 
     if (dominant[1] > 0) {
       return `${dominant[0]} (${dominant[1]} files)`;
     }
-    return 'mixed';
+    return "mixed";
   }
 
   /**
@@ -659,12 +678,18 @@ class CodebaseMapper {
       }
     }
 
-    if (totalComponents === 0) return null;
+    if (totalComponents === 0) {
+      return null;
+    }
 
     const ratio = pascalCount / totalComponents;
-    if (ratio > 0.8) return 'PascalCase';
-    if (ratio > 0.5) return 'mostly PascalCase';
-    return 'mixed';
+    if (ratio > 0.8) {
+      return "PascalCase";
+    }
+    if (ratio > 0.5) {
+      return "mostly PascalCase";
+    }
+    return "mixed";
   }
 
   /**
@@ -676,23 +701,25 @@ class CodebaseMapper {
     let relativeCount = 0;
 
     for (const [, fileInfo] of this._fileIndex) {
-      if (!fileInfo.imports) continue;
+      if (!fileInfo.imports) {
+        continue;
+      }
 
       for (const imp of fileInfo.imports) {
-        if (imp.startsWith('@/') || imp.startsWith('~/')) {
+        if (imp.startsWith("@/") || imp.startsWith("~/")) {
           absoluteCount++;
-        } else if (imp.startsWith('./') || imp.startsWith('../')) {
+        } else if (imp.startsWith("./") || imp.startsWith("../")) {
           relativeCount++;
         }
       }
     }
 
     if (absoluteCount > relativeCount * 2) {
-      return 'absolute via @/ alias';
+      return "absolute via @/ alias";
     } else if (relativeCount > absoluteCount * 2) {
-      return 'relative paths';
+      return "relative paths";
     }
-    return 'mixed (absolute and relative)';
+    return "mixed (absolute and relative)";
   }
 
   /**
@@ -704,18 +731,20 @@ class CodebaseMapper {
     let defaultCount = 0;
 
     for (const [, fileInfo] of this._fileIndex) {
-      if (!fileInfo.exports) continue;
+      if (!fileInfo.exports) {
+        continue;
+      }
 
       namedCount += fileInfo.exports.named || 0;
       defaultCount += fileInfo.exports.default ? 1 : 0;
     }
 
     if (namedCount > defaultCount * 2) {
-      return 'named exports preferred';
+      return "named exports preferred";
     } else if (defaultCount > namedCount * 2) {
-      return 'default exports preferred';
+      return "default exports preferred";
     }
-    return 'mixed';
+    return "mixed";
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -728,13 +757,13 @@ class CodebaseMapper {
    */
   async extractDependencies() {
     if (!this.quiet) {
-      console.log('Extracting dependencies...');
+      console.log("Extracting dependencies...");
     }
 
-    const pkgPath = path.join(this.rootPath, 'package.json');
+    const pkgPath = path.join(this.rootPath, "package.json");
 
     try {
-      const content = await fsPromises.readFile(pkgPath, 'utf-8');
+      const content = await fsPromises.readFile(pkgPath, "utf-8");
       const pkg = JSON.parse(content);
 
       this._dependencies = {
@@ -745,14 +774,14 @@ class CodebaseMapper {
       };
 
       // Detect package manager
-      if (fs.existsSync(path.join(this.rootPath, 'pnpm-lock.yaml'))) {
-        this._dependencies.packageManager = 'pnpm';
-      } else if (fs.existsSync(path.join(this.rootPath, 'yarn.lock'))) {
-        this._dependencies.packageManager = 'yarn';
-      } else if (fs.existsSync(path.join(this.rootPath, 'package-lock.json'))) {
-        this._dependencies.packageManager = 'npm';
-      } else if (fs.existsSync(path.join(this.rootPath, 'bun.lockb'))) {
-        this._dependencies.packageManager = 'bun';
+      if (fs.existsSync(path.join(this.rootPath, "pnpm-lock.yaml"))) {
+        this._dependencies.packageManager = "pnpm";
+      } else if (fs.existsSync(path.join(this.rootPath, "yarn.lock"))) {
+        this._dependencies.packageManager = "yarn";
+      } else if (fs.existsSync(path.join(this.rootPath, "package-lock.json"))) {
+        this._dependencies.packageManager = "npm";
+      } else if (fs.existsSync(path.join(this.rootPath, "bun.lockb"))) {
+        this._dependencies.packageManager = "bun";
       }
 
       // Detect monorepo
@@ -832,22 +861,22 @@ class CodebaseMapper {
    */
   async identifyServices() {
     if (!this.quiet) {
-      console.log('Identifying services...');
+      console.log("Identifying services...");
     }
 
     const services = [];
 
     // Check for common service directories
     const serviceIndicators = [
-      { dir: 'src/services', type: 'internal' },
-      { dir: 'services', type: 'internal' },
-      { dir: 'src/api', type: 'api' },
-      { dir: 'api', type: 'api' },
-      { dir: 'server', type: 'backend' },
-      { dir: 'backend', type: 'backend' },
-      { dir: 'src/server', type: 'backend' },
-      { dir: 'packages', type: 'package' },
-      { dir: 'apps', type: 'app' },
+      { dir: "src/services", type: "internal" },
+      { dir: "services", type: "internal" },
+      { dir: "src/api", type: "api" },
+      { dir: "api", type: "api" },
+      { dir: "server", type: "backend" },
+      { dir: "backend", type: "backend" },
+      { dir: "src/server", type: "backend" },
+      { dir: "packages", type: "package" },
+      { dir: "apps", type: "app" },
     ];
 
     for (const indicator of serviceIndicators) {
@@ -857,7 +886,7 @@ class CodebaseMapper {
           const entries = await fsPromises.readdir(dirPath, { withFileTypes: true });
 
           for (const entry of entries) {
-            if (entry.isDirectory() && !entry.name.startsWith('.')) {
+            if (entry.isDirectory() && !entry.name.startsWith(".")) {
               const servicePath = path.join(indicator.dir, entry.name);
               const entrypoint = await this._findEntrypoint(path.join(dirPath, entry.name));
 
@@ -868,7 +897,7 @@ class CodebaseMapper {
                 entrypoint: entrypoint || null,
                 dependencies: await this._getServiceDependencies(path.join(dirPath, entry.name)),
               });
-            } else if (entry.isFile() && !entry.name.startsWith('.')) {
+            } else if (entry.isFile() && !entry.name.startsWith(".")) {
               const ext = path.extname(entry.name);
               if (CONFIG.codeExtensions.includes(ext)) {
                 services.push({
@@ -893,20 +922,20 @@ class CodebaseMapper {
         : this._dependencies.workspaces.packages || [];
 
       for (const workspace of workspaces) {
-        const basePath = workspace.replace('/*', '');
+        const basePath = workspace.replace("/*", "");
         const wsPath = path.join(this.rootPath, basePath);
 
         if (fs.existsSync(wsPath)) {
           try {
             const entries = await fsPromises.readdir(wsPath, { withFileTypes: true });
             for (const entry of entries) {
-              if (entry.isDirectory() && !entry.name.startsWith('.')) {
-                const pkgJsonPath = path.join(wsPath, entry.name, 'package.json');
+              if (entry.isDirectory() && !entry.name.startsWith(".")) {
+                const pkgJsonPath = path.join(wsPath, entry.name, "package.json");
                 if (fs.existsSync(pkgJsonPath)) {
-                  const pkgContent = JSON.parse(await fsPromises.readFile(pkgJsonPath, 'utf-8'));
+                  const pkgContent = JSON.parse(await fsPromises.readFile(pkgJsonPath, "utf-8"));
                   services.push({
                     name: pkgContent.name || entry.name,
-                    type: 'workspace',
+                    type: "workspace",
                     directory: path.join(basePath, entry.name),
                     entrypoint: pkgContent.main || null,
                     dependencies: Object.keys(pkgContent.dependencies || {}),
@@ -930,7 +959,7 @@ class CodebaseMapper {
    * @private
    */
   async _findEntrypoint(dirPath) {
-    const entrypoints = ['index.ts', 'index.js', 'main.ts', 'main.js', 'mod.ts', 'mod.js'];
+    const entrypoints = ["index.ts", "index.js", "main.ts", "main.js", "mod.ts", "mod.js"];
 
     for (const entry of entrypoints) {
       const filePath = path.join(dirPath, entry);
@@ -941,7 +970,7 @@ class CodebaseMapper {
 
     // Check for src/index
     for (const entry of entrypoints) {
-      const filePath = path.join(dirPath, 'src', entry);
+      const filePath = path.join(dirPath, "src", entry);
       if (fs.existsSync(filePath)) {
         return path.relative(this.rootPath, filePath);
       }
@@ -955,10 +984,10 @@ class CodebaseMapper {
    * @private
    */
   async _getServiceDependencies(dirPath) {
-    const pkgPath = path.join(dirPath, 'package.json');
+    const pkgPath = path.join(dirPath, "package.json");
     if (fs.existsSync(pkgPath)) {
       try {
-        const content = await fsPromises.readFile(pkgPath, 'utf-8');
+        const content = await fsPromises.readFile(pkgPath, "utf-8");
         const pkg = JSON.parse(content);
         return Object.keys(pkg.dependencies || {});
       } catch {
@@ -986,10 +1015,10 @@ class CodebaseMapper {
 
     // Get project name from package.json or directory
     let projectName = path.basename(this.rootPath);
-    const pkgPath = path.join(this.rootPath, 'package.json');
+    const pkgPath = path.join(this.rootPath, "package.json");
     if (fs.existsSync(pkgPath)) {
       try {
-        const pkg = JSON.parse(await fsPromises.readFile(pkgPath, 'utf-8'));
+        const pkg = JSON.parse(await fsPromises.readFile(pkgPath, "utf-8"));
         projectName = pkg.name || projectName;
       } catch {
         // Use directory name
@@ -1013,11 +1042,11 @@ class CodebaseMapper {
 
       stats: {
         totalFiles: this._fileIndex.size,
-        codeFiles: [...this._fileIndex.values()].filter(f =>
-          CONFIG.codeExtensions.includes(f.extension)
+        codeFiles: [...this._fileIndex.values()].filter((f) =>
+          CONFIG.codeExtensions.includes(f.extension),
         ).length,
-        testFiles: [...this._fileIndex.values()].filter(f => f.hasTests).length,
-        components: [...this._fileIndex.values()].filter(f => f.isComponent).length,
+        testFiles: [...this._fileIndex.values()].filter((f) => f.hasTests).length,
+        components: [...this._fileIndex.values()].filter((f) => f.isComponent).length,
         configFiles: this._configFiles.length,
       },
 
@@ -1033,7 +1062,7 @@ class CodebaseMapper {
    */
   _simplifyStructure(structure, depth = 0) {
     if (depth > 3) {
-      return { type: 'directory', truncated: true };
+      return { type: "directory", truncated: true };
     }
 
     const simplified = {
@@ -1077,7 +1106,7 @@ class CodebaseMapper {
       await fsPromises.mkdir(dir, { recursive: true });
     }
 
-    await fsPromises.writeFile(savePath, JSON.stringify(map, null, 2), 'utf-8');
+    await fsPromises.writeFile(savePath, JSON.stringify(map, null, 2), "utf-8");
 
     if (!this.quiet) {
       console.log(`\nCodebase map saved to: ${savePath}`);
@@ -1102,10 +1131,10 @@ class CodebaseMapper {
     const existingPath = path.join(this.rootPath, CONFIG.outputPath);
 
     if (!fs.existsSync(existingPath)) {
-      return { error: 'No existing map found', newMap: true };
+      return { error: "No existing map found", newMap: true };
     }
 
-    const existingContent = await fsPromises.readFile(existingPath, 'utf-8');
+    const existingContent = await fsPromises.readFile(existingPath, "utf-8");
     const existingMap = JSON.parse(existingContent);
     const newMap = await this.generateMap();
 
@@ -1126,8 +1155,12 @@ class CodebaseMapper {
         },
         dependencies: {
           runtime: {
-            added: newMap.dependencies.runtime.filter(d => !existingMap.dependencies.runtime.includes(d)),
-            removed: existingMap.dependencies.runtime.filter(d => !newMap.dependencies.runtime.includes(d)),
+            added: newMap.dependencies.runtime.filter(
+              (d) => !existingMap.dependencies.runtime.includes(d),
+            ),
+            removed: existingMap.dependencies.runtime.filter(
+              (d) => !newMap.dependencies.runtime.includes(d),
+            ),
           },
         },
       },
@@ -1144,7 +1177,7 @@ class CodebaseMapper {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.includes('--help') || args.includes('-h')) {
+  if (args.includes("--help") || args.includes("-h")) {
     console.log(`
 Codebase Mapper - AIOX Memory Layer (Story 7.2)
 
@@ -1190,23 +1223,23 @@ Acceptance Criteria Coverage:
   let outputPath = null;
   let depth = CONFIG.defaultMaxDepth;
   let quiet = false;
-  let command = 'map';
+  let command = "map";
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--root' && args[i + 1]) {
+    if (arg === "--root" && args[i + 1]) {
       rootPath = args[++i];
       if (!path.isAbsolute(rootPath)) {
         rootPath = path.join(process.cwd(), rootPath);
       }
-    } else if (arg === '--output' && args[i + 1]) {
+    } else if (arg === "--output" && args[i + 1]) {
       outputPath = args[++i];
-    } else if (arg === '--depth' && args[i + 1]) {
+    } else if (arg === "--depth" && args[i + 1]) {
       depth = parseInt(args[++i], 10);
-    } else if (arg === '--quiet' || arg === '-q') {
+    } else if (arg === "--quiet" || arg === "-q") {
       quiet = true;
-    } else if (!arg.startsWith('-')) {
+    } else if (!arg.startsWith("-")) {
       command = arg;
     }
   }
@@ -1215,11 +1248,11 @@ Acceptance Criteria Coverage:
     const mapper = new CodebaseMapper(rootPath, { maxDepth: depth, quiet });
 
     switch (command) {
-      case 'map':
-      case 'save': {
+      case "map":
+      case "save": {
         const savePath = await mapper.saveMap(outputPath);
         if (!quiet) {
-          console.log('\nCodebase map generated successfully.');
+          console.log("\nCodebase map generated successfully.");
           const map = await mapper.toJSON();
           console.log(`\nStats:`);
           console.log(`  Total files: ${map.stats.totalFiles}`);
@@ -1231,33 +1264,41 @@ Acceptance Criteria Coverage:
         break;
       }
 
-      case 'json': {
+      case "json": {
         const map = await mapper.toJSON();
         console.log(JSON.stringify(map, null, 2));
         break;
       }
 
-      case 'diff': {
+      case "diff": {
         const diff = await mapper.diff();
         if (diff.error) {
           console.log(`\n${diff.error}`);
           if (diff.newMap) {
-            console.log('Run `codebase-mapper save` to create initial map.');
+            console.log("Run `codebase-mapper save` to create initial map.");
           }
         } else {
-          console.log('\nCodebase Map Diff:');
+          console.log("\nCodebase Map Diff:");
           console.log(`  Previous: ${diff.previousMappedAt}`);
           console.log(`  Current:  ${diff.currentMappedAt}`);
           console.log(`\nChanges:`);
-          console.log(`  Files: ${diff.changes.files.added >= 0 ? '+' : ''}${diff.changes.files.added}`);
-          console.log(`  Services: ${diff.changes.services.previous} -> ${diff.changes.services.current}`);
-          console.log(`  Patterns changed: ${diff.changes.patterns.changed ? 'Yes' : 'No'}`);
+          console.log(
+            `  Files: ${diff.changes.files.added >= 0 ? "+" : ""}${diff.changes.files.added}`,
+          );
+          console.log(
+            `  Services: ${diff.changes.services.previous} -> ${diff.changes.services.current}`,
+          );
+          console.log(`  Patterns changed: ${diff.changes.patterns.changed ? "Yes" : "No"}`);
 
           if (diff.changes.dependencies.runtime.added.length > 0) {
-            console.log(`  Dependencies added: ${diff.changes.dependencies.runtime.added.join(', ')}`);
+            console.log(
+              `  Dependencies added: ${diff.changes.dependencies.runtime.added.join(", ")}`,
+            );
           }
           if (diff.changes.dependencies.runtime.removed.length > 0) {
-            console.log(`  Dependencies removed: ${diff.changes.dependencies.runtime.removed.join(', ')}`);
+            console.log(
+              `  Dependencies removed: ${diff.changes.dependencies.runtime.removed.join(", ")}`,
+            );
           }
         }
         break;

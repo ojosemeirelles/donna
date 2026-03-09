@@ -5,7 +5,7 @@ read_when:
 title: "Donna"
 ---
 
-# Donna 🦞
+# Donna 🌙
 
 <p align="center">
     <img
@@ -22,7 +22,7 @@ title: "Donna"
     />
 </p>
 
-> _"EXFOLIATE! EXFOLIATE!"_ — A space lobster, probably
+> _Your AI gateway, the smart way._
 
 <p align="center">
   <strong>Any OS gateway for AI agents across WhatsApp, Telegram, Discord, iMessage, and more.</strong><br />

@@ -27,27 +27,27 @@
  * console.log(waves.criticalPath); // Critical path
  */
 
-'use strict';
+"use strict";
 
 const {
   WorkflowRegistry,
   createWorkflowRegistry,
   DEFAULT_CACHE_TTL,
   DEFAULT_PATTERNS_PATH,
-} = require('./registry/workflow-registry');
+} = require("./registry/workflow-registry");
 
 const {
   ConfidenceScorer,
   createConfidenceScorer,
   SCORING_WEIGHTS,
-} = require('./engine/confidence-scorer');
+} = require("./engine/confidence-scorer");
 
 const {
   SuggestionEngine,
   createSuggestionEngine,
   SUGGESTION_CACHE_TTL,
   LOW_CONFIDENCE_THRESHOLD,
-} = require('./engine/suggestion-engine');
+} = require("./engine/suggestion-engine");
 
 const {
   WaveAnalyzer,
@@ -55,14 +55,14 @@ const {
   createWaveAnalyzer,
   analyzeWaves,
   DEFAULT_TASK_DURATIONS,
-} = require('./engine/wave-analyzer');
+} = require("./engine/wave-analyzer");
 
-const outputFormatter = require('./engine/output-formatter');
+const outputFormatter = require("./engine/output-formatter");
 
 // Learning module (WIS-5)
 let learningModule = null;
 try {
-  learningModule = require('./learning');
+  learningModule = require("./learning");
 } catch (_error) {
   // Learning module not yet available
   learningModule = null;
@@ -190,7 +190,7 @@ function formatSuggestions(nextSteps, match, state, scorer, context) {
         confidence: Math.round(finalScore * 100) / 100,
       };
     })
-    .sort((a, b) => b.confidence - a.confidence);
+    .toSorted((a, b) => b.confidence - a.confidence);
 }
 
 /**

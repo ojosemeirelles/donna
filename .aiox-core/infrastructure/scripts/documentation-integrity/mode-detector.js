@@ -11,18 +11,18 @@
  * @story 6.9
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 /**
  * Installation modes supported by AIOX
  * @enum {string}
  */
 const InstallationMode = {
-  FRAMEWORK_DEV: 'framework-dev',
-  GREENFIELD: 'greenfield',
-  BROWNFIELD: 'brownfield',
-  UNKNOWN: 'unknown',
+  FRAMEWORK_DEV: "framework-dev",
+  GREENFIELD: "greenfield",
+  BROWNFIELD: "brownfield",
+  UNKNOWN: "unknown",
 };
 
 /**
@@ -30,10 +30,10 @@ const InstallationMode = {
  * @enum {string}
  */
 const LegacyProjectType = {
-  EXISTING_AIOX: 'EXISTING_AIOX',
-  GREENFIELD: 'GREENFIELD',
-  BROWNFIELD: 'BROWNFIELD',
-  UNKNOWN: 'UNKNOWN',
+  EXISTING_AIOX: "EXISTING_AIOX",
+  GREENFIELD: "GREENFIELD",
+  BROWNFIELD: "BROWNFIELD",
+  UNKNOWN: "UNKNOWN",
 };
 
 /**
@@ -42,24 +42,24 @@ const LegacyProjectType = {
  */
 const ModeDescriptions = {
   [InstallationMode.FRAMEWORK_DEV]: {
-    label: '🔧 Framework Development',
-    hint: 'Developing aiox-core itself - uses framework standards, skips project setup',
-    description: 'For AIOX contributors working on the framework',
+    label: "🔧 Framework Development",
+    hint: "Developing aiox-core itself - uses framework standards, skips project setup",
+    description: "For AIOX contributors working on the framework",
   },
   [InstallationMode.GREENFIELD]: {
-    label: '🆕 New Project (Greenfield)',
-    hint: 'Start a fresh project with AIOX - generates project docs, config, and infrastructure',
-    description: 'Empty directory setup with full scaffolding',
+    label: "🆕 New Project (Greenfield)",
+    hint: "Start a fresh project with AIOX - generates project docs, config, and infrastructure",
+    description: "Empty directory setup with full scaffolding",
   },
   [InstallationMode.BROWNFIELD]: {
-    label: '📂 Existing Project (Brownfield)',
-    hint: 'Add AIOX to existing project - analyzes current structure and adapts',
-    description: 'Integration with existing codebase',
+    label: "📂 Existing Project (Brownfield)",
+    hint: "Add AIOX to existing project - analyzes current structure and adapts",
+    description: "Integration with existing codebase",
   },
   [InstallationMode.UNKNOWN]: {
-    label: '❓ Unknown',
-    hint: 'Could not determine project type - manual selection required',
-    description: 'Manual mode selection needed',
+    label: "❓ Unknown",
+    hint: "Could not determine project type - manual selection required",
+    description: "Manual mode selection needed",
   },
 };
 
@@ -88,8 +88,8 @@ const ModeDescriptions = {
  */
 function detectInstallationMode(targetDir = process.cwd()) {
   // Validate input
-  if (!targetDir || typeof targetDir !== 'string') {
-    throw new Error('Invalid targetDir parameter: must be a non-empty string');
+  if (!targetDir || typeof targetDir !== "string") {
+    throw new Error("Invalid targetDir parameter: must be a non-empty string");
   }
 
   const normalizedDir = path.resolve(targetDir);
@@ -108,7 +108,7 @@ function detectInstallationMode(targetDir = process.cwd()) {
       mode: InstallationMode.FRAMEWORK_DEV,
       legacyType: LegacyProjectType.EXISTING_AIOX,
       confidence: 100,
-      reason: 'Detected aiox-core repository with .aiox-core directory',
+      reason: "Detected aiox-core repository with .aiox-core directory",
       markers,
     };
   }
@@ -119,7 +119,7 @@ function detectInstallationMode(targetDir = process.cwd()) {
       mode: InstallationMode.BROWNFIELD,
       legacyType: LegacyProjectType.EXISTING_AIOX,
       confidence: 95,
-      reason: 'AIOX already installed in user project - treating as brownfield update',
+      reason: "AIOX already installed in user project - treating as brownfield update",
       markers,
     };
   }
@@ -130,7 +130,7 @@ function detectInstallationMode(targetDir = process.cwd()) {
       mode: InstallationMode.GREENFIELD,
       legacyType: LegacyProjectType.GREENFIELD,
       confidence: 100,
-      reason: 'Empty directory detected',
+      reason: "Empty directory detected",
       markers,
     };
   }
@@ -144,16 +144,24 @@ function detectInstallationMode(targetDir = process.cwd()) {
     markers.hasCargoToml
   ) {
     const projectTypes = [];
-    if (markers.hasPackageJson) projectTypes.push('Node.js');
-    if (markers.hasPythonProject) projectTypes.push('Python');
-    if (markers.hasGoMod) projectTypes.push('Go');
-    if (markers.hasCargoToml) projectTypes.push('Rust');
+    if (markers.hasPackageJson) {
+      projectTypes.push("Node.js");
+    }
+    if (markers.hasPythonProject) {
+      projectTypes.push("Python");
+    }
+    if (markers.hasGoMod) {
+      projectTypes.push("Go");
+    }
+    if (markers.hasCargoToml) {
+      projectTypes.push("Rust");
+    }
 
     return {
       mode: InstallationMode.BROWNFIELD,
       legacyType: LegacyProjectType.BROWNFIELD,
       confidence: 90,
-      reason: `Existing project detected: ${projectTypes.join(', ') || 'Git repository'}`,
+      reason: `Existing project detected: ${projectTypes.join(", ") || "Git repository"}`,
       markers,
     };
   }
@@ -163,7 +171,7 @@ function detectInstallationMode(targetDir = process.cwd()) {
     mode: InstallationMode.UNKNOWN,
     legacyType: LegacyProjectType.UNKNOWN,
     confidence: 0,
-    reason: 'Directory has files but no recognized project markers',
+    reason: "Directory has files but no recognized project markers",
     markers,
   };
 }
@@ -179,7 +187,7 @@ function collectMarkers(targetDir) {
 
   return {
     // AIOX markers
-    hasAioxCore: fs.existsSync(path.join(targetDir, '.aiox-core')),
+    hasAioxCore: fs.existsSync(path.join(targetDir, ".aiox-core")),
     isAioxCoreRepo: isAioxCoreRepository(targetDir),
 
     // Directory state
@@ -187,35 +195,35 @@ function collectMarkers(targetDir) {
     fileCount: dirContents.length,
 
     // Project markers
-    hasPackageJson: fs.existsSync(path.join(targetDir, 'package.json')),
-    hasGit: fs.existsSync(path.join(targetDir, '.git')),
+    hasPackageJson: fs.existsSync(path.join(targetDir, "package.json")),
+    hasGit: fs.existsSync(path.join(targetDir, ".git")),
 
     // Python markers
     hasPythonProject:
-      fs.existsSync(path.join(targetDir, 'requirements.txt')) ||
-      fs.existsSync(path.join(targetDir, 'pyproject.toml')) ||
-      fs.existsSync(path.join(targetDir, 'setup.py')),
+      fs.existsSync(path.join(targetDir, "requirements.txt")) ||
+      fs.existsSync(path.join(targetDir, "pyproject.toml")) ||
+      fs.existsSync(path.join(targetDir, "setup.py")),
 
     // Go markers
-    hasGoMod: fs.existsSync(path.join(targetDir, 'go.mod')),
+    hasGoMod: fs.existsSync(path.join(targetDir, "go.mod")),
 
     // Rust markers
-    hasCargoToml: fs.existsSync(path.join(targetDir, 'Cargo.toml')),
+    hasCargoToml: fs.existsSync(path.join(targetDir, "Cargo.toml")),
 
     // Existing standards markers
     hasEslintrc:
-      fs.existsSync(path.join(targetDir, '.eslintrc.js')) ||
-      fs.existsSync(path.join(targetDir, '.eslintrc.json')) ||
-      fs.existsSync(path.join(targetDir, '.eslintrc.yaml')),
+      fs.existsSync(path.join(targetDir, ".eslintrc.js")) ||
+      fs.existsSync(path.join(targetDir, ".eslintrc.json")) ||
+      fs.existsSync(path.join(targetDir, ".eslintrc.yaml")),
     hasPrettierrc:
-      fs.existsSync(path.join(targetDir, '.prettierrc')) ||
-      fs.existsSync(path.join(targetDir, '.prettierrc.json')) ||
-      fs.existsSync(path.join(targetDir, 'prettier.config.js')),
-    hasTsconfig: fs.existsSync(path.join(targetDir, 'tsconfig.json')),
+      fs.existsSync(path.join(targetDir, ".prettierrc")) ||
+      fs.existsSync(path.join(targetDir, ".prettierrc.json")) ||
+      fs.existsSync(path.join(targetDir, "prettier.config.js")),
+    hasTsconfig: fs.existsSync(path.join(targetDir, "tsconfig.json")),
 
     // CI/CD markers
-    hasGithubWorkflows: fs.existsSync(path.join(targetDir, '.github', 'workflows')),
-    hasGitlabCi: fs.existsSync(path.join(targetDir, '.gitlab-ci.yml')),
+    hasGithubWorkflows: fs.existsSync(path.join(targetDir, ".github", "workflows")),
+    hasGitlabCi: fs.existsSync(path.join(targetDir, ".gitlab-ci.yml")),
   };
 }
 
@@ -226,25 +234,25 @@ function collectMarkers(targetDir) {
  * @returns {boolean} True if this is the aiox-core repository
  */
 function isAioxCoreRepository(targetDir) {
-  const packageJsonPath = path.join(targetDir, 'package.json');
+  const packageJsonPath = path.join(targetDir, "package.json");
 
   if (!fs.existsSync(packageJsonPath)) {
     return false;
   }
 
   try {
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
     // Primary check: explicit aiox-core package names
-    if (packageJson.name === '@aiox/core' || packageJson.name === 'aiox-core') {
+    if (packageJson.name === "@aiox/core" || packageJson.name === "aiox-core") {
       return true;
     }
 
     // Secondary check: workspaces pattern + aiox-specific marker file
     // This prevents false positives for generic monorepos
-    const hasAioxMarker = fs.existsSync(path.join(targetDir, '.aiox-core', 'infrastructure'));
+    const hasAioxMarker = fs.existsSync(path.join(targetDir, ".aiox-core", "infrastructure"));
     const hasWorkspaces =
-      Array.isArray(packageJson.workspaces) && packageJson.workspaces.includes('packages/*');
+      Array.isArray(packageJson.workspaces) && packageJson.workspaces.includes("packages/*");
 
     return hasWorkspaces && hasAioxMarker;
   } catch (error) {
@@ -316,19 +324,19 @@ function validateModeSelection(selectedMode, detected) {
   if (selectedMode !== detected.mode) {
     if (selectedMode === InstallationMode.GREENFIELD && !detected.markers.isEmpty) {
       result.warnings.push(
-        'Selected greenfield but directory is not empty. Existing files may be overwritten.',
+        "Selected greenfield but directory is not empty. Existing files may be overwritten.",
       );
     }
 
     if (selectedMode === InstallationMode.FRAMEWORK_DEV && !detected.markers.isAioxCoreRepo) {
       result.warnings.push(
-        'Selected framework-dev but this does not appear to be the aiox-core repository.',
+        "Selected framework-dev but this does not appear to be the aiox-core repository.",
       );
     }
 
     if (selectedMode === InstallationMode.BROWNFIELD && detected.markers.isEmpty) {
       result.warnings.push(
-        'Selected brownfield but directory is empty. Consider using greenfield instead.',
+        "Selected brownfield but directory is empty. Consider using greenfield instead.",
       );
       result.suggestions.push(InstallationMode.GREENFIELD);
     }
@@ -366,7 +374,7 @@ function getModeOptions(detected = null) {
   if (detected && detected.mode !== InstallationMode.UNKNOWN) {
     const recommendedIndex = options.findIndex((opt) => opt.value === detected.mode);
     if (recommendedIndex >= 0) {
-      options[recommendedIndex].hint += ' (Recommended)';
+      options[recommendedIndex].hint += " (Recommended)";
       // Move recommended to top
       const recommended = options.splice(recommendedIndex, 1)[0];
       options.unshift(recommended);

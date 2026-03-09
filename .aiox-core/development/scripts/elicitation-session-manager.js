@@ -4,12 +4,12 @@
  * @module elicitation-session-manager
  */
 
-const fs = require('fs-extra');
-const path = require('path');
-const crypto = require('crypto');
+const fs = require("fs-extra");
+const path = require("path");
+const crypto = require("crypto");
 
 class ElicitationSessionManager {
-  constructor(sessionDir = '.aiox-sessions') {
+  constructor(sessionDir = ".aiox-sessions") {
     this.sessionDir = path.resolve(process.cwd(), sessionDir);
     this.activeSession = null;
   }
@@ -32,23 +32,23 @@ class ElicitationSessionManager {
     const session = {
       id: sessionId,
       type,
-      version: '1.0',
+      version: "1.0",
       created: new Date().toISOString(),
       updated: new Date().toISOString(),
-      status: 'active',
+      status: "active",
       currentStep: 0,
       totalSteps: 0,
       answers: {},
       metadata: {
         ...metadata,
-        user: process.env.USER || 'unknown',
-        hostname: require('os').hostname()
-      }
+        user: process.env.USER || "unknown",
+        hostname: require("os").hostname(),
+      },
     };
 
     this.activeSession = session;
     await this.saveSession(session);
-    
+
     return sessionId;
   }
 
@@ -59,11 +59,11 @@ class ElicitationSessionManager {
   async saveSession(session = null) {
     const sessionToSave = session || this.activeSession;
     if (!sessionToSave) {
-      throw new Error('No active session to save');
+      throw new Error("No active session to save");
     }
 
     sessionToSave.updated = new Date().toISOString();
-    
+
     const sessionPath = this.getSessionPath(sessionToSave.id);
     await fs.writeJson(sessionPath, sessionToSave, { spaces: 2 });
   }
@@ -75,14 +75,14 @@ class ElicitationSessionManager {
    */
   async loadSession(sessionId) {
     const sessionPath = this.getSessionPath(sessionId);
-    
-    if (!await fs.pathExists(sessionPath)) {
+
+    if (!(await fs.pathExists(sessionPath))) {
       throw new Error(`Session ${sessionId} not found`);
     }
 
     const session = await fs.readJson(sessionPath);
     this.activeSession = session;
-    
+
     return session;
   }
 
@@ -93,12 +93,12 @@ class ElicitationSessionManager {
    */
   async updateAnswers(answers, stepIndex = null) {
     if (!this.activeSession) {
-      throw new Error('No active session');
+      throw new Error("No active session");
     }
 
     // Merge answers
     Object.assign(this.activeSession.answers, answers);
-    
+
     // Update step index if provided
     if (stepIndex !== null) {
       this.activeSession.currentStep = stepIndex;
@@ -117,24 +117,32 @@ class ElicitationSessionManager {
     const sessions = [];
 
     for (const file of files) {
-      if (file.endsWith('.json')) {
+      if (file.endsWith(".json")) {
         try {
           const sessionPath = path.join(this.sessionDir, file);
           const session = await fs.readJson(sessionPath);
-          
+
           // Apply filters
-          if (filters.type && session.type !== filters.type) continue;
-          if (filters.status && session.status !== filters.status) continue;
-          if (filters.after && new Date(session.created) < new Date(filters.after)) continue;
-          
+          if (filters.type && session.type !== filters.type) {
+            continue;
+          }
+          if (filters.status && session.status !== filters.status) {
+            continue;
+          }
+          if (filters.after && new Date(session.created) < new Date(filters.after)) {
+            continue;
+          }
+
           sessions.push({
             id: session.id,
             type: session.type,
             created: session.created,
             updated: session.updated,
             status: session.status,
-            progress: session.totalSteps > 0 ? 
-              Math.round((session.currentStep / session.totalSteps) * 100) : 0
+            progress:
+              session.totalSteps > 0
+                ? Math.round((session.currentStep / session.totalSteps) * 100)
+                : 0,
           });
         } catch (_error) {
           // Skip invalid session files
@@ -145,7 +153,7 @@ class ElicitationSessionManager {
 
     // Sort by updated date (newest first)
     sessions.sort((a, b) => new Date(b.updated) - new Date(a.updated));
-    
+
     return sessions;
   }
 
@@ -156,15 +164,15 @@ class ElicitationSessionManager {
    */
   async resumeSession(sessionId) {
     const session = await this.loadSession(sessionId);
-    
+
     // Calculate resume information
     const resumeInfo = {
       ...session,
       resumeFrom: session.currentStep,
       completedSteps: Object.keys(session.answers).length,
       remainingSteps: session.totalSteps - session.currentStep,
-      percentComplete: session.totalSteps > 0 ? 
-        Math.round((session.currentStep / session.totalSteps) * 100) : 0
+      percentComplete:
+        session.totalSteps > 0 ? Math.round((session.currentStep / session.totalSteps) * 100) : 0,
     };
 
     return resumeInfo;
@@ -174,25 +182,25 @@ class ElicitationSessionManager {
    * Complete a session
    * @param {string} result - Completion result (success, cancelled, error)
    */
-  async completeSession(result = 'success') {
+  async completeSession(result = "success") {
     if (!this.activeSession) {
-      throw new Error('No active session');
+      throw new Error("No active session");
     }
 
-    this.activeSession.status = 'completed';
+    this.activeSession.status = "completed";
     this.activeSession.completedAt = new Date().toISOString();
     this.activeSession.result = result;
-    
+
     await this.saveSession();
-    
+
     // Move to completed directory if success
-    if (result === 'success') {
-      const completedDir = path.join(this.sessionDir, 'completed');
+    if (result === "success") {
+      const completedDir = path.join(this.sessionDir, "completed");
       await fs.ensureDir(completedDir);
-      
+
       const oldPath = this.getSessionPath(this.activeSession.id);
       const newPath = path.join(completedDir, path.basename(oldPath));
-      
+
       await fs.move(oldPath, newPath, { overwrite: true });
     }
 
@@ -205,8 +213,8 @@ class ElicitationSessionManager {
    */
   async deleteSession(sessionId) {
     const sessionPath = this.getSessionPath(sessionId);
-    const completedPath = path.join(this.sessionDir, 'completed', `${sessionId}.json`);
-    
+    const completedPath = path.join(this.sessionDir, "completed", `${sessionId}.json`);
+
     // Check both active and completed directories
     if (await fs.pathExists(sessionPath)) {
       await fs.remove(sessionPath);
@@ -228,17 +236,17 @@ class ElicitationSessionManager {
    * @param {string} format - Export format (json, yaml)
    * @returns {Promise<string>} Exported data
    */
-  async exportSession(sessionId, format = 'json') {
+  async exportSession(sessionId, format = "json") {
     const session = await this.loadSession(sessionId);
-    
+
     switch (format) {
-      case 'json':
+      case "json":
         return JSON.stringify(session, null, 2);
-        
-      case 'yaml':
-        const yaml = require('js-yaml');
+
+      case "yaml":
+        const yaml = require("js-yaml");
         return yaml.dump(session);
-        
+
       default:
         throw new Error(`Unsupported export format: ${format}`);
     }
@@ -252,16 +260,16 @@ class ElicitationSessionManager {
     const sessions = await this.listSessions();
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-    
+
     let deletedCount = 0;
-    
+
     for (const session of sessions) {
-      if (new Date(session.updated) < cutoffDate && session.status !== 'active') {
+      if (new Date(session.updated) < cutoffDate && session.status !== "active") {
         await this.deleteSession(session.id);
         deletedCount++;
       }
     }
-    
+
     return deletedCount;
   }
 
@@ -270,7 +278,7 @@ class ElicitationSessionManager {
    * @private
    */
   generateSessionId() {
-    return crypto.randomBytes(8).toString('hex');
+    return crypto.randomBytes(8).toString("hex");
   }
 
   /**

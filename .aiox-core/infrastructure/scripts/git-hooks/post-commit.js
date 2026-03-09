@@ -13,8 +13,8 @@
  *     node .aiox-core/infrastructure/scripts/git-hooks/post-commit.js
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 /**
  * Find the project root by walking up from the current directory
@@ -27,11 +27,13 @@ function findProjectRoot() {
 
   // Walk up looking for .aiox-core
   for (let i = 0; i < 10; i++) {
-    if (fs.existsSync(path.join(dir, '.aiox-core'))) {
+    if (fs.existsSync(path.join(dir, ".aiox-core"))) {
       return dir;
     }
     const parent = path.dirname(dir);
-    if (parent === dir) break; // Reached filesystem root
+    if (parent === dir) {
+      break;
+    } // Reached filesystem root
     dir = parent;
   }
 
@@ -44,7 +46,7 @@ function findProjectRoot() {
  */
 function clearProjectStatusCache() {
   const projectRoot = findProjectRoot();
-  const aioxDir = path.join(projectRoot, '.aiox');
+  const aioxDir = path.join(projectRoot, ".aiox");
 
   if (!fs.existsSync(aioxDir)) {
     return; // No .aiox directory - nothing to clear
@@ -55,7 +57,7 @@ function clearProjectStatusCache() {
 
     for (const file of files) {
       // Match project-status.yaml and project-status-{hash}.yaml
-      if (file.startsWith('project-status') && file.endsWith('.yaml')) {
+      if (file.startsWith("project-status") && file.endsWith(".yaml")) {
         const filePath = path.join(aioxDir, file);
         try {
           fs.unlinkSync(filePath);

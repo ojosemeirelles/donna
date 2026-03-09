@@ -14,7 +14,7 @@
  * @see https://docs.github.com/en/copilot/reference/custom-agents-configuration
  */
 
-const { normalizeCommands, getVisibleCommands } = require('../agent-parser');
+const { normalizeCommands, getVisibleCommands } = require("../agent-parser");
 
 /**
  * Transform agent data to GitHub Copilot custom agent format
@@ -29,18 +29,18 @@ function transform(agentData) {
 
   const id = agent.id || agentData.id;
   const name = agent.name || id;
-  const title = agent.title || 'AIOX Agent';
-  const icon = agent.icon || '';
+  const title = agent.title || "AIOX Agent";
+  const icon = agent.icon || "";
   const description = escapeYamlString(agent.whenToUse || `${title} agent for development tasks`);
 
   // Build YAML frontmatter
   const frontmatter = [
-    '---',
+    "---",
     `name: ${id}`,
     `description: '${description}'`,
     `tools: ['read', 'edit', 'search', 'execute']`,
-    '---',
-  ].join('\n');
+    "---",
+  ].join("\n");
 
   // Build markdown body
   const body = buildMarkdownBody({
@@ -77,7 +77,7 @@ function buildMarkdownBody(params) {
   const parts = [];
 
   // Header
-  const headerIcon = icon ? `${icon} ` : '';
+  const headerIcon = icon ? `${icon} ` : "";
   parts.push(`# ${headerIcon}${name} Agent (@${id})\n`);
 
   // Role description
@@ -95,34 +95,34 @@ function buildMarkdownBody(params) {
   // Core principles (may be in persona block or at root level of YAML)
   const corePrinciples = personaBlock.core_principles || params.corePrinciples;
   if (corePrinciples && Array.isArray(corePrinciples)) {
-    parts.push('## Core Principles\n');
+    parts.push("## Core Principles\n");
     for (const principle of corePrinciples) {
       // Handle both string and object formats (YAML may parse "KEY: value" as {KEY: value})
-      if (typeof principle === 'string') {
+      if (typeof principle === "string") {
         parts.push(`- ${principle}`);
-      } else if (typeof principle === 'object' && principle !== null) {
+      } else if (typeof principle === "object" && principle !== null) {
         const entries = Object.entries(principle);
         for (const [key, value] of entries) {
           parts.push(`- ${key}: ${value}`);
         }
       }
     }
-    parts.push('');
+    parts.push("");
   }
 
   // Commands reference
   const allCommands = normalizeCommands(commands);
-  const keyCommands = getVisibleCommands(allCommands, 'key');
-  const quickCommands = getVisibleCommands(allCommands, 'quick');
+  const keyCommands = getVisibleCommands(allCommands, "key");
+  const quickCommands = getVisibleCommands(allCommands, "quick");
   const displayCommands = keyCommands.length > 0 ? keyCommands : quickCommands.slice(0, 10);
 
   if (displayCommands.length > 0) {
-    parts.push('## Commands\n');
-    parts.push('Use `*` prefix for commands:\n');
+    parts.push("## Commands\n");
+    parts.push("Use `*` prefix for commands:\n");
     for (const cmd of displayCommands) {
-      parts.push(`- \`*${cmd.name}\` - ${cmd.description || 'No description'}`);
+      parts.push(`- \`*${cmd.name}\` - ${cmd.description || "No description"}`);
     }
-    parts.push('');
+    parts.push("");
   }
 
   // Collaboration section (condensed)
@@ -131,11 +131,11 @@ function buildMarkdownBody(params) {
   }
 
   // Sync footer
-  parts.push('---');
+  parts.push("---");
   parts.push(`*AIOX Agent - Synced from .aiox-core/development/agents/${filename}*`);
-  parts.push('');
+  parts.push("");
 
-  return parts.join('\n');
+  return parts.join("\n");
 }
 
 /**
@@ -145,7 +145,9 @@ function buildMarkdownBody(params) {
  * @returns {string} - Escaped string
  */
 function escapeYamlString(str) {
-  if (!str) return '';
+  if (!str) {
+    return "";
+  }
   // In YAML single-quoted strings, single quotes are escaped by doubling them
   return str.replace(/'/g, "''");
 }
@@ -159,12 +161,12 @@ function escapeYamlString(str) {
 function truncateContent(content, maxChars) {
   // Find the last complete section before the limit
   const truncated = content.substring(0, maxChars - 100);
-  const lastNewline = truncated.lastIndexOf('\n\n');
+  const lastNewline = truncated.lastIndexOf("\n\n");
 
   if (lastNewline > 0) {
-    return truncated.substring(0, lastNewline) + '\n\n---\n*Content truncated to fit 30K limit*\n';
+    return truncated.substring(0, lastNewline) + "\n\n---\n*Content truncated to fit 30K limit*\n";
   }
-  return truncated + '\n\n---\n*Content truncated to fit 30K limit*\n';
+  return truncated + "\n\n---\n*Content truncated to fit 30K limit*\n";
 }
 
 /**
@@ -180,5 +182,5 @@ function getFilename(agentData) {
 module.exports = {
   transform,
   getFilename,
-  format: 'github-copilot',
+  format: "github-copilot",
 };

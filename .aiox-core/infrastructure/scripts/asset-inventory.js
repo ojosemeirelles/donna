@@ -10,19 +10,19 @@
  * @module asset-inventory
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
 // Asset locations relative to project root
 const ASSET_PATHS = {
-  agents: '.aiox-core/development/agents',
-  tasks: '.aiox-core/development/tasks',
-  templates: '.aiox-core/product/templates',
-  checklists: '.aiox-core/product/checklists',
-  scripts: '.aiox-core/infrastructure/scripts',
-  schemas: '.aiox-core/schemas',
-  data: '.aiox-core/development/data',
+  agents: ".aiox-core/development/agents",
+  tasks: ".aiox-core/development/tasks",
+  templates: ".aiox-core/product/templates",
+  checklists: ".aiox-core/product/checklists",
+  scripts: ".aiox-core/infrastructure/scripts",
+  schemas: ".aiox-core/schemas",
+  data: ".aiox-core/development/data",
 };
 
 // File patterns for each asset type
@@ -105,9 +105,15 @@ function extractTaskDependencies(parsed, content) {
   };
 
   // Check frontmatter
-  if (parsed?.templates) deps.templates = parsed.templates;
-  if (parsed?.checklists) deps.checklists = parsed.checklists;
-  if (parsed?.tools) deps.tools = parsed.tools;
+  if (parsed?.templates) {
+    deps.templates = parsed.templates;
+  }
+  if (parsed?.checklists) {
+    deps.checklists = parsed.checklists;
+  }
+  if (parsed?.tools) {
+    deps.tools = parsed.tools;
+  }
 
   // Check content for references
   const templateRefs = content.match(/templates?\/[a-z0-9-]+\.(yaml|yml|md)/gi) || [];
@@ -115,12 +121,16 @@ function extractTaskDependencies(parsed, content) {
 
   templateRefs.forEach((ref) => {
     const name = path.basename(ref);
-    if (!deps.templates.includes(name)) deps.templates.push(name);
+    if (!deps.templates.includes(name)) {
+      deps.templates.push(name);
+    }
   });
 
   checklistRefs.forEach((ref) => {
     const name = path.basename(ref);
-    if (!deps.checklists.includes(name)) deps.checklists.push(name);
+    if (!deps.checklists.includes(name)) {
+      deps.checklists.push(name);
+    }
   });
 
   return deps;
@@ -130,10 +140,10 @@ function extractTaskDependencies(parsed, content) {
  * Detect schema version (V2 or V3)
  */
 function detectVersion(parsed) {
-  if (parsed?.autoClaude?.version === '3.0') {
-    return 'v3';
+  if (parsed?.autoClaude?.version === "3.0") {
+    return "v3";
   }
-  return 'v2';
+  return "v2";
 }
 
 /**
@@ -146,15 +156,19 @@ async function scanDirectory(dirPath, pattern, rootPath) {
     const files = await fs.readdir(dirPath);
 
     for (const file of files) {
-      if (!pattern.test(file)) continue;
+      if (!pattern.test(file)) {
+        continue;
+      }
 
       const fullPath = path.join(dirPath, file);
       const stat = await fs.stat(fullPath);
 
-      if (!stat.isFile()) continue;
+      if (!stat.isFile()) {
+        continue;
+      }
 
       const relativePath = path.relative(rootPath, fullPath);
-      const content = await fs.readFile(fullPath, 'utf-8');
+      const content = await fs.readFile(fullPath, "utf-8");
 
       assets.push({
         file,
@@ -180,10 +194,10 @@ function processAgents(rawAssets) {
     const parsed = extractYamlFromMarkdown(asset.content) || {};
 
     return {
-      type: 'agent',
-      id: parsed.agent?.id || path.basename(asset.file, '.md'),
-      name: parsed.agent?.name || 'Unknown',
-      title: parsed.agent?.title || 'Unknown',
+      type: "agent",
+      id: parsed.agent?.id || path.basename(asset.file, ".md"),
+      name: parsed.agent?.name || "Unknown",
+      title: parsed.agent?.title || "Unknown",
       path: asset.path,
       version: detectVersion(parsed),
       dependencies: extractAgentDependencies(parsed, asset.content),
@@ -203,14 +217,18 @@ function processTasks(rawAssets) {
 
     // Extract task name from various formats
     let taskName = parsed.task?.name || parsed.task || null;
-    if (typeof taskName === 'object') taskName = taskName?.name || null;
-    if (!taskName) taskName = path.basename(asset.file, '.md');
+    if (typeof taskName === "object") {
+      taskName = taskName?.name || null;
+    }
+    if (!taskName) {
+      taskName = path.basename(asset.file, ".md");
+    }
 
     return {
-      type: 'task',
-      id: path.basename(asset.file, '.md'),
+      type: "task",
+      id: path.basename(asset.file, ".md"),
       name: taskName,
-      responsavel: parsed.task?.responsavel || parsed.responsavel || 'Unknown',
+      responsavel: parsed.task?.responsavel || parsed.responsavel || "Unknown",
       path: asset.path,
       version: detectVersion(parsed),
       dependencies: extractTaskDependencies(parsed, asset.content),
@@ -229,18 +247,18 @@ function processTemplates(rawAssets) {
     const ext = path.extname(asset.file);
     let parsed = null;
 
-    if (ext === '.yaml' || ext === '.yml') {
+    if (ext === ".yaml" || ext === ".yml") {
       try {
         parsed = yaml.load(asset.content);
       } catch (e) {
         // Invalid YAML
       }
-    } else if (ext === '.md') {
+    } else if (ext === ".md") {
       parsed = extractYamlFromMarkdown(asset.content);
     }
 
     return {
-      type: 'template',
+      type: "template",
       id: path.basename(asset.file, ext),
       name: parsed?.name || path.basename(asset.file, ext),
       format: ext.substring(1),
@@ -262,9 +280,9 @@ function processChecklists(rawAssets) {
     const itemCount = (asset.content.match(/^- \[[ x]\]/gm) || []).length;
 
     return {
-      type: 'checklist',
-      id: path.basename(asset.file, '.md'),
-      name: parsed?.name || path.basename(asset.file, '.md'),
+      type: "checklist",
+      id: path.basename(asset.file, ".md"),
+      name: parsed?.name || path.basename(asset.file, ".md"),
       path: asset.path,
       itemCount,
       size: asset.size,
@@ -284,14 +302,14 @@ function processScripts(rawAssets) {
 
     // Check for exports
     const hasExports =
-      asset.content.includes('module.exports') || asset.content.includes('exports.');
+      asset.content.includes("module.exports") || asset.content.includes("exports.");
 
     // Check if it's a CLI script
-    const isCli = asset.content.includes('#!/usr/bin/env node');
+    const isCli = asset.content.includes("#!/usr/bin/env node");
 
     return {
-      type: 'script',
-      id: path.basename(asset.file, '.js'),
+      type: "script",
+      id: path.basename(asset.file, ".js"),
       path: asset.path,
       description,
       hasExports,
@@ -310,22 +328,22 @@ function findOrphans(inventory) {
 
   // Collect all referenced assets
   inventory.agents.forEach((agent) => {
-    agent.dependencies.tasks.forEach((t) => referenced.add(`task:${t.replace('.md', '')}`));
+    agent.dependencies.tasks.forEach((t) => referenced.add(`task:${t.replace(".md", "")}`));
     agent.dependencies.templates.forEach((t) =>
-      referenced.add(`template:${t.replace(/\.(yaml|yml|md)$/, '')}`)
+      referenced.add(`template:${t.replace(/\.(yaml|yml|md)$/, "")}`),
     );
     agent.dependencies.checklists.forEach((t) =>
-      referenced.add(`checklist:${t.replace('.md', '')}`)
+      referenced.add(`checklist:${t.replace(".md", "")}`),
     );
-    agent.dependencies.data.forEach((t) => referenced.add(`data:${t.replace(/\.(md|yaml)$/, '')}`));
+    agent.dependencies.data.forEach((t) => referenced.add(`data:${t.replace(/\.(md|yaml)$/, "")}`));
   });
 
   inventory.tasks.forEach((task) => {
     task.dependencies.templates.forEach((t) =>
-      referenced.add(`template:${t.replace(/\.(yaml|yml|md)$/, '')}`)
+      referenced.add(`template:${t.replace(/\.(yaml|yml|md)$/, "")}`),
     );
     task.dependencies.checklists.forEach((t) =>
-      referenced.add(`checklist:${t.replace('.md', '')}`)
+      referenced.add(`checklist:${t.replace(".md", "")}`),
     );
   });
 
@@ -334,19 +352,19 @@ function findOrphans(inventory) {
 
   inventory.tasks.forEach((task) => {
     if (!referenced.has(`task:${task.id}`)) {
-      orphans.push({ type: 'task', id: task.id, path: task.path });
+      orphans.push({ type: "task", id: task.id, path: task.path });
     }
   });
 
   inventory.templates.forEach((template) => {
     if (!referenced.has(`template:${template.id}`)) {
-      orphans.push({ type: 'template', id: template.id, path: template.path });
+      orphans.push({ type: "template", id: template.id, path: template.path });
     }
   });
 
   inventory.checklists.forEach((checklist) => {
     if (!referenced.has(`checklist:${checklist.id}`)) {
-      orphans.push({ type: 'checklist', id: checklist.id, path: checklist.path });
+      orphans.push({ type: "checklist", id: checklist.id, path: checklist.path });
     }
   });
 
@@ -362,26 +380,26 @@ function countDependencies(inventory) {
   // Count how many times each asset is referenced
   inventory.agents.forEach((agent) => {
     agent.dependencies.tasks.forEach((t) => {
-      const key = `task:${t.replace('.md', '')}`;
+      const key = `task:${t.replace(".md", "")}`;
       counts[key] = (counts[key] || 0) + 1;
     });
     agent.dependencies.templates.forEach((t) => {
-      const key = `template:${t.replace(/\.(yaml|yml|md)$/, '')}`;
+      const key = `template:${t.replace(/\.(yaml|yml|md)$/, "")}`;
       counts[key] = (counts[key] || 0) + 1;
     });
     agent.dependencies.checklists.forEach((t) => {
-      const key = `checklist:${t.replace('.md', '')}`;
+      const key = `checklist:${t.replace(".md", "")}`;
       counts[key] = (counts[key] || 0) + 1;
     });
   });
 
   inventory.tasks.forEach((task) => {
     task.dependencies.templates.forEach((t) => {
-      const key = `template:${t.replace(/\.(yaml|yml|md)$/, '')}`;
+      const key = `template:${t.replace(/\.(yaml|yml|md)$/, "")}`;
       counts[key] = (counts[key] || 0) + 1;
     });
     task.dependencies.checklists.forEach((t) => {
-      const key = `checklist:${t.replace('.md', '')}`;
+      const key = `checklist:${t.replace(".md", "")}`;
       counts[key] = (counts[key] || 0) + 1;
     });
   });
@@ -402,11 +420,11 @@ function generateSummary(inventory, orphans) {
     schemas: inventory.schemas?.length || 0,
     orphans: orphans.length,
     v2Assets:
-      inventory.agents.filter((a) => a.version === 'v2').length +
-      inventory.tasks.filter((t) => t.version === 'v2').length,
+      inventory.agents.filter((a) => a.version === "v2").length +
+      inventory.tasks.filter((t) => t.version === "v2").length,
     v3Assets:
-      inventory.agents.filter((a) => a.version === 'v3').length +
-      inventory.tasks.filter((t) => t.version === 'v3').length,
+      inventory.agents.filter((a) => a.version === "v3").length +
+      inventory.tasks.filter((t) => t.version === "v3").length,
   };
 }
 
@@ -425,7 +443,7 @@ async function generateInventory(rootPath, options = {}) {
       scanDirectory(
         path.join(rootPath, ASSET_PATHS.checklists),
         ASSET_PATTERNS.checklists,
-        rootPath
+        rootPath,
       ),
       scanDirectory(path.join(rootPath, ASSET_PATHS.scripts), ASSET_PATTERNS.scripts, rootPath),
       scanDirectory(path.join(rootPath, ASSET_PATHS.schemas), ASSET_PATTERNS.schemas, rootPath),
@@ -439,7 +457,7 @@ async function generateInventory(rootPath, options = {}) {
     checklists: processChecklists(rawChecklists),
     scripts: processScripts(rawScripts),
     schemas: rawSchemas.map((s) => ({
-      type: 'schema',
+      type: "schema",
       id: path.basename(s.file, path.extname(s.file)),
       path: s.path,
       format: path.extname(s.file).substring(1),
@@ -487,61 +505,61 @@ async function generateInventory(rootPath, options = {}) {
 function formatConsoleOutput(report, verbose = false) {
   const lines = [];
 
-  lines.push('');
-  lines.push('═══════════════════════════════════════════════════════════');
-  lines.push('  AIOX Asset Inventory');
+  lines.push("");
+  lines.push("═══════════════════════════════════════════════════════════");
+  lines.push("  AIOX Asset Inventory");
   lines.push(`  Generated: ${report.generated}`);
-  lines.push('═══════════════════════════════════════════════════════════');
-  lines.push('');
+  lines.push("═══════════════════════════════════════════════════════════");
+  lines.push("");
 
-  lines.push('SUMMARY');
-  lines.push('───────');
+  lines.push("SUMMARY");
+  lines.push("───────");
   lines.push(`  Agents:     ${report.summary.agents}`);
   lines.push(`  Tasks:      ${report.summary.tasks}`);
   lines.push(`  Templates:  ${report.summary.templates}`);
   lines.push(`  Checklists: ${report.summary.checklists}`);
   lines.push(`  Scripts:    ${report.summary.scripts}`);
   lines.push(`  Schemas:    ${report.summary.schemas}`);
-  lines.push('');
+  lines.push("");
   lines.push(`  V2 Assets:  ${report.summary.v2Assets}`);
   lines.push(`  V3 Assets:  ${report.summary.v3Assets}`);
   lines.push(`  Orphans:    ${report.summary.orphans}`);
-  lines.push('');
+  lines.push("");
 
   if (verbose) {
-    lines.push('AGENTS');
-    lines.push('──────');
+    lines.push("AGENTS");
+    lines.push("──────");
     report.assets.agents.forEach((agent) => {
-      const vBadge = agent.version === 'v3' ? '🆕' : '📦';
+      const vBadge = agent.version === "v3" ? "🆕" : "📦";
       lines.push(`  ${vBadge} ${agent.id} (${agent.name}) - ${agent.commandCount} commands`);
       if (agent.dependencies.tasks.length > 0) {
-        lines.push(`     └─ Tasks: ${agent.dependencies.tasks.slice(0, 5).join(', ')}...`);
+        lines.push(`     └─ Tasks: ${agent.dependencies.tasks.slice(0, 5).join(", ")}...`);
       }
     });
-    lines.push('');
+    lines.push("");
 
-    lines.push('TASKS (top 20)');
-    lines.push('──────────────');
+    lines.push("TASKS (top 20)");
+    lines.push("──────────────");
     report.assets.tasks.slice(0, 20).forEach((task) => {
-      const vBadge = task.version === 'v3' ? '🆕' : '📦';
-      const refs = task.referencedBy > 0 ? `(${task.referencedBy} refs)` : '(orphan)';
+      const vBadge = task.version === "v3" ? "🆕" : "📦";
+      const refs = task.referencedBy > 0 ? `(${task.referencedBy} refs)` : "(orphan)";
       lines.push(`  ${vBadge} ${task.id} ${refs}`);
     });
-    lines.push('');
+    lines.push("");
 
     if (report.orphans.length > 0) {
-      lines.push('ORPHAN ASSETS');
-      lines.push('─────────────');
+      lines.push("ORPHAN ASSETS");
+      lines.push("─────────────");
       report.orphans.forEach((orphan) => {
         lines.push(`  ⚠️  ${orphan.type}: ${orphan.id}`);
       });
-      lines.push('');
+      lines.push("");
     }
   }
 
-  lines.push('═══════════════════════════════════════════════════════════');
+  lines.push("═══════════════════════════════════════════════════════════");
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -550,7 +568,7 @@ function formatConsoleOutput(report, verbose = false) {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.includes('--help')) {
+  if (args.includes("--help")) {
     console.log(`
 AIOX Asset Inventory Generator
 
@@ -566,24 +584,24 @@ Options:
     return;
   }
 
-  const verbose = args.includes('--verbose');
-  const jsonOutput = args.includes('--json');
-  const outputIndex = args.indexOf('--output');
+  const verbose = args.includes("--verbose");
+  const jsonOutput = args.includes("--json");
+  const outputIndex = args.indexOf("--output");
   const outputPath = outputIndex !== -1 ? args[outputIndex + 1] : null;
 
   // Find project root (look for .aiox-core directory)
   let rootPath = process.cwd();
-  while (rootPath !== '/') {
+  while (rootPath !== "/") {
     try {
-      await fs.access(path.join(rootPath, '.aiox-core'));
+      await fs.access(path.join(rootPath, ".aiox-core"));
       break;
     } catch {
       rootPath = path.dirname(rootPath);
     }
   }
 
-  if (rootPath === '/') {
-    console.error('Error: Could not find .aiox-core directory. Run from project root.');
+  if (rootPath === "/") {
+    console.error("Error: Could not find .aiox-core directory. Run from project root.");
     process.exit(1);
   }
 
@@ -614,7 +632,7 @@ module.exports = {
 // Run CLI if called directly
 if (require.main === module) {
   main().catch((error) => {
-    console.error('Error:', error.message);
+    console.error("Error:", error.message);
     process.exit(1);
   });
 }

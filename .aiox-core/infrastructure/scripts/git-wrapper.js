@@ -1,7 +1,7 @@
-const { execa } = require('execa');
-const path = require('path');
-const fs = require('fs').promises;
-const chalk = require('chalk');
+const { execa } = require("execa");
+const path = require("path");
+const fs = require("fs").promises;
+const chalk = require("chalk");
 
 /**
  * GitWrapper - Centralized git operations for AIOX
@@ -12,7 +12,7 @@ const chalk = require('chalk');
 class GitWrapper {
   constructor(rootPath) {
     this.rootPath = rootPath || process.cwd();
-    this.gitPath = 'git';
+    this.gitPath = "git";
   }
 
   /**
@@ -25,7 +25,7 @@ class GitWrapper {
   async execGit(command, options = {}) {
     try {
       // Split command string into array for execa
-      const args = command.split(' ');
+      const args = command.split(" ");
       const { stdout, stderr } = await execa(this.gitPath, args, {
         cwd: this.rootPath,
         ...options,
@@ -37,7 +37,7 @@ class GitWrapper {
 
       return stdout.trim();
     } catch (error) {
-      throw new Error(`Git command failed: ${error.message}`);
+      throw new Error(`Git command failed: ${error.message}`, { cause: error });
     }
   }
 
@@ -46,7 +46,7 @@ class GitWrapper {
    */
   async isGitInitialized() {
     try {
-      await this.execGit('rev-parse --git-dir');
+      await this.execGit("rev-parse --git-dir");
       return true;
     } catch (error) {
       return false;
@@ -58,10 +58,10 @@ class GitWrapper {
    */
   async initializeRepository() {
     try {
-      await this.execGit('init');
+      await this.execGit("init");
       return true;
     } catch (error) {
-      throw new Error(`Failed to initialize git repository: ${error.message}`);
+      throw new Error(`Failed to initialize git repository: ${error.message}`, { cause: error });
     }
   }
 
@@ -70,9 +70,9 @@ class GitWrapper {
    */
   async getCurrentBranch() {
     try {
-      return await this.execGit('rev-parse --abbrev-ref HEAD');
+      return await this.execGit("rev-parse --abbrev-ref HEAD");
     } catch (error) {
-      throw new Error(`Failed to get current branch: ${error.message}`);
+      throw new Error(`Failed to get current branch: ${error.message}`, { cause: error });
     }
   }
 
@@ -88,7 +88,7 @@ class GitWrapper {
       }
       return true;
     } catch (error) {
-      throw new Error(`Failed to create branch ${branchName}: ${error.message}`);
+      throw new Error(`Failed to create branch ${branchName}: ${error.message}`, { cause: error });
     }
   }
 
@@ -100,7 +100,9 @@ class GitWrapper {
       await this.execGit(`checkout ${branchName}`);
       return true;
     } catch (error) {
-      throw new Error(`Failed to checkout branch ${branchName}: ${error.message}`);
+      throw new Error(`Failed to checkout branch ${branchName}: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -108,7 +110,7 @@ class GitWrapper {
    * Create a modification branch with timestamp
    */
   async createModificationBranch(modificationId) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const branchName = `modification/${modificationId}/${timestamp}`;
     await this.createBranch(branchName);
     return branchName;
@@ -128,7 +130,7 @@ class GitWrapper {
       }
       return true;
     } catch (error) {
-      throw new Error(`Failed to stage files: ${error.message}`);
+      throw new Error(`Failed to stage files: ${error.message}`, { cause: error });
     }
   }
 
@@ -137,10 +139,10 @@ class GitWrapper {
    */
   async commit(message, options = {}) {
     try {
-      const commitArgs = ['commit', '-m', message];
+      const commitArgs = ["commit", "-m", message];
 
       if (options.allowEmpty) {
-        commitArgs.push('--allow-empty');
+        commitArgs.push("--allow-empty");
       }
 
       // Note: execa handles arguments array directly
@@ -150,7 +152,7 @@ class GitWrapper {
 
       return stdout.trim();
     } catch (error) {
-      throw new Error(`Failed to create commit: ${error.message}`);
+      throw new Error(`Failed to create commit: ${error.message}`, { cause: error });
     }
   }
 
@@ -171,7 +173,7 @@ ${JSON.stringify(metadata, null, 2)}`;
    */
   async getStatus() {
     try {
-      const output = await this.execGit('status --porcelain');
+      const output = await this.execGit("status --porcelain");
 
       const status = {
         clean: !output,
@@ -180,26 +182,28 @@ ${JSON.stringify(metadata, null, 2)}`;
         untracked: [],
       };
 
-      if (!output) return status;
+      if (!output) {
+        return status;
+      }
 
-      const lines = output.split('\n').filter(line => line.trim());
+      const lines = output.split("\n").filter((line) => line.trim());
 
       for (const line of lines) {
         const statusCode = line.substring(0, 2);
         const file = line.substring(3);
 
-        if (statusCode[0] === 'M') {
+        if (statusCode[0] === "M") {
           status.staged.push(file);
-        } else if (statusCode[1] === 'M') {
+        } else if (statusCode[1] === "M") {
           status.modified.push(file);
-        } else if (statusCode === '??') {
+        } else if (statusCode === "??") {
           status.untracked.push(file);
         }
       }
 
       return status;
     } catch (error) {
-      throw new Error(`Failed to get status: ${error.message}`);
+      throw new Error(`Failed to get status: ${error.message}`, { cause: error });
     }
   }
 
@@ -209,15 +213,15 @@ ${JSON.stringify(metadata, null, 2)}`;
   async getHistory(limit = 10) {
     try {
       const output = await this.execGit(`log --oneline -n ${limit}`);
-      return output.split('\n').map(line => {
-        const [hash, ...messageParts] = line.split(' ');
+      return output.split("\n").map((line) => {
+        const [hash, ...messageParts] = line.split(" ");
         return {
           hash,
-          message: messageParts.join(' '),
+          message: messageParts.join(" "),
         };
       });
     } catch (error) {
-      throw new Error(`Failed to get history: ${error.message}`);
+      throw new Error(`Failed to get history: ${error.message}`, { cause: error });
     }
   }
 
@@ -226,8 +230,8 @@ ${JSON.stringify(metadata, null, 2)}`;
    */
   async getConflicts() {
     try {
-      const output = await this.execGit('diff --name-only --diff-filter=U');
-      return output ? output.split('\n').filter(f => f.trim()) : [];
+      const output = await this.execGit("diff --name-only --diff-filter=U");
+      return output ? output.split("\n").filter((f) => f.trim()) : [];
     } catch (error) {
       return [];
     }
@@ -238,14 +242,14 @@ ${JSON.stringify(metadata, null, 2)}`;
    */
   async mergeBranch(branchName, options = {}) {
     try {
-      const mergeArgs = ['merge', branchName];
+      const mergeArgs = ["merge", branchName];
 
       if (options.noFf) {
-        mergeArgs.push('--no-ff');
+        mergeArgs.push("--no-ff");
       }
 
       if (options.message) {
-        mergeArgs.push('-m', options.message);
+        mergeArgs.push("-m", options.message);
       }
 
       const { stdout } = await execa(this.gitPath, mergeArgs, {
@@ -270,9 +274,7 @@ ${JSON.stringify(metadata, null, 2)}`;
    * Create a git tag
    */
   async createTag(tagName, message = null) {
-    const tagArgs = message
-      ? `tag -a ${tagName} -m "${message}"`
-      : `tag ${tagName}`;
+    const tagArgs = message ? `tag -a ${tagName} -m "${message}"` : `tag ${tagName}`;
 
     return await this.execGit(tagArgs);
   }
@@ -280,20 +282,20 @@ ${JSON.stringify(metadata, null, 2)}`;
   /**
    * Push to remote
    */
-  async push(remote = 'origin', branch = null, options = {}) {
+  async push(remote = "origin", branch = null, options = {}) {
     try {
-      const pushArgs = ['push', remote];
+      const pushArgs = ["push", remote];
 
       if (branch) {
         pushArgs.push(branch);
       }
 
       if (options.setUpstream) {
-        pushArgs.push('--set-upstream');
+        pushArgs.push("--set-upstream");
       }
 
       if (options.force) {
-        pushArgs.push('--force');
+        pushArgs.push("--force");
       }
 
       const { stdout } = await execa(this.gitPath, pushArgs, {
@@ -302,7 +304,7 @@ ${JSON.stringify(metadata, null, 2)}`;
 
       return stdout.trim();
     } catch (error) {
-      throw new Error(`Failed to push: ${error.message}`);
+      throw new Error(`Failed to push: ${error.message}`, { cause: error });
     }
   }
 
@@ -311,27 +313,27 @@ ${JSON.stringify(metadata, null, 2)}`;
    */
   async getDiff(files = null, options = {}) {
     try {
-      let diffCommand = 'diff';
+      let diffCommand = "diff";
 
       if (options.staged) {
-        diffCommand += ' --staged';
+        diffCommand += " --staged";
       }
 
       if (options.nameOnly) {
-        diffCommand += ' --name-only';
+        diffCommand += " --name-only";
       }
 
       if (files) {
         if (Array.isArray(files)) {
-          diffCommand += ' ' + files.join(' ');
+          diffCommand += " " + files.join(" ");
         } else {
-          diffCommand += ' ' + files;
+          diffCommand += " " + files;
         }
       }
 
       return await this.execGit(diffCommand);
     } catch (error) {
-      return '';
+      return "";
     }
   }
 
@@ -339,9 +341,7 @@ ${JSON.stringify(metadata, null, 2)}`;
    * Stash changes
    */
   async stash(message = null) {
-    const stashCommand = message
-      ? `stash save "${message}"`
-      : 'stash';
+    const stashCommand = message ? `stash save "${message}"` : "stash";
 
     return await this.execGit(stashCommand);
   }
@@ -350,9 +350,7 @@ ${JSON.stringify(metadata, null, 2)}`;
    * Apply stashed changes
    */
   async stashApply(stashRef = null) {
-    const applyCommand = stashRef
-      ? `stash apply ${stashRef}`
-      : 'stash apply';
+    const applyCommand = stashRef ? `stash apply ${stashRef}` : "stash apply";
 
     return await this.execGit(applyCommand);
   }
@@ -362,19 +360,21 @@ ${JSON.stringify(metadata, null, 2)}`;
    */
   async getRemotes() {
     try {
-      const output = await this.execGit('remote -v');
+      const output = await this.execGit("remote -v");
       const remotes = {};
 
-      if (!output) return remotes;
+      if (!output) {
+        return remotes;
+      }
 
-      const lines = output.split('\n').filter(line => line.trim());
+      const lines = output.split("\n").filter((line) => line.trim());
 
       for (const line of lines) {
         const [name, url, type] = line.split(/\s+/);
         if (!remotes[name]) {
           remotes[name] = { fetch: null, push: null };
         }
-        remotes[name][type.replace(/[()]/g, '')] = url;
+        remotes[name][type.replace(/[()]/g, "")] = url;
       }
 
       return remotes;
@@ -400,15 +400,15 @@ ${JSON.stringify(metadata, null, 2)}`;
   /**
    * Fetch from remote
    */
-  async fetch(remote = 'origin', options = {}) {
-    const fetchArgs = ['fetch', remote];
+  async fetch(remote = "origin", options = {}) {
+    const fetchArgs = ["fetch", remote];
 
     if (options.prune) {
-      fetchArgs.push('--prune');
+      fetchArgs.push("--prune");
     }
 
     if (options.all) {
-      fetchArgs.push('--all');
+      fetchArgs.push("--all");
     }
 
     const { stdout } = await execa(this.gitPath, fetchArgs, {
@@ -421,15 +421,15 @@ ${JSON.stringify(metadata, null, 2)}`;
   /**
    * Pull from remote
    */
-  async pull(remote = 'origin', branch = null, options = {}) {
-    const pullArgs = ['pull', remote];
+  async pull(remote = "origin", branch = null, options = {}) {
+    const pullArgs = ["pull", remote];
 
     if (branch) {
       pullArgs.push(branch);
     }
 
     if (options.rebase) {
-      pullArgs.push('--rebase');
+      pullArgs.push("--rebase");
     }
 
     const { stdout } = await execa(this.gitPath, pullArgs, {

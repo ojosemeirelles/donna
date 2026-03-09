@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 function getDefaultOptions() {
   const projectRoot = process.cwd();
   return {
     projectRoot,
-    instructionsFile: path.join(projectRoot, 'AGENTS.md'),
-    agentsDir: path.join(projectRoot, '.codex', 'agents'),
-    skillsDir: path.join(projectRoot, '.codex', 'skills'),
-    sourceAgentsDir: path.join(projectRoot, '.aiox-core', 'development', 'agents'),
+    instructionsFile: path.join(projectRoot, "AGENTS.md"),
+    agentsDir: path.join(projectRoot, ".codex", "agents"),
+    skillsDir: path.join(projectRoot, ".codex", "skills"),
+    sourceAgentsDir: path.join(projectRoot, ".aiox-core", "development", "agents"),
     quiet: false,
     json: false,
   };
@@ -20,23 +20,26 @@ function getDefaultOptions() {
 function parseArgs(argv = process.argv.slice(2)) {
   const args = new Set(argv);
   return {
-    quiet: args.has('--quiet') || args.has('-q'),
-    json: args.has('--json'),
+    quiet: args.has("--quiet") || args.has("-q"),
+    json: args.has("--json"),
   };
 }
 
 function countMarkdownFiles(dirPath) {
-  if (!fs.existsSync(dirPath)) return 0;
-  return fs.readdirSync(dirPath).filter((f) => f.endsWith('.md')).length;
+  if (!fs.existsSync(dirPath)) {
+    return 0;
+  }
+  return fs.readdirSync(dirPath).filter((f) => f.endsWith(".md")).length;
 }
 
 function countSkillFiles(skillsDir) {
-  if (!fs.existsSync(skillsDir)) return 0;
+  if (!fs.existsSync(skillsDir)) {
+    return 0;
+  }
   const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
   return entries
-    .filter((entry) => entry.isDirectory() && entry.name.startsWith('aiox-'))
-    .filter((entry) => fs.existsSync(path.join(skillsDir, entry.name, 'SKILL.md')))
-    .length;
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith("aiox-"))
+    .filter((entry) => fs.existsSync(path.join(skillsDir, entry.name, "SKILL.md"))).length;
 }
 
 function validateCodexIntegration(options = {}) {
@@ -45,10 +48,11 @@ function validateCodexIntegration(options = {}) {
     ...getDefaultOptions(),
     ...options,
     projectRoot,
-    instructionsFile: options.instructionsFile || path.join(projectRoot, 'AGENTS.md'),
-    agentsDir: options.agentsDir || path.join(projectRoot, '.codex', 'agents'),
-    skillsDir: options.skillsDir || path.join(projectRoot, '.codex', 'skills'),
-    sourceAgentsDir: options.sourceAgentsDir || path.join(projectRoot, '.aiox-core', 'development', 'agents'),
+    instructionsFile: options.instructionsFile || path.join(projectRoot, "AGENTS.md"),
+    agentsDir: options.agentsDir || path.join(projectRoot, ".codex", "agents"),
+    skillsDir: options.skillsDir || path.join(projectRoot, ".codex", "skills"),
+    sourceAgentsDir:
+      options.sourceAgentsDir || path.join(projectRoot, ".aiox-core", "development", "agents"),
   };
   const errors = [];
   const warnings = [];
@@ -60,11 +64,15 @@ function validateCodexIntegration(options = {}) {
   }
 
   if (!fs.existsSync(resolved.agentsDir)) {
-    errors.push(`Missing Codex agents dir: ${path.relative(resolved.projectRoot, resolved.agentsDir)}`);
+    errors.push(
+      `Missing Codex agents dir: ${path.relative(resolved.projectRoot, resolved.agentsDir)}`,
+    );
   }
 
   if (!fs.existsSync(resolved.skillsDir)) {
-    errors.push(`Missing Codex skills dir: ${path.relative(resolved.projectRoot, resolved.skillsDir)}`);
+    errors.push(
+      `Missing Codex skills dir: ${path.relative(resolved.projectRoot, resolved.skillsDir)}`,
+    );
   }
 
   const sourceCount = countMarkdownFiles(resolved.sourceAgentsDir);
@@ -99,7 +107,7 @@ function formatHumanReport(result) {
     if (result.warnings.length > 0) {
       lines.push(...result.warnings.map((w) => `⚠️ ${w}`));
     }
-    return lines.join('\n');
+    return lines.join("\n");
   }
   const lines = [
     `❌ Codex integration validation failed (${result.errors.length} issue(s))`,
@@ -108,7 +116,7 @@ function formatHumanReport(result) {
   if (result.warnings.length > 0) {
     lines.push(...result.warnings.map((w) => `⚠️ ${w}`));
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function main() {

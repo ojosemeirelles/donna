@@ -6,61 +6,61 @@
  * integration points for AIOX workflows.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { EventEmitter } = require('events');
+const fs = require("fs");
+const path = require("path");
+const { EventEmitter } = require("events");
 
 /**
  * Provider configurations for different CI/CD systems
  */
 const PROVIDERS = {
-  'github-actions': {
-    name: 'GitHub Actions',
-    configPaths: ['.github/workflows'],
-    configPatterns: ['*.yml', '*.yaml'],
-    triggerTypes: ['push', 'pull_request', 'workflow_dispatch', 'schedule', 'release'],
+  "github-actions": {
+    name: "GitHub Actions",
+    configPaths: [".github/workflows"],
+    configPatterns: ["*.yml", "*.yaml"],
+    triggerTypes: ["push", "pull_request", "workflow_dispatch", "schedule", "release"],
   },
-  'gitlab-ci': {
-    name: 'GitLab CI',
-    configPaths: ['.'],
-    configPatterns: ['.gitlab-ci.yml', '.gitlab-ci.yaml'],
-    triggerTypes: ['push', 'merge_request', 'schedule', 'pipeline', 'trigger'],
+  "gitlab-ci": {
+    name: "GitLab CI",
+    configPaths: ["."],
+    configPatterns: [".gitlab-ci.yml", ".gitlab-ci.yaml"],
+    triggerTypes: ["push", "merge_request", "schedule", "pipeline", "trigger"],
   },
   jenkins: {
-    name: 'Jenkins',
-    configPaths: ['.'],
-    configPatterns: ['Jenkinsfile', 'jenkins.yml', 'jenkins.yaml'],
-    triggerTypes: ['scm', 'cron', 'upstream', 'manual'],
+    name: "Jenkins",
+    configPaths: ["."],
+    configPatterns: ["Jenkinsfile", "jenkins.yml", "jenkins.yaml"],
+    triggerTypes: ["scm", "cron", "upstream", "manual"],
   },
   circleci: {
-    name: 'CircleCI',
-    configPaths: ['.circleci'],
-    configPatterns: ['config.yml', 'config.yaml'],
-    triggerTypes: ['push', 'pull_request', 'schedule', 'api'],
+    name: "CircleCI",
+    configPaths: [".circleci"],
+    configPatterns: ["config.yml", "config.yaml"],
+    triggerTypes: ["push", "pull_request", "schedule", "api"],
   },
-  'travis-ci': {
-    name: 'Travis CI',
-    configPaths: ['.'],
-    configPatterns: ['.travis.yml', '.travis.yaml'],
-    triggerTypes: ['push', 'pull_request', 'cron', 'api'],
+  "travis-ci": {
+    name: "Travis CI",
+    configPaths: ["."],
+    configPatterns: [".travis.yml", ".travis.yaml"],
+    triggerTypes: ["push", "pull_request", "cron", "api"],
   },
-  'azure-pipelines': {
-    name: 'Azure Pipelines',
-    configPaths: ['.'],
-    configPatterns: ['azure-pipelines.yml', 'azure-pipelines.yaml'],
-    triggerTypes: ['push', 'pull_request', 'schedule', 'manual'],
+  "azure-pipelines": {
+    name: "Azure Pipelines",
+    configPaths: ["."],
+    configPatterns: ["azure-pipelines.yml", "azure-pipelines.yaml"],
+    triggerTypes: ["push", "pull_request", "schedule", "manual"],
   },
   bitbucket: {
-    name: 'Bitbucket Pipelines',
-    configPaths: ['.'],
-    configPatterns: ['bitbucket-pipelines.yml'],
-    triggerTypes: ['push', 'pull_request', 'manual', 'schedule'],
+    name: "Bitbucket Pipelines",
+    configPaths: ["."],
+    configPatterns: ["bitbucket-pipelines.yml"],
+    triggerTypes: ["push", "pull_request", "manual", "schedule"],
   },
-  'aws-codepipeline': {
-    name: 'AWS CodePipeline',
-    configPaths: ['.'],
-    configPatterns: ['buildspec.yml', 'buildspec.yaml'],
-    triggerTypes: ['push', 'manual', 'cloudwatch'],
+  "aws-codepipeline": {
+    name: "AWS CodePipeline",
+    configPaths: ["."],
+    configPatterns: ["buildspec.yml", "buildspec.yaml"],
+    triggerTypes: ["push", "manual", "cloudwatch"],
   },
 };
 
@@ -78,12 +78,14 @@ class ConfigParser {
   parseYaml(content) {
     // Simple YAML parser for CI/CD configs
     const result = {};
-    const lines = content.split('\n');
+    const lines = content.split("\n");
     const stack = [{ obj: result, indent: -1 }];
 
     for (const line of lines) {
       // Skip comments and empty lines
-      if (line.trim().startsWith('#') || !line.trim()) continue;
+      if (line.trim().startsWith("#") || !line.trim()) {
+        continue;
+      }
 
       const indent = line.search(/\S/);
       const trimmed = line.trim();
@@ -96,16 +98,16 @@ class ConfigParser {
       const parent = stack[stack.length - 1].obj;
 
       // Handle list items
-      if (trimmed.startsWith('- ')) {
+      if (trimmed.startsWith("- ")) {
         const value = trimmed.substring(2).trim();
         const lastKey = Object.keys(parent).pop();
         if (lastKey && !Array.isArray(parent[lastKey])) {
           parent[lastKey] = [];
         }
         if (lastKey) {
-          if (value.includes(':')) {
+          if (value.includes(":")) {
             const obj = {};
-            const [k, v] = value.split(':').map((s) => s.trim());
+            const [k, v] = value.split(":").map((s) => s.trim());
             obj[k] = v || {};
             parent[lastKey].push(obj);
             stack.push({ obj: obj, indent: indent });
@@ -117,14 +119,14 @@ class ConfigParser {
       }
 
       // Handle key-value pairs
-      const colonIdx = trimmed.indexOf(':');
+      const colonIdx = trimmed.indexOf(":");
       if (colonIdx > 0) {
         const key = trimmed.substring(0, colonIdx).trim();
         const value = trimmed.substring(colonIdx + 1).trim();
 
         if (value) {
           // Inline value
-          parent[key] = value.replace(/^["']|["']$/g, '');
+          parent[key] = value.replace(/^["']|["']$/g, "");
         } else {
           // Nested object
           parent[key] = {};
@@ -141,7 +143,7 @@ class ConfigParser {
    */
   parseJenkinsfile(content) {
     const result = {
-      type: 'jenkinsfile',
+      type: "jenkinsfile",
       stages: [],
       agents: [],
       environment: {},
@@ -153,7 +155,7 @@ class ConfigParser {
     const pipelineMatch = content.match(/pipeline\s*\{([\s\S]*)\}/);
     if (!pipelineMatch) {
       // Scripted pipeline
-      result.type = 'scripted';
+      result.type = "scripted";
       const stageMatches = content.matchAll(/stage\s*\(\s*['"]([^'"]+)['"]\s*\)/g);
       for (const match of stageMatches) {
         result.stages.push({ name: match[1] });
@@ -167,21 +169,21 @@ class ConfigParser {
     const agentMatch = pipelineContent.match(/agent\s*\{([^}]+)\}/);
     if (agentMatch) {
       const agentContent = agentMatch[1].trim();
-      if (agentContent.includes('docker')) {
-        result.agents.push({ type: 'docker', config: agentContent });
-      } else if (agentContent.includes('kubernetes')) {
-        result.agents.push({ type: 'kubernetes', config: agentContent });
-      } else if (agentContent.includes('label')) {
+      if (agentContent.includes("docker")) {
+        result.agents.push({ type: "docker", config: agentContent });
+      } else if (agentContent.includes("kubernetes")) {
+        result.agents.push({ type: "kubernetes", config: agentContent });
+      } else if (agentContent.includes("label")) {
         const labelMatch = agentContent.match(/label\s+['"]([^'"]+)['"]/);
-        result.agents.push({ type: 'label', value: labelMatch?.[1] });
+        result.agents.push({ type: "label", value: labelMatch?.[1] });
       } else {
-        result.agents.push({ type: 'any' });
+        result.agents.push({ type: "any" });
       }
     }
 
     // Extract stages
     const stagesMatch = pipelineContent.match(
-      /stages\s*\{([\s\S]*?)\}(?=\s*(?:post|options|triggers|\}|$))/
+      /stages\s*\{([\s\S]*?)\}(?=\s*(?:post|options|triggers|\}|$))/,
     );
     if (stagesMatch) {
       const stageMatches = stagesMatch[1].matchAll(/stage\s*\(\s*['"]([^'"]+)['"]\s*\)/g);
@@ -193,7 +195,7 @@ class ConfigParser {
     // Extract environment
     const envMatch = pipelineContent.match(/environment\s*\{([^}]+)\}/);
     if (envMatch) {
-      const envLines = envMatch[1].trim().split('\n');
+      const envLines = envMatch[1].trim().split("\n");
       for (const line of envLines) {
         const eqMatch = line.match(/(\w+)\s*=\s*(.+)/);
         if (eqMatch) {
@@ -205,9 +207,15 @@ class ConfigParser {
     // Extract triggers
     const triggersMatch = pipelineContent.match(/triggers\s*\{([^}]+)\}/);
     if (triggersMatch) {
-      if (triggersMatch[1].includes('pollSCM')) result.triggers.push('scm');
-      if (triggersMatch[1].includes('cron')) result.triggers.push('cron');
-      if (triggersMatch[1].includes('upstream')) result.triggers.push('upstream');
+      if (triggersMatch[1].includes("pollSCM")) {
+        result.triggers.push("scm");
+      }
+      if (triggersMatch[1].includes("cron")) {
+        result.triggers.push("cron");
+      }
+      if (triggersMatch[1].includes("upstream")) {
+        result.triggers.push("upstream");
+      }
     }
 
     return result;
@@ -228,7 +236,7 @@ class ConfigParser {
 
     // Extract triggers
     if (config.on) {
-      if (typeof config.on === 'string') {
+      if (typeof config.on === "string") {
         result.triggers.push(config.on);
       } else if (Array.isArray(config.on)) {
         result.triggers = config.on;
@@ -242,7 +250,7 @@ class ConfigParser {
       for (const [jobName, jobConfig] of Object.entries(config.jobs)) {
         const job = {
           name: jobName,
-          runsOn: jobConfig['runs-on'] || 'ubuntu-latest',
+          runsOn: jobConfig["runs-on"] || "ubuntu-latest",
           steps: [],
           needs: jobConfig.needs || [],
           env: jobConfig.env || {},
@@ -279,26 +287,28 @@ class ConfigParser {
     };
 
     // Reserved keywords (not jobs)
-    const reserved = [
-      'stages',
-      'variables',
-      'include',
-      'default',
-      'workflow',
-      'image',
-      'services',
-      'before_script',
-      'after_script',
-      'cache',
-    ];
+    const reserved = new Set([
+      "stages",
+      "variables",
+      "include",
+      "default",
+      "workflow",
+      "image",
+      "services",
+      "before_script",
+      "after_script",
+      "cache",
+    ]);
 
     // Extract jobs
     for (const [key, value] of Object.entries(config)) {
-      if (reserved.includes(key) || key.startsWith('.')) continue;
-      if (typeof value === 'object') {
+      if (reserved.has(key) || key.startsWith(".")) {
+        continue;
+      }
+      if (typeof value === "object") {
         result.jobs.push({
           name: key,
-          stage: value.stage || 'test',
+          stage: value.stage || "test",
           script: value.script || [],
           only: value.only || [],
           except: value.except || [],
@@ -338,7 +348,9 @@ class ConfigParser {
     // Extract workflows
     if (config.workflows) {
       for (const [name, wfConfig] of Object.entries(config.workflows)) {
-        if (name === 'version') continue;
+        if (name === "version") {
+          continue;
+        }
         result.workflows.push({
           name,
           jobs: wfConfig.jobs || [],
@@ -353,15 +365,15 @@ class ConfigParser {
   /**
    * Parse any CI/CD config based on provider
    */
-  parse(content, provider, filename = '') {
+  parse(content, provider, filename = "") {
     switch (provider) {
-      case 'github-actions':
+      case "github-actions":
         return this.parseGitHubActions(content, filename);
-      case 'gitlab-ci':
+      case "gitlab-ci":
         return this.parseGitLabCI(content);
-      case 'jenkins':
+      case "jenkins":
         return this.parseJenkinsfile(content);
-      case 'circleci':
+      case "circleci":
         return this.parseCircleCI(content);
       default:
         return this.parseYaml(content);
@@ -407,7 +419,9 @@ class ProviderDetector {
     for (const configPath of config.configPaths) {
       const fullPath = path.join(this.rootPath, configPath);
 
-      if (!fs.existsSync(fullPath)) continue;
+      if (!fs.existsSync(fullPath)) {
+        continue;
+      }
 
       const stat = fs.statSync(fullPath);
 
@@ -440,9 +454,11 @@ class ProviderDetector {
    */
   matchesPattern(filename, patterns) {
     for (const pattern of patterns) {
-      if (pattern.startsWith('*.')) {
+      if (pattern.startsWith("*.")) {
         const ext = pattern.substring(1);
-        if (filename.endsWith(ext)) return true;
+        if (filename.endsWith(ext)) {
+          return true;
+        }
       } else if (filename === pattern) {
         return true;
       }
@@ -461,7 +477,7 @@ class PipelineAnalyzer {
   analyze(parsed, provider) {
     const analysis = {
       provider,
-      complexity: 'simple',
+      complexity: "simple",
       hasTests: false,
       hasBuild: false,
       hasDeploy: false,
@@ -477,16 +493,16 @@ class PipelineAnalyzer {
 
     // Analyze based on provider
     switch (provider) {
-      case 'github-actions':
+      case "github-actions":
         this.analyzeGitHubActions(parsed, analysis);
         break;
-      case 'gitlab-ci':
+      case "gitlab-ci":
         this.analyzeGitLabCI(parsed, analysis);
         break;
-      case 'jenkins':
+      case "jenkins":
         this.analyzeJenkins(parsed, analysis);
         break;
-      case 'circleci':
+      case "circleci":
         this.analyzeCircleCI(parsed, analysis);
         break;
       default:
@@ -517,58 +533,58 @@ class PipelineAnalyzer {
 
         // Test detection
         if (
-          stepStr.includes('test') ||
-          stepStr.includes('jest') ||
-          stepStr.includes('pytest') ||
-          stepStr.includes('npm run test')
+          stepStr.includes("test") ||
+          stepStr.includes("jest") ||
+          stepStr.includes("pytest") ||
+          stepStr.includes("npm run test")
         ) {
           analysis.hasTests = true;
         }
 
         // Build detection
         if (
-          stepStr.includes('build') ||
-          stepStr.includes('compile') ||
-          stepStr.includes('npm run build')
+          stepStr.includes("build") ||
+          stepStr.includes("compile") ||
+          stepStr.includes("npm run build")
         ) {
           analysis.hasBuild = true;
         }
 
         // Deploy detection
         if (
-          stepStr.includes('deploy') ||
-          stepStr.includes('publish') ||
-          stepStr.includes('release')
+          stepStr.includes("deploy") ||
+          stepStr.includes("publish") ||
+          stepStr.includes("release")
         ) {
           analysis.hasDeploy = true;
         }
 
         // Lint detection
         if (
-          stepStr.includes('lint') ||
-          stepStr.includes('eslint') ||
-          stepStr.includes('prettier')
+          stepStr.includes("lint") ||
+          stepStr.includes("eslint") ||
+          stepStr.includes("prettier")
         ) {
           analysis.hasLint = true;
         }
 
         // Security scan detection
         if (
-          stepStr.includes('security') ||
-          stepStr.includes('snyk') ||
-          stepStr.includes('codeql') ||
-          stepStr.includes('trivy')
+          stepStr.includes("security") ||
+          stepStr.includes("snyk") ||
+          stepStr.includes("codeql") ||
+          stepStr.includes("trivy")
         ) {
           analysis.hasSecurityScan = true;
         }
 
         // Cache detection
-        if (step.uses?.includes('cache')) {
+        if (step.uses?.includes("cache")) {
           analysis.caching = true;
         }
 
         // Artifacts detection
-        if (step.uses?.includes('upload-artifact') || step.uses?.includes('download-artifact')) {
+        if (step.uses?.includes("upload-artifact") || step.uses?.includes("download-artifact")) {
           analysis.artifacts = true;
         }
       }
@@ -576,7 +592,7 @@ class PipelineAnalyzer {
       // Extract environments from job
       if (job.env) {
         for (const key of Object.keys(job.env)) {
-          if (key.includes('ENV') || key.includes('ENVIRONMENT')) {
+          if (key.includes("ENV") || key.includes("ENVIRONMENT")) {
             const value = job.env[key];
             if (!analysis.environments.includes(value)) {
               analysis.environments.push(value);
@@ -606,11 +622,19 @@ class PipelineAnalyzer {
     // Check stages for common patterns
     for (const stage of stages) {
       const stageLower = stage.toLowerCase();
-      if (stageLower.includes('test')) analysis.hasTests = true;
-      if (stageLower.includes('build')) analysis.hasBuild = true;
-      if (stageLower.includes('deploy')) analysis.hasDeploy = true;
-      if (stageLower.includes('lint')) analysis.hasLint = true;
-      if (stageLower.includes('security') || stageLower.includes('scan')) {
+      if (stageLower.includes("test")) {
+        analysis.hasTests = true;
+      }
+      if (stageLower.includes("build")) {
+        analysis.hasBuild = true;
+      }
+      if (stageLower.includes("deploy")) {
+        analysis.hasDeploy = true;
+      }
+      if (stageLower.includes("lint")) {
+        analysis.hasLint = true;
+      }
+      if (stageLower.includes("security") || stageLower.includes("scan")) {
         analysis.hasSecurityScan = true;
       }
     }
@@ -619,9 +643,15 @@ class PipelineAnalyzer {
     for (const job of jobs) {
       const jobStr = JSON.stringify(job).toLowerCase();
 
-      if (jobStr.includes('test')) analysis.hasTests = true;
-      if (jobStr.includes('build')) analysis.hasBuild = true;
-      if (jobStr.includes('deploy')) analysis.hasDeploy = true;
+      if (jobStr.includes("test")) {
+        analysis.hasTests = true;
+      }
+      if (jobStr.includes("build")) {
+        analysis.hasBuild = true;
+      }
+      if (jobStr.includes("deploy")) {
+        analysis.hasDeploy = true;
+      }
 
       // Extract environments
       if (job.environment) {
@@ -632,7 +662,7 @@ class PipelineAnalyzer {
     // Extract variables/secrets
     if (parsed.variables) {
       for (const key of Object.keys(parsed.variables)) {
-        if (key.includes('SECRET') || key.includes('TOKEN') || key.includes('KEY')) {
+        if (key.includes("SECRET") || key.includes("TOKEN") || key.includes("KEY")) {
           analysis.secrets.push(key);
         }
       }
@@ -641,7 +671,7 @@ class PipelineAnalyzer {
     // Parallelism (multiple jobs in same stage)
     const jobsByStage = {};
     for (const job of jobs) {
-      const stage = job.stage || 'test';
+      const stage = job.stage || "test";
       jobsByStage[stage] = (jobsByStage[stage] || 0) + 1;
     }
     if (Object.values(jobsByStage).some((count) => count > 1)) {
@@ -657,11 +687,19 @@ class PipelineAnalyzer {
 
     for (const stage of stages) {
       const nameLower = stage.name.toLowerCase();
-      if (nameLower.includes('test')) analysis.hasTests = true;
-      if (nameLower.includes('build')) analysis.hasBuild = true;
-      if (nameLower.includes('deploy')) analysis.hasDeploy = true;
-      if (nameLower.includes('lint')) analysis.hasLint = true;
-      if (nameLower.includes('security') || nameLower.includes('scan')) {
+      if (nameLower.includes("test")) {
+        analysis.hasTests = true;
+      }
+      if (nameLower.includes("build")) {
+        analysis.hasBuild = true;
+      }
+      if (nameLower.includes("deploy")) {
+        analysis.hasDeploy = true;
+      }
+      if (nameLower.includes("lint")) {
+        analysis.hasLint = true;
+      }
+      if (nameLower.includes("security") || nameLower.includes("scan")) {
         analysis.hasSecurityScan = true;
       }
     }
@@ -669,7 +707,7 @@ class PipelineAnalyzer {
     // Check environment for secrets
     if (parsed.environment) {
       for (const [key, value] of Object.entries(parsed.environment)) {
-        if (value.includes('credentials(') || key.includes('SECRET') || key.includes('TOKEN')) {
+        if (value.includes("credentials(") || key.includes("SECRET") || key.includes("TOKEN")) {
           analysis.secrets.push(key);
         }
       }
@@ -692,23 +730,23 @@ class PipelineAnalyzer {
       const nameLower = job.name.toLowerCase();
       const stepsStr = JSON.stringify(job.steps || []).toLowerCase();
 
-      if (nameLower.includes('test') || stepsStr.includes('test')) {
+      if (nameLower.includes("test") || stepsStr.includes("test")) {
         analysis.hasTests = true;
       }
-      if (nameLower.includes('build') || stepsStr.includes('build')) {
+      if (nameLower.includes("build") || stepsStr.includes("build")) {
         analysis.hasBuild = true;
       }
-      if (nameLower.includes('deploy') || stepsStr.includes('deploy')) {
+      if (nameLower.includes("deploy") || stepsStr.includes("deploy")) {
         analysis.hasDeploy = true;
       }
 
       // Check for caching
-      if (stepsStr.includes('restore_cache') || stepsStr.includes('save_cache')) {
+      if (stepsStr.includes("restore_cache") || stepsStr.includes("save_cache")) {
         analysis.caching = true;
       }
 
       // Check for artifacts
-      if (stepsStr.includes('store_artifacts') || stepsStr.includes('persist_to_workspace')) {
+      if (stepsStr.includes("store_artifacts") || stepsStr.includes("persist_to_workspace")) {
         analysis.artifacts = true;
       }
     }
@@ -723,7 +761,7 @@ class PipelineAnalyzer {
     // Check orbs
     if (parsed.orbs) {
       for (const orbName of Object.keys(parsed.orbs)) {
-        if (orbName.includes('security') || orbName.includes('snyk')) {
+        if (orbName.includes("security") || orbName.includes("snyk")) {
           analysis.hasSecurityScan = true;
         }
       }
@@ -736,11 +774,11 @@ class PipelineAnalyzer {
   analyzeGeneric(parsed, analysis) {
     const str = JSON.stringify(parsed).toLowerCase();
 
-    analysis.hasTests = str.includes('test');
-    analysis.hasBuild = str.includes('build');
-    analysis.hasDeploy = str.includes('deploy');
-    analysis.hasLint = str.includes('lint');
-    analysis.hasSecurityScan = str.includes('security') || str.includes('scan');
+    analysis.hasTests = str.includes("test");
+    analysis.hasBuild = str.includes("build");
+    analysis.hasDeploy = str.includes("deploy");
+    analysis.hasLint = str.includes("lint");
+    analysis.hasSecurityScan = str.includes("security") || str.includes("scan");
   }
 
   /**
@@ -749,21 +787,47 @@ class PipelineAnalyzer {
   calculateComplexity(analysis) {
     let score = 0;
 
-    if (analysis.hasTests) score += 1;
-    if (analysis.hasBuild) score += 1;
-    if (analysis.hasDeploy) score += 2;
-    if (analysis.hasLint) score += 1;
-    if (analysis.hasSecurityScan) score += 2;
-    if (analysis.parallelism) score += 1;
-    if (analysis.caching) score += 1;
-    if (analysis.artifacts) score += 1;
-    if (analysis.environments.length > 1) score += 2;
-    if (analysis.secrets.length > 3) score += 1;
+    if (analysis.hasTests) {
+      score += 1;
+    }
+    if (analysis.hasBuild) {
+      score += 1;
+    }
+    if (analysis.hasDeploy) {
+      score += 2;
+    }
+    if (analysis.hasLint) {
+      score += 1;
+    }
+    if (analysis.hasSecurityScan) {
+      score += 2;
+    }
+    if (analysis.parallelism) {
+      score += 1;
+    }
+    if (analysis.caching) {
+      score += 1;
+    }
+    if (analysis.artifacts) {
+      score += 1;
+    }
+    if (analysis.environments.length > 1) {
+      score += 2;
+    }
+    if (analysis.secrets.length > 3) {
+      score += 1;
+    }
 
-    if (score <= 3) return 'simple';
-    if (score <= 6) return 'moderate';
-    if (score <= 9) return 'complex';
-    return 'enterprise';
+    if (score <= 3) {
+      return "simple";
+    }
+    if (score <= 6) {
+      return "moderate";
+    }
+    if (score <= 9) {
+      return "complex";
+    }
+    return "enterprise";
   }
 }
 
@@ -779,20 +843,20 @@ class IntegrationSuggester {
 
     // Add AIOX build step
     suggestions.push({
-      type: 'add_step',
-      priority: 'high',
-      title: 'Add AIOX Build Orchestration',
-      description: 'Integrate AIOX build orchestrator for intelligent parallel builds',
+      type: "add_step",
+      priority: "high",
+      title: "Add AIOX Build Orchestration",
+      description: "Integrate AIOX build orchestrator for intelligent parallel builds",
       code: this.getAIOXBuildStep(provider),
     });
 
     // Add test step if missing
     if (!analysis.hasTests) {
       suggestions.push({
-        type: 'add_step',
-        priority: 'medium',
-        title: 'Add Test Discovery',
-        description: 'Use AIOX test discovery to automatically find and run tests',
+        type: "add_step",
+        priority: "medium",
+        title: "Add Test Discovery",
+        description: "Use AIOX test discovery to automatically find and run tests",
         code: this.getTestStep(provider),
       });
     }
@@ -800,10 +864,10 @@ class IntegrationSuggester {
     // Add lint step if missing
     if (!analysis.hasLint) {
       suggestions.push({
-        type: 'add_step',
-        priority: 'low',
-        title: 'Add Linting Step',
-        description: 'Add code quality checks with ESLint/Prettier',
+        type: "add_step",
+        priority: "low",
+        title: "Add Linting Step",
+        description: "Add code quality checks with ESLint/Prettier",
         code: this.getLintStep(provider),
       });
     }
@@ -811,31 +875,31 @@ class IntegrationSuggester {
     // Add security scan if missing
     if (!analysis.hasSecurityScan) {
       suggestions.push({
-        type: 'add_step',
-        priority: 'high',
-        title: 'Add Security Scanning',
-        description: 'Add AIOX PR Review AI for security analysis',
+        type: "add_step",
+        priority: "high",
+        title: "Add Security Scanning",
+        description: "Add AIOX PR Review AI for security analysis",
         code: this.getSecurityStep(provider),
       });
     }
 
     // Add caching if missing
-    if (!analysis.caching && provider === 'github-actions') {
+    if (!analysis.caching && provider === "github-actions") {
       suggestions.push({
-        type: 'add_step',
-        priority: 'medium',
-        title: 'Add Dependency Caching',
-        description: 'Cache node_modules to speed up builds',
+        type: "add_step",
+        priority: "medium",
+        title: "Add Dependency Caching",
+        description: "Cache node_modules to speed up builds",
         code: this.getCacheStep(provider),
       });
     }
 
     // Add AIOX status reporting
     suggestions.push({
-      type: 'add_step',
-      priority: 'low',
-      title: 'Add AIOX Status Reporting',
-      description: 'Report build status to AIOX dashboard',
+      type: "add_step",
+      priority: "low",
+      title: "Add AIOX Status Reporting",
+      description: "Report build status to AIOX dashboard",
       code: this.getStatusStep(provider),
     });
 
@@ -847,12 +911,12 @@ class IntegrationSuggester {
    */
   getAIOXBuildStep(provider) {
     const steps = {
-      'github-actions': `- name: AIOX Build Orchestration
+      "github-actions": `- name: AIOX Build Orchestration
   run: npx aiox build --parallel --smart-cache
   env:
     AIOX_CI: true`,
 
-      'gitlab-ci': `aiox_build:
+      "gitlab-ci": `aiox_build:
   stage: build
   script:
     - npx aiox build --parallel --smart-cache
@@ -875,7 +939,7 @@ class IntegrationSuggester {
       AIOX_CI: true`,
     };
 
-    return steps[provider] || steps['github-actions'];
+    return steps[provider] || steps["github-actions"];
   }
 
   /**
@@ -883,10 +947,10 @@ class IntegrationSuggester {
    */
   getTestStep(provider) {
     const steps = {
-      'github-actions': `- name: Run Tests
+      "github-actions": `- name: Run Tests
   run: npx aiox test --discover --coverage`,
 
-      'gitlab-ci': `test:
+      "gitlab-ci": `test:
   stage: test
   script:
     - npx aiox test --discover --coverage
@@ -903,7 +967,7 @@ class IntegrationSuggester {
     command: npx aiox test --discover --coverage`,
     };
 
-    return steps[provider] || steps['github-actions'];
+    return steps[provider] || steps["github-actions"];
   }
 
   /**
@@ -911,10 +975,10 @@ class IntegrationSuggester {
    */
   getLintStep(provider) {
     const steps = {
-      'github-actions': `- name: Lint Code
+      "github-actions": `- name: Lint Code
   run: npm run lint`,
 
-      'gitlab-ci': `lint:
+      "gitlab-ci": `lint:
   stage: test
   script:
     - npm run lint`,
@@ -930,7 +994,7 @@ class IntegrationSuggester {
     command: npm run lint`,
     };
 
-    return steps[provider] || steps['github-actions'];
+    return steps[provider] || steps["github-actions"];
   }
 
   /**
@@ -938,11 +1002,11 @@ class IntegrationSuggester {
    */
   getSecurityStep(provider) {
     const steps = {
-      'github-actions': `- name: Security Scan
+      "github-actions": `- name: Security Scan
   run: npx aiox review --security-only
   continue-on-error: true`,
 
-      'gitlab-ci': `security_scan:
+      "gitlab-ci": `security_scan:
   stage: test
   script:
     - npx aiox review --security-only
@@ -965,14 +1029,16 @@ class IntegrationSuggester {
     when: always`,
     };
 
-    return steps[provider] || steps['github-actions'];
+    return steps[provider] || steps["github-actions"];
   }
 
   /**
    * Get cache step for GitHub Actions
    */
   getCacheStep(provider) {
-    if (provider !== 'github-actions') return '';
+    if (provider !== "github-actions") {
+      return "";
+    }
 
     return `- name: Cache node_modules
   uses: actions/cache@v4
@@ -988,13 +1054,13 @@ class IntegrationSuggester {
    */
   getStatusStep(provider) {
     const steps = {
-      'github-actions': `- name: Report to AIOX
+      "github-actions": `- name: Report to AIOX
   if: always()
   run: npx aiox status --report-ci
   env:
     AIOX_BUILD_STATUS: \${{ job.status }}`,
 
-      'gitlab-ci': `report_status:
+      "gitlab-ci": `report_status:
   stage: .post
   script:
     - npx aiox status --report-ci
@@ -1012,7 +1078,7 @@ class IntegrationSuggester {
     when: always`,
     };
 
-    return steps[provider] || steps['github-actions'];
+    return steps[provider] || steps["github-actions"];
   }
 }
 
@@ -1033,7 +1099,7 @@ class CICDDiscovery extends EventEmitter {
    * Scan project for CI/CD configurations
    */
   async scan(options = {}) {
-    this.emit('scan:start', { rootPath: this.rootPath });
+    this.emit("scan:start", { rootPath: this.rootPath });
 
     const result = {
       providers: [],
@@ -1047,15 +1113,15 @@ class CICDDiscovery extends EventEmitter {
       // Detect providers
       const providers = await this.detector.detect();
       result.providers = providers;
-      this.emit('providers:detected', { count: providers.length, providers });
+      this.emit("providers:detected", { count: providers.length, providers });
 
       if (providers.length === 0) {
         result.summary = {
           hasCI: false,
-          message: 'No CI/CD configuration found',
-          recommendation: 'Consider adding GitHub Actions for automated builds',
+          message: "No CI/CD configuration found",
+          recommendation: "Consider adding GitHub Actions for automated builds",
         };
-        this.emit('scan:complete', result);
+        this.emit("scan:complete", result);
         return result;
       }
 
@@ -1065,7 +1131,7 @@ class CICDDiscovery extends EventEmitter {
           const filePath = path.join(this.rootPath, file);
 
           try {
-            const content = fs.readFileSync(filePath, 'utf8');
+            const content = fs.readFileSync(filePath, "utf8");
             const parsed = this.parser.parse(content, provider.id, path.basename(file));
             const analysis = this.analyzer.analyze(parsed, provider.id);
 
@@ -1088,20 +1154,20 @@ class CICDDiscovery extends EventEmitter {
               result.suggestions.push(suggestion);
             }
 
-            this.emit('pipeline:analyzed', { file, analysis });
+            this.emit("pipeline:analyzed", { file, analysis });
           } catch (error) {
-            this.emit('pipeline:error', { file, error: error.message });
+            this.emit("pipeline:error", { file, error: error.message });
           }
         }
       }
 
       // Generate summary
       result.summary = this.generateSummary(result);
-      this.emit('scan:complete', result);
+      this.emit("scan:complete", result);
 
       return result;
     } catch (error) {
-      this.emit('scan:error', { error: error.message });
+      this.emit("scan:error", { error: error.message });
       throw error;
     }
   }
@@ -1122,26 +1188,41 @@ class CICDDiscovery extends EventEmitter {
         hasLint: false,
         hasSecurityScan: false,
       },
-      complexity: 'none',
+      complexity: "none",
       suggestionCount: result.suggestions.length,
-      highPrioritySuggestions: result.suggestions.filter((s) => s.priority === 'high').length,
+      highPrioritySuggestions: result.suggestions.filter((s) => s.priority === "high").length,
     };
 
     // Aggregate features
     for (const analysis of Object.values(result.analysis)) {
-      if (analysis.hasTests) summary.features.hasTests = true;
-      if (analysis.hasBuild) summary.features.hasBuild = true;
-      if (analysis.hasDeploy) summary.features.hasDeploy = true;
-      if (analysis.hasLint) summary.features.hasLint = true;
-      if (analysis.hasSecurityScan) summary.features.hasSecurityScan = true;
+      if (analysis.hasTests) {
+        summary.features.hasTests = true;
+      }
+      if (analysis.hasBuild) {
+        summary.features.hasBuild = true;
+      }
+      if (analysis.hasDeploy) {
+        summary.features.hasDeploy = true;
+      }
+      if (analysis.hasLint) {
+        summary.features.hasLint = true;
+      }
+      if (analysis.hasSecurityScan) {
+        summary.features.hasSecurityScan = true;
+      }
     }
 
     // Determine overall complexity
-    const complexities = Object.values(result.analysis).map((a) => a.complexity);
-    if (complexities.includes('enterprise')) summary.complexity = 'enterprise';
-    else if (complexities.includes('complex')) summary.complexity = 'complex';
-    else if (complexities.includes('moderate')) summary.complexity = 'moderate';
-    else if (complexities.includes('simple')) summary.complexity = 'simple';
+    const complexities = new Set(Object.values(result.analysis).map((a) => a.complexity));
+    if (complexities.has("enterprise")) {
+      summary.complexity = "enterprise";
+    } else if (complexities.has("complex")) {
+      summary.complexity = "complex";
+    } else if (complexities.has("moderate")) {
+      summary.complexity = "moderate";
+    } else if (complexities.has("simple")) {
+      summary.complexity = "simple";
+    }
 
     return summary;
   }
@@ -1169,39 +1250,41 @@ class CICDDiscovery extends EventEmitter {
     const fullPath = path.join(this.rootPath, filePath);
 
     if (!fs.existsSync(fullPath)) {
-      return { valid: false, error: 'File not found' };
+      return { valid: false, error: "File not found" };
     }
 
     // Detect provider from path
     let provider = null;
     for (const [id, config] of Object.entries(PROVIDERS)) {
       for (const pattern of config.configPatterns) {
-        if (filePath.includes(pattern.replace('*', '')) || path.basename(filePath) === pattern) {
+        if (filePath.includes(pattern.replace("*", "")) || path.basename(filePath) === pattern) {
           provider = id;
           break;
         }
       }
-      if (provider) break;
+      if (provider) {
+        break;
+      }
     }
 
     if (!provider) {
-      return { valid: false, error: 'Unknown CI/CD provider' };
+      return { valid: false, error: "Unknown CI/CD provider" };
     }
 
     try {
-      const content = fs.readFileSync(fullPath, 'utf8');
+      const content = fs.readFileSync(fullPath, "utf8");
       const parsed = this.parser.parse(content, provider, path.basename(filePath));
 
       // Basic validation
       const errors = [];
       const warnings = [];
 
-      if (provider === 'github-actions') {
+      if (provider === "github-actions") {
         if (!parsed.triggers || parsed.triggers.length === 0) {
-          warnings.push('No triggers defined - workflow will never run automatically');
+          warnings.push("No triggers defined - workflow will never run automatically");
         }
         if (!parsed.jobs || parsed.jobs.length === 0) {
-          errors.push('No jobs defined');
+          errors.push("No jobs defined");
         }
       }
 
@@ -1219,18 +1302,18 @@ class CICDDiscovery extends EventEmitter {
 
 // CLI interface
 if (require.main === module) {
-  const args = process.argv.slice(2);
+  const args = new Set(process.argv.slice(2));
   const discovery = new CICDDiscovery();
 
-  discovery.on('providers:detected', ({ count }) => {
+  discovery.on("providers:detected", ({ count }) => {
     console.log(`Found ${count} CI/CD provider(s)`);
   });
 
-  discovery.on('pipeline:analyzed', ({ file }) => {
+  discovery.on("pipeline:analyzed", ({ file }) => {
     console.log(`  Analyzed: ${file}`);
   });
 
-  if (args.includes('--quick')) {
+  if (args.has("--quick")) {
     discovery.quickCheck().then((result) => {
       console.log(JSON.stringify(result, null, 2));
     });
@@ -1238,22 +1321,22 @@ if (require.main === module) {
     discovery
       .scan()
       .then((result) => {
-        console.log('\n--- Summary ---');
+        console.log("\n--- Summary ---");
         console.log(JSON.stringify(result.summary, null, 2));
 
-        if (args.includes('--suggestions')) {
-          console.log('\n--- Suggestions ---');
+        if (args.has("--suggestions")) {
+          console.log("\n--- Suggestions ---");
           for (const suggestion of result.suggestions) {
             console.log(`\n[${suggestion.priority.toUpperCase()}] ${suggestion.title}`);
             console.log(suggestion.description);
-            console.log('```');
+            console.log("```");
             console.log(suggestion.code);
-            console.log('```');
+            console.log("```");
           }
         }
       })
       .catch((error) => {
-        console.error('Error:', error.message);
+        console.error("Error:", error.message);
         process.exit(1);
       });
   }

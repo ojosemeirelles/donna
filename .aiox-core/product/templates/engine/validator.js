@@ -6,12 +6,12 @@
  * @version 2.0.0
  */
 
-'use strict';
+"use strict";
 
-const Ajv = require('ajv');
-const addFormats = require('ajv-formats');
-const fs = require('fs').promises;
-const path = require('path');
+const Ajv = require("ajv");
+const addFormats = require("ajv-formats");
+const fs = require("fs").promises;
+const path = require("path");
 
 /**
  * TemplateValidator class for validating template output
@@ -23,8 +23,9 @@ class TemplateValidator {
    * @param {string} options.schemasDir - Path to schemas directory
    */
   constructor(options = {}) {
-    this.schemasDir = options.schemasDir ||
-      path.join(process.cwd(), '.aiox-core', 'product', 'templates', 'engine', 'schemas');
+    this.schemasDir =
+      options.schemasDir ||
+      path.join(process.cwd(), ".aiox-core", "product", "templates", "engine", "schemas");
 
     this.ajv = new Ajv({
       allErrors: true,
@@ -48,22 +49,22 @@ class TemplateValidator {
    */
   registerCustomFormats() {
     // Semantic version format
-    this.ajv.addFormat('semver', {
+    this.ajv.addFormat("semver", {
       validate: (str) => /^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$/.test(str),
     });
 
     // Slug format (URL-safe string)
-    this.ajv.addFormat('slug', {
+    this.ajv.addFormat("slug", {
       validate: (str) => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(str),
     });
 
     // Story ID format (e.g., "3.6", "12.1")
-    this.ajv.addFormat('story-id', {
+    this.ajv.addFormat("story-id", {
       validate: (str) => /^\d+\.\d+$/.test(str),
     });
 
     // Epic ID format (e.g., "EPIC-S3")
-    this.ajv.addFormat('epic-id', {
+    this.ajv.addFormat("epic-id", {
       validate: (str) => /^EPIC-[A-Z0-9]+$/.test(str),
     });
   }
@@ -80,22 +81,24 @@ class TemplateValidator {
 
     // Handle versioned schema aliases (e.g., prd-v2 -> prd-v2.schema.json)
     const schemaAliases = {
-      'prd-v2': 'prd-v2',
+      "prd-v2": "prd-v2",
     };
 
     const schemaName = schemaAliases[templateType] || templateType;
     const schemaPath = path.join(this.schemasDir, `${schemaName}.schema.json`);
 
     try {
-      const content = await fs.readFile(schemaPath, 'utf-8');
+      const content = await fs.readFile(schemaPath, "utf-8");
       const schema = JSON.parse(content);
       this.schemas.set(templateType, schema);
       return schema;
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`Schema not found for template type: ${templateType}`);
+      if (error.code === "ENOENT") {
+        throw new Error(`Schema not found for template type: ${templateType}`, { cause: error });
       }
-      throw new Error(`Failed to load schema for ${templateType}: ${error.message}`);
+      throw new Error(`Failed to load schema for ${templateType}: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -164,7 +167,7 @@ class TemplateValidator {
     // Check required sections from template metadata
     if (metadata.required_sections) {
       for (const section of metadata.required_sections) {
-        const sectionRegex = new RegExp(`^##?\\s+${section}`, 'mi');
+        const sectionRegex = new RegExp(`^##?\\s+${section}`, "mi");
         if (!sectionRegex.test(content)) {
           errors.push(`Missing required section: ${section}`);
         }
@@ -200,21 +203,23 @@ class TemplateValidator {
    * @returns {Array<string>} Formatted error messages
    */
   formatErrors(errors) {
-    if (!errors) return [];
+    if (!errors) {
+      return [];
+    }
 
-    return errors.map(error => {
-      const path = error.instancePath || '/';
+    return errors.map((error) => {
+      const path = error.instancePath || "/";
       const message = error.message;
       const params = error.params;
 
-      let details = '';
+      let details = "";
       if (params) {
         if (params.additionalProperty) {
           details = ` (unknown property: ${params.additionalProperty})`;
         } else if (params.missingProperty) {
           details = ` (missing: ${params.missingProperty})`;
         } else if (params.allowedValues) {
-          details = ` (allowed: ${params.allowedValues.join(', ')})`;
+          details = ` (allowed: ${params.allowedValues.join(", ")})`;
         }
       }
 
@@ -230,13 +235,13 @@ class TemplateValidator {
    */
   extractDataFromMarkdown(content, template) {
     const data = {};
-    const lines = content.split('\n');
+    const lines = content.split("\n");
 
     // Extract frontmatter values (key: value format)
     for (const line of lines) {
       const match = line.match(/^\*\*([^:]+):\*\*\s*(.+)$/);
       if (match) {
-        const key = match[1].toLowerCase().replace(/\s+/g, '_');
+        const key = match[1].toLowerCase().replace(/\s+/g, "_");
         const value = match[2].trim();
         data[key] = value;
       }

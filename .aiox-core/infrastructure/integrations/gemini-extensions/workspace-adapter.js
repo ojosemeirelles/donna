@@ -6,7 +6,7 @@
  * creating/editing Docs, Sheets, and Slides.
  */
 
-const { execSync } = require('child_process');
+const { execSync } = require("child_process");
 
 class WorkspaceAdapter {
   constructor(config = {}) {
@@ -19,12 +19,14 @@ class WorkspaceAdapter {
    */
   async checkAvailability() {
     try {
-      const output = execSync('gemini extensions list --output-format json 2>/dev/null', {
-        encoding: 'utf8',
+      const output = execSync("gemini extensions list --output-format json 2>/dev/null", {
+        encoding: "utf8",
         timeout: 10000,
       });
       const extensions = JSON.parse(output);
-      this.enabled = extensions.some((e) => e.name === 'workspace' || e.name === 'google-workspace');
+      this.enabled = extensions.some(
+        (e) => e.name === "workspace" || e.name === "google-workspace",
+      );
       return this.enabled;
     } catch {
       this.enabled = false;
@@ -39,7 +41,9 @@ class WorkspaceAdapter {
    * @returns {Promise<Object>} Created document info
    */
   async createDoc(title, content) {
-    if (!this.enabled) throw new Error('Workspace extension not available');
+    if (!this.enabled) {
+      throw new Error("Workspace extension not available");
+    }
 
     const prompt = `Use Google Workspace to create a new Google Doc titled "${title}" with the following content:\n\n${content}`;
     return this._executeWorkspace(prompt);
@@ -51,9 +55,11 @@ class WorkspaceAdapter {
    * @param {Array<Array>} data - Initial data as 2D array
    */
   async createSheet(title, data) {
-    if (!this.enabled) throw new Error('Workspace extension not available');
+    if (!this.enabled) {
+      throw new Error("Workspace extension not available");
+    }
 
-    const dataStr = data.map((row) => row.join('\t')).join('\n');
+    const dataStr = data.map((row) => row.join("\t")).join("\n");
     const prompt = `Use Google Workspace to create a new Google Sheet titled "${title}" with this data:\n\n${dataStr}`;
     return this._executeWorkspace(prompt);
   }
@@ -64,9 +70,13 @@ class WorkspaceAdapter {
    * @param {Array<Object>} slides - Slide definitions
    */
   async createPresentation(title, slides) {
-    if (!this.enabled) throw new Error('Workspace extension not available');
+    if (!this.enabled) {
+      throw new Error("Workspace extension not available");
+    }
 
-    const slidesDesc = slides.map((s, i) => `Slide ${i + 1}: ${s.title}\n${s.content}`).join('\n\n');
+    const slidesDesc = slides
+      .map((s, i) => `Slide ${i + 1}: ${s.title}\n${s.content}`)
+      .join("\n\n");
     const prompt = `Use Google Workspace to create a new Google Slides presentation titled "${title}" with these slides:\n\n${slidesDesc}`;
     return this._executeWorkspace(prompt);
   }
@@ -76,11 +86,11 @@ class WorkspaceAdapter {
    * @param {string} storyPath - Path to story file
    */
   async exportStoryToDoc(storyPath) {
-    const fs = require('fs');
-    const path = require('path');
+    const fs = require("fs");
+    const path = require("path");
 
-    const content = fs.readFileSync(storyPath, 'utf8');
-    const title = path.basename(storyPath, '.md');
+    const content = fs.readFileSync(storyPath, "utf8");
+    const title = path.basename(storyPath, ".md");
 
     return this.createDoc(`AIOX Story: ${title}`, content);
   }
@@ -90,7 +100,7 @@ class WorkspaceAdapter {
     // For now, return a placeholder
     return {
       success: true,
-      message: 'Workspace operation queued',
+      message: "Workspace operation queued",
       prompt,
     };
   }

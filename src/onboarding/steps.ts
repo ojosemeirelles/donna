@@ -49,19 +49,15 @@ export interface OnboardingStep {
 const configStep: OnboardingStep = {
   id: "config",
   title: "Configuration",
-  description:
-    "Set up your AI provider credentials (API key) and select the default model.",
+  description: "Set up your AI provider credentials (API key) and select the default model.",
   required: true,
   async validate(config) {
     // Considered done when at least one auth profile is configured or a
     // well-known provider env var is set.
     const hasProfiles =
-      config.auth?.profiles !== undefined &&
-      Object.keys(config.auth.profiles).length > 0;
+      config.auth?.profiles !== undefined && Object.keys(config.auth.profiles).length > 0;
     const hasEnvKey = Boolean(
-      process.env.ANTHROPIC_API_KEY ??
-        process.env.OPENAI_API_KEY ??
-        process.env.GOOGLE_API_KEY,
+      process.env.ANTHROPIC_API_KEY ?? process.env.OPENAI_API_KEY ?? process.env.GOOGLE_API_KEY,
     );
     return hasProfiles || hasEnvKey;
   },
@@ -78,8 +74,8 @@ const gatewayStep: OnboardingStep = {
     const port = resolveGatewayPort(config);
     const hasAuth = Boolean(
       config.gateway?.auth?.token ??
-        config.gateway?.auth?.password ??
-        process.env.DONNA_GATEWAY_TOKEN,
+      config.gateway?.auth?.password ??
+      process.env.DONNA_GATEWAY_TOKEN,
     );
     return port > 0 && hasAuth;
   },
@@ -94,7 +90,9 @@ const channelStep: OnboardingStep = {
   async validate(config) {
     // At least one channel has credentials configured.
     const ch = config.channels;
-    if (!ch) return false;
+    if (!ch) {
+      return false;
+    }
     const hasTelegram = Boolean(ch.telegram?.botToken);
     const hasWhatsapp = Boolean(ch.whatsapp);
     const hasDiscord = Boolean(ch.discord?.token);
@@ -121,8 +119,7 @@ const testMessageStep: OnboardingStep = {
 const completionStep: OnboardingStep = {
   id: "done",
   title: "Onboarding Complete",
-  description:
-    "All required steps are finished. Your Donna agent is ready to use.",
+  description: "All required steps are finished. Your Donna agent is ready to use.",
   required: false,
   async validate(_config) {
     // Terminal step — validated by checking all required steps.
@@ -167,13 +164,11 @@ export function getRequiredSteps(): OnboardingStep[] {
  * Evaluate all steps against the current config snapshot and return a map
  * of step id to completion status.
  */
-export async function evaluateSteps(
-  config?: DonnaConfig,
-): Promise<Map<string, boolean>> {
+export async function evaluateSteps(config?: DonnaConfig): Promise<Map<string, boolean>> {
   const cfg = config ?? (await readConfigFileSnapshot()).config ?? {};
   const result = new Map<string, boolean>();
   for (const step of onboardingSteps) {
-    result.set(step.id, await step.validate(cfg as DonnaConfig));
+    result.set(step.id, await step.validate(cfg));
   }
   return result;
 }
@@ -181,9 +176,7 @@ export async function evaluateSteps(
 /**
  * Returns true when all required steps are satisfied according to config.
  */
-export async function isOnboardingComplete(
-  config?: DonnaConfig,
-): Promise<boolean> {
+export async function isOnboardingComplete(config?: DonnaConfig): Promise<boolean> {
   const status = await evaluateSteps(config);
   return getRequiredSteps().every((s) => status.get(s.id) === true);
 }

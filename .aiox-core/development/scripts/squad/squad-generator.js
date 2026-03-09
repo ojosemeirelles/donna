@@ -9,68 +9,68 @@
  * @see Story SQS-4: Squad Creator Agent + Tasks
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const { execSync } = require('child_process');
-const yaml = require('js-yaml');
+const fs = require("fs").promises;
+const path = require("path");
+const { execSync } = require("child_process");
+const yaml = require("js-yaml");
 
 /**
  * Default path for squads directory
  * @constant {string}
  */
-const DEFAULT_SQUADS_PATH = './squads';
+const DEFAULT_SQUADS_PATH = "./squads";
 
 /**
  * Default path for squad designs directory
  * @constant {string}
  */
-const DEFAULT_DESIGNS_PATH = './squads/.designs';
+const DEFAULT_DESIGNS_PATH = "./squads/.designs";
 
 /**
  * Path to squad design schema
  * @constant {string}
  */
-const SQUAD_DESIGN_SCHEMA_PATH = path.join(__dirname, '../../schemas/squad-design-schema.json');
+const SQUAD_DESIGN_SCHEMA_PATH = path.join(__dirname, "../../schemas/squad-design-schema.json");
 
 /**
  * Default AIOX minimum version
  * @constant {string}
  */
-const DEFAULT_AIOX_MIN_VERSION = '2.1.0';
+const DEFAULT_AIOX_MIN_VERSION = "2.1.0";
 
 /**
  * Available templates
  * @constant {string[]}
  */
-const AVAILABLE_TEMPLATES = ['basic', 'etl', 'agent-only'];
+const AVAILABLE_TEMPLATES = ["basic", "etl", "agent-only"];
 
 /**
  * Available config modes
  * @constant {string[]}
  */
-const CONFIG_MODES = ['extend', 'override', 'none'];
+const CONFIG_MODES = ["extend", "override", "none"];
 
 /**
  * Available licenses
  * @constant {string[]}
  */
-const AVAILABLE_LICENSES = ['MIT', 'Apache-2.0', 'ISC', 'UNLICENSED'];
+const AVAILABLE_LICENSES = ["MIT", "Apache-2.0", "ISC", "UNLICENSED"];
 
 /**
  * Directories to create in squad structure
  * @constant {string[]}
  */
 const SQUAD_DIRECTORIES = [
-  '',
-  'config',
-  'agents',
-  'tasks',
-  'workflows',
-  'checklists',
-  'templates',
-  'tools',
-  'scripts',
-  'data',
+  "",
+  "config",
+  "agents",
+  "tasks",
+  "workflows",
+  "checklists",
+  "templates",
+  "tools",
+  "scripts",
+  "data",
 ];
 
 /**
@@ -78,15 +78,15 @@ const SQUAD_DIRECTORIES = [
  * @enum {string}
  */
 const GeneratorErrorCodes = {
-  INVALID_NAME: 'INVALID_NAME',
-  SQUAD_EXISTS: 'SQUAD_EXISTS',
-  PERMISSION_DENIED: 'PERMISSION_DENIED',
-  TEMPLATE_NOT_FOUND: 'TEMPLATE_NOT_FOUND',
-  INVALID_CONFIG_MODE: 'INVALID_CONFIG_MODE',
-  BLUEPRINT_NOT_FOUND: 'BLUEPRINT_NOT_FOUND',
-  BLUEPRINT_INVALID: 'BLUEPRINT_INVALID',
-  BLUEPRINT_PARSE_ERROR: 'BLUEPRINT_PARSE_ERROR',
-  SCHEMA_NOT_FOUND: 'SCHEMA_NOT_FOUND',
+  INVALID_NAME: "INVALID_NAME",
+  SQUAD_EXISTS: "SQUAD_EXISTS",
+  PERMISSION_DENIED: "PERMISSION_DENIED",
+  TEMPLATE_NOT_FOUND: "TEMPLATE_NOT_FOUND",
+  INVALID_CONFIG_MODE: "INVALID_CONFIG_MODE",
+  BLUEPRINT_NOT_FOUND: "BLUEPRINT_NOT_FOUND",
+  BLUEPRINT_INVALID: "BLUEPRINT_INVALID",
+  BLUEPRINT_PARSE_ERROR: "BLUEPRINT_PARSE_ERROR",
+  SCHEMA_NOT_FOUND: "SCHEMA_NOT_FOUND",
 };
 
 /**
@@ -102,9 +102,9 @@ class SquadGeneratorError extends Error {
    */
   constructor(code, message, suggestion) {
     super(message);
-    this.name = 'SquadGeneratorError';
+    this.name = "SquadGeneratorError";
     this.code = code;
-    this.suggestion = suggestion || '';
+    this.suggestion = suggestion || "";
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, SquadGeneratorError);
@@ -120,7 +120,7 @@ class SquadGeneratorError extends Error {
     return new SquadGeneratorError(
       GeneratorErrorCodes.INVALID_NAME,
       `Invalid squad name "${name}": must be kebab-case (lowercase letters, numbers, hyphens)`,
-      'Use format: my-squad-name (lowercase, hyphens only)',
+      "Use format: my-squad-name (lowercase, hyphens only)",
     );
   }
 
@@ -147,7 +147,7 @@ class SquadGeneratorError extends Error {
     return new SquadGeneratorError(
       GeneratorErrorCodes.TEMPLATE_NOT_FOUND,
       `Template "${template}" not found`,
-      `Available templates: ${AVAILABLE_TEMPLATES.join(', ')}`,
+      `Available templates: ${AVAILABLE_TEMPLATES.join(", ")}`,
     );
   }
 
@@ -160,7 +160,7 @@ class SquadGeneratorError extends Error {
     return new SquadGeneratorError(
       GeneratorErrorCodes.INVALID_CONFIG_MODE,
       `Invalid config mode "${mode}"`,
-      `Available modes: ${CONFIG_MODES.join(', ')}`,
+      `Available modes: ${CONFIG_MODES.join(", ")}`,
     );
   }
 
@@ -173,7 +173,7 @@ class SquadGeneratorError extends Error {
     return new SquadGeneratorError(
       GeneratorErrorCodes.BLUEPRINT_NOT_FOUND,
       `Blueprint not found at "${blueprintPath}"`,
-      'Generate a blueprint first: *design-squad --docs ./your-docs.md',
+      "Generate a blueprint first: *design-squad --docs ./your-docs.md",
     );
   }
 
@@ -187,7 +187,7 @@ class SquadGeneratorError extends Error {
     return new SquadGeneratorError(
       GeneratorErrorCodes.BLUEPRINT_PARSE_ERROR,
       `Failed to parse blueprint at "${blueprintPath}": ${parseError}`,
-      'Ensure blueprint is valid YAML format',
+      "Ensure blueprint is valid YAML format",
     );
   }
 
@@ -199,8 +199,8 @@ class SquadGeneratorError extends Error {
   static blueprintInvalid(validationErrors) {
     return new SquadGeneratorError(
       GeneratorErrorCodes.BLUEPRINT_INVALID,
-      `Blueprint validation failed:\n  - ${validationErrors.join('\n  - ')}`,
-      'Fix the validation errors and try again',
+      `Blueprint validation failed:\n  - ${validationErrors.join("\n  - ")}`,
+      "Fix the validation errors and try again",
     );
   }
 
@@ -213,7 +213,7 @@ class SquadGeneratorError extends Error {
     return new SquadGeneratorError(
       GeneratorErrorCodes.SCHEMA_NOT_FOUND,
       `Schema not found at "${schemaPath}"`,
-      'Ensure AIOX is properly installed',
+      "Ensure AIOX is properly installed",
     );
   }
 }
@@ -224,10 +224,10 @@ class SquadGeneratorError extends Error {
  */
 function getGitUserName() {
   try {
-    const name = execSync('git config user.name', { encoding: 'utf-8' }).trim();
-    return name || 'Unknown';
+    const name = execSync("git config user.name", { encoding: "utf-8" }).trim();
+    return name || "Unknown";
   } catch {
-    return 'Unknown';
+    return "Unknown";
   }
 }
 
@@ -250,7 +250,7 @@ function isValidSquadName(name) {
  */
 function extractSlashPrefix(name) {
   // Remove -squad suffix if present
-  return name.replace(/-squad$/, '');
+  return name.replace(/-squad$/, "");
 }
 
 /**
@@ -259,9 +259,11 @@ function extractSlashPrefix(name) {
  * @returns {string} Safely quoted value
  */
 function safeYamlValue(val) {
-  if (!val) return '""';
+  if (!val) {
+    return '""';
+  }
   // Quote if contains special YAML characters or leading/trailing spaces
-  if (/[:\n\r"']/.test(val) || val.startsWith(' ') || val.endsWith(' ')) {
+  if (/[:\n\r"']/.test(val) || val.startsWith(" ") || val.endsWith(" ")) {
     return `"${val.replace(/"/g, '\\"')}"`;
   }
   return val;
@@ -278,8 +280,8 @@ function safeYamlValue(val) {
  */
 function generateSquadYaml(config) {
   const components = {
-    tasks: config.includeTask ? ['example-agent-task.md'] : [],
-    agents: config.includeAgent ? ['example-agent.md'] : [],
+    tasks: config.includeTask ? ["example-agent-task.md"] : [],
+    agents: config.includeAgent ? ["example-agent.md"] : [],
     workflows: [],
     checklists: [],
     templates: [],
@@ -288,49 +290,46 @@ function generateSquadYaml(config) {
   };
 
   // For etl template, add more components
-  if (config.template === 'etl') {
-    components.agents = ['data-extractor.md', 'data-transformer.md'];
-    components.tasks = [
-      'extract-data.md',
-      'transform-data.md',
-      'load-data.md',
-    ];
-    components.scripts = ['utils.js'];
+  if (config.template === "etl") {
+    components.agents = ["data-extractor.md", "data-transformer.md"];
+    components.tasks = ["extract-data.md", "transform-data.md", "load-data.md"];
+    components.scripts = ["utils.js"];
   }
 
   // For agent-only template
-  if (config.template === 'agent-only') {
-    components.agents = ['primary-agent.md', 'helper-agent.md'];
+  if (config.template === "agent-only") {
+    components.agents = ["primary-agent.md", "helper-agent.md"];
     components.tasks = [];
   }
 
   // SQS-10: Use project configs if available, otherwise use local paths
   let configSection;
-  if (config.configMode === 'none') {
+  if (config.configMode === "none") {
     configSection = {};
   } else if (config._useProjectConfigs && config._projectConfigs) {
     // Reference project-level config files
     configSection = {
       extends: config.configMode,
-      'coding-standards': config._projectConfigs['coding-standards'] || 'config/coding-standards.md',
-      'tech-stack': config._projectConfigs['tech-stack'] || 'config/tech-stack.md',
-      'source-tree': config._projectConfigs['source-tree'] || 'config/source-tree.md',
+      "coding-standards":
+        config._projectConfigs["coding-standards"] || "config/coding-standards.md",
+      "tech-stack": config._projectConfigs["tech-stack"] || "config/tech-stack.md",
+      "source-tree": config._projectConfigs["source-tree"] || "config/source-tree.md",
     };
   } else {
     // Fallback to local config files
     configSection = {
       extends: config.configMode,
-      'coding-standards': 'config/coding-standards.md',
-      'tech-stack': 'config/tech-stack.md',
-      'source-tree': 'config/source-tree.md',
+      "coding-standards": "config/coding-standards.md",
+      "tech-stack": "config/tech-stack.md",
+      "source-tree": "config/source-tree.md",
     };
   }
 
   const yaml = `name: ${config.name}
 version: 1.0.0
-description: ${safeYamlValue(config.description || 'Custom squad')}
-author: ${safeYamlValue(config.author || 'Unknown')}
-license: ${config.license || 'MIT'}
+description: ${safeYamlValue(config.description || "Custom squad")}
+author: ${safeYamlValue(config.author || "Unknown")}
+license: ${config.license || "MIT"}
 slashPrefix: ${extractSlashPrefix(config.name)}
 
 aiox:
@@ -338,23 +337,23 @@ aiox:
   type: squad
 
 components:
-  tasks:${components.tasks.length ? '\n    - ' + components.tasks.join('\n    - ') : ' []'}
-  agents:${components.agents.length ? '\n    - ' + components.agents.join('\n    - ') : ' []'}
+  tasks:${components.tasks.length ? "\n    - " + components.tasks.join("\n    - ") : " []"}
+  agents:${components.agents.length ? "\n    - " + components.agents.join("\n    - ") : " []"}
   workflows: []
   checklists: []
   templates: []
   tools: []
-  scripts:${components.scripts.length ? '\n    - ' + components.scripts.join('\n    - ') : ' []'}
+  scripts:${components.scripts.length ? "\n    - " + components.scripts.join("\n    - ") : " []"}
 
 config:${
-  config.configMode === 'none'
-    ? ' {}'
-    : `
+    config.configMode === "none"
+      ? " {}"
+      : `
   extends: ${configSection.extends}
-  coding-standards: ${configSection['coding-standards']}
-  tech-stack: ${configSection['tech-stack']}
-  source-tree: ${configSection['source-tree']}`
-}
+  coding-standards: ${configSection["coding-standards"]}
+  tech-stack: ${configSection["tech-stack"]}
+  source-tree: ${configSection["source-tree"]}`
+  }
 
 dependencies:
   node: []
@@ -376,7 +375,7 @@ tags:
 function generateReadme(config) {
   return `# ${config.name}
 
-${config.description || 'Custom AIOX squad.'}
+${config.description || "Custom AIOX squad."}
 
 ## Installation
 
@@ -392,15 +391,15 @@ Activate agents from this squad and use their commands.
 
 ### Available Agents
 
-${config.includeAgent || config.template !== 'basic' ? '- **example-agent** - Example agent (customize or remove)' : '_No agents defined yet_'}
+${config.includeAgent || config.template !== "basic" ? "- **example-agent** - Example agent (customize or remove)" : "_No agents defined yet_"}
 
 ### Available Tasks
 
-${config.includeTask || config.template === 'etl' ? '- **example-agent-task** - Example task (customize or remove)' : '_No tasks defined yet_'}
+${config.includeTask || config.template === "etl" ? "- **example-agent-task** - Example task (customize or remove)" : "_No tasks defined yet_"}
 
 ## Configuration
 
-This squad ${config.configMode === 'extend' ? 'extends' : config.configMode === 'override' ? 'overrides' : 'does not inherit'} the core AIOX configuration.
+This squad ${config.configMode === "extend" ? "extends" : config.configMode === "override" ? "overrides" : "does not inherit"} the core AIOX configuration.
 
 ## Development
 
@@ -411,7 +410,7 @@ This squad ${config.configMode === 'extend' ? 'extends' : config.configMode === 
 
 ## License
 
-${config.license || 'MIT'}
+${config.license || "MIT"}
 `;
 }
 
@@ -423,7 +422,7 @@ ${config.license || 'MIT'}
 function generateCodingStandards(config) {
   return `# Coding Standards - ${config.name}
 
-> This file ${config.configMode === 'extend' ? 'extends' : config.configMode === 'override' ? 'overrides' : 'is independent of'} the core AIOX coding standards.
+> This file ${config.configMode === "extend" ? "extends" : config.configMode === "override" ? "overrides" : "is independent of"} the core AIOX coding standards.
 
 ## Code Style
 
@@ -524,8 +523,8 @@ ${config.name}/
  * @returns {string} Markdown content
  */
 function generateExampleAgent(config) {
-  const agentName = config.template === 'etl' ? 'data-extractor' : 'example-agent';
-  const title = config.template === 'etl' ? 'Data Extractor' : 'Example Agent';
+  const agentName = config.template === "etl" ? "data-extractor" : "example-agent";
+  const title = config.template === "etl" ? "Data Extractor" : "Example Agent";
 
   return `# ${agentName}
 
@@ -533,23 +532,23 @@ function generateExampleAgent(config) {
 
 \`\`\`yaml
 agent:
-  name: ${title.replace(/ /g, '')}
+  name: ${title.replace(/ /g, "")}
   id: ${agentName}
   title: ${title}
   icon: "🤖"
-  whenToUse: "Use for ${config.template === 'etl' ? 'extracting data from sources' : 'example purposes - customize this'}"
+  whenToUse: "Use for ${config.template === "etl" ? "extracting data from sources" : "example purposes - customize this"}"
 
 persona:
-  role: ${config.template === 'etl' ? 'Data Extraction Specialist' : 'Example Specialist'}
+  role: ${config.template === "etl" ? "Data Extraction Specialist" : "Example Specialist"}
   style: Systematic, thorough
-  focus: ${config.template === 'etl' ? 'Extracting data efficiently' : 'Demonstrating squad structure'}
+  focus: ${config.template === "etl" ? "Extracting data efficiently" : "Demonstrating squad structure"}
 
 commands:
   - name: help
     description: "Show available commands"
   - name: run
-    description: "${config.template === 'etl' ? 'Extract data from source' : 'Run example task'}"
-    task: ${config.template === 'etl' ? 'extract-data.md' : 'example-agent-task.md'}
+    description: "${config.template === "etl" ? "Extract data from source" : "Run example task"}"
+    task: ${config.template === "etl" ? "extract-data.md" : "example-agent-task.md"}
 \`\`\`
 
 ## Usage
@@ -568,12 +567,12 @@ commands:
  * @returns {string} Markdown content
  */
 function generateExampleTask(config) {
-  const taskName = config.template === 'etl' ? 'extract-data' : 'example-agent-task';
-  const title = config.template === 'etl' ? 'Extract Data' : 'Example Task';
+  const taskName = config.template === "etl" ? "extract-data" : "example-agent-task";
+  const title = config.template === "etl" ? "Extract Data" : "Example Task";
 
   return `---
 task: ${title}
-responsavel: "@${config.template === 'etl' ? 'data-extractor' : 'example-agent'}"
+responsavel: "@${config.template === "etl" ? "data-extractor" : "example-agent"}"
 responsavel_type: agent
 atomic_layer: task
 Entrada: |
@@ -590,15 +589,15 @@ Checklist:
   - "[ ] Return result"
 ---
 
-# *${taskName.replace(/-/g, '-')}
+# *${taskName.replace(/-/g, "-")}
 
-${config.template === 'etl' ? 'Extracts data from the specified source.' : 'Example task demonstrating task-first architecture.'}
+${config.template === "etl" ? "Extracts data from the specified source." : "Example task demonstrating task-first architecture."}
 
 ## Usage
 
 \`\`\`
-@${config.template === 'etl' ? 'data-extractor' : 'example-agent'}
-*${taskName.replace('example-agent-', '')} --source ./data/input.json --format json
+@${config.template === "etl" ? "data-extractor" : "example-agent"}
+*${taskName.replace("example-agent-", "")} --source ./data/input.json --format json
 \`\`\`
 
 ## Parameters
@@ -666,7 +665,7 @@ class SquadGenerator {
    * @see Story SQS-10: Project Config Reference for Squads
    */
   async detectProjectConfigs(projectRoot, squadPath) {
-    const frameworkDir = path.join(projectRoot, 'docs', 'framework');
+    const frameworkDir = path.join(projectRoot, "docs", "framework");
 
     // Check if docs/framework/ exists
     if (!(await this.pathExists(frameworkDir))) {
@@ -675,9 +674,9 @@ class SquadGenerator {
 
     // Config files to detect (case-insensitive variants)
     const configFiles = {
-      'coding-standards': ['CODING-STANDARDS.md', 'coding-standards.md', 'Coding-Standards.md'],
-      'tech-stack': ['TECH-STACK.md', 'tech-stack.md', 'Tech-Stack.md'],
-      'source-tree': ['SOURCE-TREE.md', 'source-tree.md', 'Source-Tree.md'],
+      "coding-standards": ["CODING-STANDARDS.md", "coding-standards.md", "Coding-Standards.md"],
+      "tech-stack": ["TECH-STACK.md", "tech-stack.md", "Tech-Stack.md"],
+      "source-tree": ["SOURCE-TREE.md", "source-tree.md", "Source-Tree.md"],
     };
 
     const detected = {};
@@ -687,7 +686,7 @@ class SquadGenerator {
         const fullPath = path.join(frameworkDir, filename);
         if (await this.pathExists(fullPath)) {
           // Calculate relative path from squad to project config
-          detected[key] = path.relative(squadPath, fullPath).replace(/\\/g, '/');
+          detected[key] = path.relative(squadPath, fullPath).replace(/\\/g, "/");
           break;
         }
       }
@@ -713,8 +712,8 @@ class SquadGenerator {
     if (!config.name) {
       throw new SquadGeneratorError(
         GeneratorErrorCodes.INVALID_NAME,
-        'Squad name is required',
-        'Provide a name: *create-squad my-squad-name',
+        "Squad name is required",
+        "Provide a name: *create-squad my-squad-name",
       );
     }
 
@@ -753,11 +752,11 @@ class SquadGenerator {
     // Set defaults
     const fullConfig = {
       name: config.name,
-      description: config.description || 'Custom squad',
+      description: config.description || "Custom squad",
       author: config.author || getGitUserName(),
-      license: config.license || 'MIT',
-      template: config.template || 'basic',
-      configMode: config.configMode || 'extend',
+      license: config.license || "MIT",
+      template: config.template || "basic",
+      configMode: config.configMode || "extend",
       includeAgent: config.includeAgent !== false,
       includeTask: config.includeTask !== false,
       aioxMinVersion: config.aioxMinVersion || DEFAULT_AIOX_MIN_VERSION,
@@ -773,12 +772,12 @@ class SquadGenerator {
     let projectConfigs = null;
     let useProjectConfigs = false;
 
-    if (fullConfig.configMode === 'extend') {
+    if (fullConfig.configMode === "extend") {
       projectConfigs = await this.detectProjectConfigs(fullConfig.projectRoot, squadPath);
       useProjectConfigs = projectConfigs !== null;
 
       if (useProjectConfigs) {
-        console.log('[squad-generator] Using project-level configuration from docs/framework/');
+        console.log("[squad-generator] Using project-level configuration from docs/framework/");
       }
     }
 
@@ -802,35 +801,41 @@ class SquadGenerator {
 
     // Generate main files
     const mainFiles = {
-      'squad.yaml': generateSquadYaml(fullConfig),
-      'README.md': generateReadme(fullConfig),
+      "squad.yaml": generateSquadYaml(fullConfig),
+      "README.md": generateReadme(fullConfig),
     };
 
     for (const [filename, content] of Object.entries(mainFiles)) {
       const filePath = path.join(squadPath, filename);
-      await fs.writeFile(filePath, content, 'utf-8');
+      await fs.writeFile(filePath, content, "utf-8");
       files.push(filePath);
     }
 
     // Generate config files (SQS-10: skip if using project configs)
     if (useProjectConfigs) {
       // Don't create local config files, just add .gitkeep to config directory
-      console.log('[squad-generator] Skipping local config file creation (using project-level configs)');
-      const gitkeepPath = path.join(squadPath, 'config', '.gitkeep');
-      await fs.writeFile(gitkeepPath, '# Config files are referenced from project docs/framework/\n', 'utf-8');
+      console.log(
+        "[squad-generator] Skipping local config file creation (using project-level configs)",
+      );
+      const gitkeepPath = path.join(squadPath, "config", ".gitkeep");
+      await fs.writeFile(
+        gitkeepPath,
+        "# Config files are referenced from project docs/framework/\n",
+        "utf-8",
+      );
       files.push(gitkeepPath);
     } else {
       // Fallback: Create local config files (AC10.3)
-      console.log('[squad-generator] Creating local configuration files');
+      console.log("[squad-generator] Creating local configuration files");
       const configFiles = {
-        'config/coding-standards.md': generateCodingStandards(fullConfig),
-        'config/tech-stack.md': generateTechStack(fullConfig),
-        'config/source-tree.md': generateSourceTree(fullConfig),
+        "config/coding-standards.md": generateCodingStandards(fullConfig),
+        "config/tech-stack.md": generateTechStack(fullConfig),
+        "config/source-tree.md": generateSourceTree(fullConfig),
       };
 
       for (const [filename, content] of Object.entries(configFiles)) {
         const filePath = path.join(squadPath, filename);
-        await fs.writeFile(filePath, content, 'utf-8');
+        await fs.writeFile(filePath, content, "utf-8");
         files.push(filePath);
       }
     }
@@ -838,76 +843,74 @@ class SquadGenerator {
     // Generate example agent if requested
     if (fullConfig.includeAgent) {
       const agentContent = generateExampleAgent(fullConfig);
-      const agentName =
-        fullConfig.template === 'etl' ? 'data-extractor.md' : 'example-agent.md';
-      const agentPath = path.join(squadPath, 'agents', agentName);
-      await fs.writeFile(agentPath, agentContent, 'utf-8');
+      const agentName = fullConfig.template === "etl" ? "data-extractor.md" : "example-agent.md";
+      const agentPath = path.join(squadPath, "agents", agentName);
+      await fs.writeFile(agentPath, agentContent, "utf-8");
       files.push(agentPath);
 
       // For ETL template, add second agent
-      if (fullConfig.template === 'etl') {
-        const transformerConfig = { ...fullConfig, template: 'basic' };
+      if (fullConfig.template === "etl") {
+        const transformerConfig = { ...fullConfig, template: "basic" };
         const transformerContent = generateExampleAgent(transformerConfig)
-          .replace(/data-extractor/g, 'data-transformer')
-          .replace(/Data Extractor/g, 'Data Transformer')
-          .replace(/extracting data/g, 'transforming data')
-          .replace(/extract-data/g, 'transform-data');
-        const transformerPath = path.join(squadPath, 'agents', 'data-transformer.md');
-        await fs.writeFile(transformerPath, transformerContent, 'utf-8');
+          .replace(/data-extractor/g, "data-transformer")
+          .replace(/Data Extractor/g, "Data Transformer")
+          .replace(/extracting data/g, "transforming data")
+          .replace(/extract-data/g, "transform-data");
+        const transformerPath = path.join(squadPath, "agents", "data-transformer.md");
+        await fs.writeFile(transformerPath, transformerContent, "utf-8");
         files.push(transformerPath);
       }
 
       // For agent-only template, add agents
-      if (fullConfig.template === 'agent-only') {
-        const primaryContent = generateExampleAgent({ ...fullConfig, template: 'basic' })
-          .replace(/example-agent/g, 'primary-agent')
-          .replace(/Example Agent/g, 'Primary Agent');
-        const primaryPath = path.join(squadPath, 'agents', 'primary-agent.md');
-        await fs.writeFile(primaryPath, primaryContent, 'utf-8');
+      if (fullConfig.template === "agent-only") {
+        const primaryContent = generateExampleAgent({ ...fullConfig, template: "basic" })
+          .replace(/example-agent/g, "primary-agent")
+          .replace(/Example Agent/g, "Primary Agent");
+        const primaryPath = path.join(squadPath, "agents", "primary-agent.md");
+        await fs.writeFile(primaryPath, primaryContent, "utf-8");
         files.push(primaryPath);
 
-        const helperContent = generateExampleAgent({ ...fullConfig, template: 'basic' })
-          .replace(/example-agent/g, 'helper-agent')
-          .replace(/Example Agent/g, 'Helper Agent');
-        const helperPath = path.join(squadPath, 'agents', 'helper-agent.md');
-        await fs.writeFile(helperPath, helperContent, 'utf-8');
+        const helperContent = generateExampleAgent({ ...fullConfig, template: "basic" })
+          .replace(/example-agent/g, "helper-agent")
+          .replace(/Example Agent/g, "Helper Agent");
+        const helperPath = path.join(squadPath, "agents", "helper-agent.md");
+        await fs.writeFile(helperPath, helperContent, "utf-8");
         files.push(helperPath);
       }
     }
 
     // Generate example task if requested
-    if (fullConfig.includeTask && fullConfig.template !== 'agent-only') {
+    if (fullConfig.includeTask && fullConfig.template !== "agent-only") {
       const taskContent = generateExampleTask(fullConfig);
-      const taskName =
-        fullConfig.template === 'etl' ? 'extract-data.md' : 'example-agent-task.md';
-      const taskPath = path.join(squadPath, 'tasks', taskName);
-      await fs.writeFile(taskPath, taskContent, 'utf-8');
+      const taskName = fullConfig.template === "etl" ? "extract-data.md" : "example-agent-task.md";
+      const taskPath = path.join(squadPath, "tasks", taskName);
+      await fs.writeFile(taskPath, taskContent, "utf-8");
       files.push(taskPath);
 
       // For ETL template, add more tasks
-      if (fullConfig.template === 'etl') {
+      if (fullConfig.template === "etl") {
         const transformTask = generateExampleTask(fullConfig)
-          .replace(/extract-data/g, 'transform-data')
-          .replace(/Extract Data/g, 'Transform Data')
-          .replace(/data-extractor/g, 'data-transformer')
-          .replace(/Extracts data/g, 'Transforms data');
-        const transformPath = path.join(squadPath, 'tasks', 'transform-data.md');
-        await fs.writeFile(transformPath, transformTask, 'utf-8');
+          .replace(/extract-data/g, "transform-data")
+          .replace(/Extract Data/g, "Transform Data")
+          .replace(/data-extractor/g, "data-transformer")
+          .replace(/Extracts data/g, "Transforms data");
+        const transformPath = path.join(squadPath, "tasks", "transform-data.md");
+        await fs.writeFile(transformPath, transformTask, "utf-8");
         files.push(transformPath);
 
         const loadTask = generateExampleTask(fullConfig)
-          .replace(/extract-data/g, 'load-data')
-          .replace(/Extract Data/g, 'Load Data')
-          .replace(/data-extractor/g, 'data-loader')
-          .replace(/Extracts data/g, 'Loads data');
-        const loadPath = path.join(squadPath, 'tasks', 'load-data.md');
-        await fs.writeFile(loadPath, loadTask, 'utf-8');
+          .replace(/extract-data/g, "load-data")
+          .replace(/Extract Data/g, "Load Data")
+          .replace(/data-extractor/g, "data-loader")
+          .replace(/Extracts data/g, "Loads data");
+        const loadPath = path.join(squadPath, "tasks", "load-data.md");
+        await fs.writeFile(loadPath, loadTask, "utf-8");
         files.push(loadPath);
       }
     }
 
     // For ETL template, create utils.js script
-    if (fullConfig.template === 'etl') {
+    if (fullConfig.template === "etl") {
       const utilsContent = `/**
  * ETL Utilities
  *
@@ -944,35 +947,35 @@ function formatData(data, format = 'json') {
 
 module.exports = { formatData };
 `;
-      const utilsPath = path.join(squadPath, 'scripts', 'utils.js');
-      await fs.writeFile(utilsPath, utilsContent, 'utf-8');
+      const utilsPath = path.join(squadPath, "scripts", "utils.js");
+      await fs.writeFile(utilsPath, utilsContent, "utf-8");
       files.push(utilsPath);
     }
 
     // Add .gitkeep to empty directories
-    const emptyDirs = ['workflows', 'checklists', 'templates', 'tools', 'data'];
+    const emptyDirs = ["workflows", "checklists", "templates", "tools", "data"];
     if (!fullConfig.includeAgent) {
-      emptyDirs.push('agents');
+      emptyDirs.push("agents");
     }
-    if (!fullConfig.includeTask || fullConfig.template === 'agent-only') {
-      emptyDirs.push('tasks');
+    if (!fullConfig.includeTask || fullConfig.template === "agent-only") {
+      emptyDirs.push("tasks");
     }
-    if (fullConfig.template !== 'etl') {
-      emptyDirs.push('scripts');
+    if (fullConfig.template !== "etl") {
+      emptyDirs.push("scripts");
     }
 
     for (const dir of emptyDirs) {
-      const gitkeepPath = path.join(squadPath, dir, '.gitkeep');
+      const gitkeepPath = path.join(squadPath, dir, ".gitkeep");
       // Only create .gitkeep if directory is empty
       try {
         const dirContents = await fs.readdir(path.join(squadPath, dir));
         if (dirContents.length === 0) {
-          await fs.writeFile(gitkeepPath, '', 'utf-8');
+          await fs.writeFile(gitkeepPath, "", "utf-8");
           files.push(gitkeepPath);
         }
       } catch {
         // Directory might not exist, create .gitkeep anyway
-        await fs.writeFile(gitkeepPath, '', 'utf-8');
+        await fs.writeFile(gitkeepPath, "", "utf-8");
         files.push(gitkeepPath);
       }
     }
@@ -995,14 +998,16 @@ module.exports = { formatData };
       const entries = await fs.readdir(this.squadsPath, { withFileTypes: true });
 
       for (const entry of entries) {
-        if (!entry.isDirectory()) continue;
+        if (!entry.isDirectory()) {
+          continue;
+        }
 
         const squadPath = path.join(this.squadsPath, entry.name);
 
         // Try to load manifest
         try {
-          const manifestPath = path.join(squadPath, 'squad.yaml');
-          const manifestContent = await fs.readFile(manifestPath, 'utf-8');
+          const manifestPath = path.join(squadPath, "squad.yaml");
+          const manifestContent = await fs.readFile(manifestPath, "utf-8");
 
           // Basic YAML parsing for key fields
           const nameMatch = manifestContent.match(/^name:\s*(.+)$/m);
@@ -1011,15 +1016,15 @@ module.exports = { formatData };
 
           squads.push({
             name: nameMatch ? nameMatch[1].trim() : entry.name,
-            version: versionMatch ? versionMatch[1].trim() : 'unknown',
-            description: descriptionMatch ? descriptionMatch[1].trim() : '',
+            version: versionMatch ? versionMatch[1].trim() : "unknown",
+            description: descriptionMatch ? descriptionMatch[1].trim() : "",
             path: squadPath,
           });
         } catch {
           // Try config.yaml fallback
           try {
-            const configPath = path.join(squadPath, 'config.yaml');
-            const configContent = await fs.readFile(configPath, 'utf-8');
+            const configPath = path.join(squadPath, "config.yaml");
+            const configContent = await fs.readFile(configPath, "utf-8");
 
             const nameMatch = configContent.match(/^name:\s*(.+)$/m);
             const versionMatch = configContent.match(/^version:\s*(.+)$/m);
@@ -1027,8 +1032,8 @@ module.exports = { formatData };
 
             squads.push({
               name: nameMatch ? nameMatch[1].trim() : entry.name,
-              version: versionMatch ? versionMatch[1].trim() : 'unknown',
-              description: descriptionMatch ? descriptionMatch[1].trim() : '',
+              version: versionMatch ? versionMatch[1].trim() : "unknown",
+              description: descriptionMatch ? descriptionMatch[1].trim() : "",
               path: squadPath,
               deprecated: true, // Using config.yaml
             });
@@ -1036,8 +1041,8 @@ module.exports = { formatData };
             // No manifest found, still list but mark as invalid
             squads.push({
               name: entry.name,
-              version: 'unknown',
-              description: 'No manifest found',
+              version: "unknown",
+              description: "No manifest found",
               path: squadPath,
               invalid: true,
             });
@@ -1046,7 +1051,7 @@ module.exports = { formatData };
       }
     } catch (err) {
       // Squads directory doesn't exist
-      if (err.code !== 'ENOENT') {
+      if (err.code !== "ENOENT") {
         throw err;
       }
     }
@@ -1071,11 +1076,11 @@ module.exports = { formatData };
     }
 
     try {
-      const content = await fs.readFile(blueprintPath, 'utf-8');
+      const content = await fs.readFile(blueprintPath, "utf-8");
       const blueprint = yaml.load(content);
       return blueprint;
     } catch (err) {
-      if (err.name === 'YAMLException') {
+      if (err.name === "YAMLException") {
         throw SquadGeneratorError.blueprintParseError(blueprintPath, err.message);
       }
       throw err;
@@ -1092,23 +1097,23 @@ module.exports = { formatData };
 
     // Required top-level fields
     if (!blueprint.squad) {
-      errors.push('Missing required field: squad');
+      errors.push("Missing required field: squad");
     } else {
       if (!blueprint.squad.name) {
-        errors.push('Missing required field: squad.name');
+        errors.push("Missing required field: squad.name");
       } else if (!isValidSquadName(blueprint.squad.name)) {
         errors.push(`Invalid squad name "${blueprint.squad.name}": must be kebab-case`);
       }
       if (!blueprint.squad.domain) {
-        errors.push('Missing required field: squad.domain');
+        errors.push("Missing required field: squad.domain");
       }
     }
 
     if (!blueprint.recommendations) {
-      errors.push('Missing required field: recommendations');
+      errors.push("Missing required field: recommendations");
     } else {
       if (!Array.isArray(blueprint.recommendations.agents)) {
-        errors.push('recommendations.agents must be an array');
+        errors.push("recommendations.agents must be an array");
       } else {
         // Validate each agent
         blueprint.recommendations.agents.forEach((agent, idx) => {
@@ -1120,14 +1125,20 @@ module.exports = { formatData };
           if (!agent.role) {
             errors.push(`recommendations.agents[${idx}]: missing required field "role"`);
           }
-          if (typeof agent.confidence !== 'number' || agent.confidence < 0 || agent.confidence > 1) {
-            errors.push(`recommendations.agents[${idx}]: confidence must be a number between 0 and 1`);
+          if (
+            typeof agent.confidence !== "number" ||
+            agent.confidence < 0 ||
+            agent.confidence > 1
+          ) {
+            errors.push(
+              `recommendations.agents[${idx}]: confidence must be a number between 0 and 1`,
+            );
           }
         });
       }
 
       if (!Array.isArray(blueprint.recommendations.tasks)) {
-        errors.push('recommendations.tasks must be an array');
+        errors.push("recommendations.tasks must be an array");
       } else {
         // Validate each task
         blueprint.recommendations.tasks.forEach((task, idx) => {
@@ -1139,18 +1150,20 @@ module.exports = { formatData };
           if (!task.agent) {
             errors.push(`recommendations.tasks[${idx}]: missing required field "agent"`);
           }
-          if (typeof task.confidence !== 'number' || task.confidence < 0 || task.confidence > 1) {
-            errors.push(`recommendations.tasks[${idx}]: confidence must be a number between 0 and 1`);
+          if (typeof task.confidence !== "number" || task.confidence < 0 || task.confidence > 1) {
+            errors.push(
+              `recommendations.tasks[${idx}]: confidence must be a number between 0 and 1`,
+            );
           }
         });
       }
     }
 
     if (!blueprint.metadata) {
-      errors.push('Missing required field: metadata');
+      errors.push("Missing required field: metadata");
     } else {
       if (!blueprint.metadata.created_at) {
-        errors.push('Missing required field: metadata.created_at');
+        errors.push("Missing required field: metadata.created_at");
       }
     }
 
@@ -1169,8 +1182,8 @@ module.exports = { formatData };
     const config = {
       name: blueprint.squad.name,
       description: blueprint.squad.description || `Squad for ${blueprint.squad.domain}`,
-      template: blueprint.recommendations.template || 'custom',
-      configMode: blueprint.recommendations.config_mode || 'extend',
+      template: blueprint.recommendations.template || "custom",
+      configMode: blueprint.recommendations.config_mode || "extend",
       includeAgent: false, // We'll add custom agents, not example ones
       includeTask: false, // We'll add custom tasks, not example ones
       // Store blueprint data for custom generation
@@ -1188,8 +1201,8 @@ module.exports = { formatData };
    */
   generateAgentFromBlueprint(agent, squadName) {
     const commandsList = (agent.commands || [])
-      .map(cmd => `  - name: ${cmd}\n    description: "${cmd.replace(/-/g, ' ')} operation"`)
-      .join('\n');
+      .map((cmd) => `  - name: ${cmd}\n    description: "${cmd.replace(/-/g, " ")} operation"`)
+      .join("\n");
 
     return `# ${agent.id}
 
@@ -1197,7 +1210,7 @@ module.exports = { formatData };
 
 \`\`\`yaml
 agent:
-  name: ${agent.id.replace(/-/g, '')}
+  name: ${agent.id.replace(/-/g, "")}
   id: ${agent.id}
   title: "${agent.role}"
   icon: "🤖"
@@ -1225,8 +1238,8 @@ ${commandsList}
 
 Generated from squad design blueprint for ${squadName}.
 Confidence: ${Math.round(agent.confidence * 100)}%
-${agent.user_added ? 'Added by user during design refinement.' : ''}
-${agent.user_modified ? 'Modified by user during design refinement.' : ''}
+${agent.user_added ? "Added by user during design refinement." : ""}
+${agent.user_modified ? "Modified by user during design refinement." : ""}
 `;
   }
 
@@ -1237,24 +1250,28 @@ ${agent.user_modified ? 'Modified by user during design refinement.' : ''}
    * @returns {string} Markdown content for task file
    */
   generateTaskFromBlueprint(task, squadName) {
-    const entradaList = (task.entrada || []).map(e => `  - ${e}`).join('\n');
-    const saidaList = (task.saida || []).map(s => `  - ${s}`).join('\n');
-    const checklistItems = (task.checklist || [
-      '[ ] Validate input parameters',
-      '[ ] Execute main logic',
-      '[ ] Format output',
-      '[ ] Return result',
-    ]).map(item => `  - "${item.startsWith('[') ? item : '[ ] ' + item}"`).join('\n');
+    const entradaList = (task.entrada || []).map((e) => `  - ${e}`).join("\n");
+    const saidaList = (task.saida || []).map((s) => `  - ${s}`).join("\n");
+    const checklistItems = (
+      task.checklist || [
+        "[ ] Validate input parameters",
+        "[ ] Execute main logic",
+        "[ ] Format output",
+        "[ ] Return result",
+      ]
+    )
+      .map((item) => `  - "${item.startsWith("[") ? item : "[ ] " + item}"`)
+      .join("\n");
 
     return `---
-task: "${task.name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}"
+task: "${task.name.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}"
 responsavel: "@${task.agent}"
 responsavel_type: agent
 atomic_layer: task
 Entrada: |
-${entradaList || '  - (no inputs defined)'}
+${entradaList || "  - (no inputs defined)"}
 Saida: |
-${saidaList || '  - (no outputs defined)'}
+${saidaList || "  - (no outputs defined)"}
 Checklist:
 ${checklistItems}
 ---
@@ -1274,11 +1291,11 @@ Task generated from squad design blueprint for ${squadName}.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-${(task.entrada || []).map(e => `| \`${e}\` | string | Yes | ${e.replace(/_/g, ' ')} |`).join('\n') || '| - | - | - | No parameters defined |'}
+${(task.entrada || []).map((e) => `| \`${e}\` | string | Yes | ${e.replace(/_/g, " ")} |`).join("\n") || "| - | - | - | No parameters defined |"}
 
 ## Output
 
-${(task.saida || []).map(s => `- **${s}**: ${s.replace(/_/g, ' ')}`).join('\n') || '- No outputs defined'}
+${(task.saida || []).map((s) => `- **${s}**: ${s.replace(/_/g, " ")}`).join("\n") || "- No outputs defined"}
 
 ## Origin
 
@@ -1324,8 +1341,8 @@ Confidence: ${Math.round(task.confidence * 100)}%
     const agentFiles = [];
     for (const agent of blueprint.recommendations.agents || []) {
       const agentContent = this.generateAgentFromBlueprint(agent, config.name);
-      const agentPath = path.join(squadPath, 'agents', `${agent.id}.md`);
-      await fs.writeFile(agentPath, agentContent, 'utf-8');
+      const agentPath = path.join(squadPath, "agents", `${agent.id}.md`);
+      await fs.writeFile(agentPath, agentContent, "utf-8");
       agentFiles.push(agentPath);
     }
 
@@ -1333,13 +1350,13 @@ Confidence: ${Math.round(task.confidence * 100)}%
     const taskFiles = [];
     for (const task of blueprint.recommendations.tasks || []) {
       const taskContent = this.generateTaskFromBlueprint(task, config.name);
-      const taskPath = path.join(squadPath, 'tasks', `${task.name}.md`);
-      await fs.writeFile(taskPath, taskContent, 'utf-8');
+      const taskPath = path.join(squadPath, "tasks", `${task.name}.md`);
+      await fs.writeFile(taskPath, taskContent, "utf-8");
       taskFiles.push(taskPath);
     }
 
     // 7. Update squad.yaml with actual components
-    const squadYamlPath = path.join(squadPath, 'squad.yaml');
+    const squadYamlPath = path.join(squadPath, "squad.yaml");
     await this.updateSquadYamlComponents(squadYamlPath, blueprint);
 
     // 8. Return result with blueprint info
@@ -1362,15 +1379,17 @@ Confidence: ${Math.round(task.confidence * 100)}%
    * @param {Object} blueprint - Blueprint object
    */
   async updateSquadYamlComponents(squadYamlPath, blueprint) {
-    const content = await fs.readFile(squadYamlPath, 'utf-8');
+    const content = await fs.readFile(squadYamlPath, "utf-8");
     const squadManifest = yaml.load(content);
 
     // Update components
     squadManifest.components = squadManifest.components || {};
-    squadManifest.components.agents = (blueprint.recommendations.agents || [])
-      .map(a => `${a.id}.md`);
-    squadManifest.components.tasks = (blueprint.recommendations.tasks || [])
-      .map(t => `${t.name}.md`);
+    squadManifest.components.agents = (blueprint.recommendations.agents || []).map(
+      (a) => `${a.id}.md`,
+    );
+    squadManifest.components.tasks = (blueprint.recommendations.tasks || []).map(
+      (t) => `${t.name}.md`,
+    );
 
     // Add blueprint reference
     squadManifest.blueprint = {
@@ -1385,7 +1404,7 @@ Confidence: ${Math.round(task.confidence * 100)}%
       lineWidth: 120,
       quotingType: '"',
     });
-    await fs.writeFile(squadYamlPath, updatedContent, 'utf-8');
+    await fs.writeFile(squadYamlPath, updatedContent, "utf-8");
   }
 }
 

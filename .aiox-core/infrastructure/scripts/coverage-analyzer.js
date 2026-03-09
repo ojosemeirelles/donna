@@ -1,6 +1,6 @@
-const fs = require('fs').promises;
-const path = require('path');
-const chalk = require('chalk');
+const fs = require("fs").promises;
+const path = require("path");
+const chalk = require("chalk");
 
 /**
  * Coverage analyzer for Synkra AIOX test generation
@@ -9,8 +9,8 @@ const chalk = require('chalk');
 class CoverageAnalyzer {
   constructor(options = {}) {
     this.rootPath = options.rootPath || process.cwd();
-    this.testsDir = path.join(this.rootPath, 'tests');
-    this.coverageReportsDir = path.join(this.rootPath, 'coverage');
+    this.testsDir = path.join(this.rootPath, "tests");
+    this.coverageReportsDir = path.join(this.rootPath, "coverage");
     this.coverageCache = new Map();
     this.analysisHistory = [];
   }
@@ -26,9 +26,8 @@ class CoverageAnalyzer {
       // Load existing coverage data if available
       await this.loadExistingCoverageData();
 
-      console.log(chalk.green('✅ Coverage analyzer initialized'));
+      console.log(chalk.green("✅ Coverage analyzer initialized"));
       return true;
-
     } catch (error) {
       console.error(chalk.red(`Failed to initialize coverage analyzer: ${error.message}`));
       throw error;
@@ -40,9 +39,9 @@ class CoverageAnalyzer {
    */
   async analyzeCoverage(components, options = {}) {
     const analysisId = `coverage-analysis-${Date.now()}`;
-    
-    console.log(chalk.blue('📊 Analyzing test coverage...'));
-    
+
+    console.log(chalk.blue("📊 Analyzing test coverage..."));
+
     const analysis = {
       analysis_id: analysisId,
       timestamp: new Date().toISOString(),
@@ -68,7 +67,7 @@ class CoverageAnalyzer {
       for (const component of components) {
         const componentCoverage = await this.analyzeComponentCoverage(component, options);
         analysis.component_coverage[component.id] = componentCoverage;
-        
+
         // Aggregate overall coverage
         this.aggregateCoverage(analysis.overall_coverage, componentCoverage);
       }
@@ -93,13 +92,14 @@ class CoverageAnalyzer {
       // Save analysis report
       await this.saveCoverageAnalysis(analysis);
 
-      console.log(chalk.green('✅ Coverage analysis completed'));
-      console.log(chalk.gray(`   Overall coverage: ${analysis.overall_coverage.percentage.toFixed(1)}%`));
+      console.log(chalk.green("✅ Coverage analysis completed"));
+      console.log(
+        chalk.gray(`   Overall coverage: ${analysis.overall_coverage.percentage.toFixed(1)}%`),
+      );
       console.log(chalk.gray(`   Components analyzed: ${components.length}`));
       console.log(chalk.gray(`   Coverage gaps identified: ${analysis.coverage_gaps.length}`));
 
       return analysis;
-
     } catch (error) {
       console.error(chalk.red(`Coverage analysis failed: ${error.message}`));
       throw error;
@@ -118,7 +118,7 @@ class CoverageAnalyzer {
       lines: { covered: 0, total: 0, percentage: 0 },
       functions: { covered: 0, total: 0, percentage: 0 },
       branches: { covered: 0, total: 0, percentage: 0 },
-      coverage_quality: 'unknown',
+      coverage_quality: "unknown",
       missing_tests: [],
       untested_functions: [],
       uncovered_branches: [],
@@ -156,9 +156,10 @@ class CoverageAnalyzer {
         coverage.untested_functions = await this.identifyUntestedFunctions(component);
         coverage.uncovered_branches = await this.identifyUncoveredBranches(component);
       }
-
     } catch (error) {
-      console.warn(chalk.yellow(`Failed to analyze coverage for ${component.id}: ${error.message}`));
+      console.warn(
+        chalk.yellow(`Failed to analyze coverage for ${component.id}: ${error.message}`),
+      );
     }
 
     return coverage;
@@ -170,12 +171,17 @@ class CoverageAnalyzer {
   async findTestFiles(component) {
     const testFiles = [];
     const possibleTestPaths = [
-      path.join(this.testsDir, 'unit', component.type, `${component.name}.test.js`),
-      path.join(this.testsDir, 'unit', component.type, `${component.name}.spec.js`),
-      path.join(this.testsDir, 'integration', component.type, `${component.name}.integration.test.js`),
-      path.join(this.testsDir, 'e2e', component.type, `${component.name}.e2e.test.js`),
-      path.join(this.rootPath, 'test', `${component.name}.test.js`),
-      path.join(this.rootPath, '__tests__', `${component.name}.test.js`),
+      path.join(this.testsDir, "unit", component.type, `${component.name}.test.js`),
+      path.join(this.testsDir, "unit", component.type, `${component.name}.spec.js`),
+      path.join(
+        this.testsDir,
+        "integration",
+        component.type,
+        `${component.name}.integration.test.js`,
+      ),
+      path.join(this.testsDir, "e2e", component.type, `${component.name}.e2e.test.js`),
+      path.join(this.rootPath, "test", `${component.name}.test.js`),
+      path.join(this.rootPath, "__tests__", `${component.name}.test.js`),
     ];
 
     for (const testPath of possibleTestPaths) {
@@ -184,7 +190,7 @@ class CoverageAnalyzer {
         if (stats.isFile()) {
           const testType = this.determineTestType(testPath);
           const testAnalysis = await this.analyzeTestFile(testPath);
-          
+
           testFiles.push({
             file_path: testPath,
             test_type: testType,
@@ -210,15 +216,18 @@ class CoverageAnalyzer {
     try {
       // Try to find coverage data from different coverage tools
       const coverageFiles = [
-        path.join(this.rootPath, 'coverage', 'lcov-report', 'index.html'),
-        path.join(this.rootPath, 'coverage', 'coverage-final.json'),
-        path.join(this.rootPath, 'coverage', 'clover.xml'),
-        path.join(this.rootPath, '.nyc_output', 'coverage.json'),
+        path.join(this.rootPath, "coverage", "lcov-report", "index.html"),
+        path.join(this.rootPath, "coverage", "coverage-final.json"),
+        path.join(this.rootPath, "coverage", "clover.xml"),
+        path.join(this.rootPath, ".nyc_output", "coverage.json"),
       ];
 
       for (const coverageFile of coverageFiles) {
         try {
-          const exists = await fs.access(coverageFile).then(() => true).catch(() => false);
+          const exists = await fs
+            .access(coverageFile)
+            .then(() => true)
+            .catch(() => false);
           if (exists) {
             const coverageData = await this.parseCoverageFile(coverageFile, component);
             if (coverageData) {
@@ -231,7 +240,6 @@ class CoverageAnalyzer {
       }
 
       return null;
-
     } catch (error) {
       return null;
     }
@@ -269,14 +277,21 @@ class CoverageAnalyzer {
       }
 
       // Apply coverage percentages
-      coverage.lines.covered = Math.round(coverage.lines.total * (estimatedCoveragePercentage / 100));
-      coverage.functions.covered = Math.round(coverage.functions.total * (estimatedCoveragePercentage / 100));
-      coverage.branches.covered = Math.round(coverage.branches.total * (estimatedCoveragePercentage / 100));
+      coverage.lines.covered = Math.round(
+        coverage.lines.total * (estimatedCoveragePercentage / 100),
+      );
+      coverage.functions.covered = Math.round(
+        coverage.functions.total * (estimatedCoveragePercentage / 100),
+      );
+      coverage.branches.covered = Math.round(
+        coverage.branches.total * (estimatedCoveragePercentage / 100),
+      );
 
       this.calculateCoveragePercentages(coverage);
-
     } catch (error) {
-      console.warn(chalk.yellow(`Failed to estimate coverage for ${component.id}: ${error.message}`));
+      console.warn(
+        chalk.yellow(`Failed to estimate coverage for ${component.id}: ${error.message}`),
+      );
     }
 
     return coverage;
@@ -298,18 +313,21 @@ class CoverageAnalyzer {
         return analysis;
       }
 
-      const content = await fs.readFile(component.filePath, 'utf-8');
+      const content = await fs.readFile(component.filePath, "utf-8");
 
-      if (component.type === 'util') {
+      if (component.type === "util") {
         // JavaScript utility analysis
-        const lines = content.split('\n').filter(line => 
-          line.trim() && 
-          !line.trim().startsWith('//') && 
-          !line.trim().startsWith('/*'),
-        );
+        const lines = content
+          .split("\n")
+          .filter(
+            (line) => line.trim() && !line.trim().startsWith("//") && !line.trim().startsWith("/*"),
+          );
         analysis.lines = lines.length;
 
-        const functions = content.match(/(?:function\s+\w+|[\w\$]+\s*[=:]\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/g) || [];
+        const functions =
+          content.match(
+            /(?:function\s+\w+|[\w$]+\s*[=:]\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/g,
+          ) || [];
         analysis.functions = functions.length;
 
         const branches = content.match(/\b(?:if|else|switch|case|for|while|try|catch)\b/g) || [];
@@ -317,11 +335,10 @@ class CoverageAnalyzer {
 
         // Identify testable elements
         analysis.testable_elements = [
-          ...functions.map(f => ({ type: 'function', name: this.extractFunctionName(f) })),
-          ...branches.map((b, i) => ({ type: 'branch', name: `branch_${i + 1}` })),
+          ...functions.map((f) => ({ type: "function", name: this.extractFunctionName(f) })),
+          ...branches.map((b, i) => ({ type: "branch", name: `branch_${i + 1}` })),
         ];
-
-      } else if (component.type === 'agent' || component.type === 'task') {
+      } else if (component.type === "agent" || component.type === "task") {
         // Markdown with embedded JavaScript
         const jsBlocks = content.match(/```javascript([\s\S]*?)```/g) || [];
         let totalLines = 0;
@@ -329,14 +346,16 @@ class CoverageAnalyzer {
         let totalBranches = 0;
 
         for (const block of jsBlocks) {
-          const jsCode = block.replace(/```javascript|```/g, '');
-          const lines = jsCode.split('\n').filter(line => 
-            line.trim() && 
-            !line.trim().startsWith('//'),
-          );
+          const jsCode = block.replace(/```javascript|```/g, "");
+          const lines = jsCode
+            .split("\n")
+            .filter((line) => line.trim() && !line.trim().startsWith("//"));
           totalLines += lines.length;
 
-          const functions = jsCode.match(/(?:function\s+\w+|[\w\$]+\s*[=:]\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/g) || [];
+          const functions =
+            jsCode.match(
+              /(?:function\s+\w+|[\w$]+\s*[=:]\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/g,
+            ) || [];
           totalFunctions += functions.length;
 
           const branches = jsCode.match(/\b(?:if|else|switch|case|for|while|try|catch)\b/g) || [];
@@ -349,23 +368,21 @@ class CoverageAnalyzer {
 
         // For agents/tasks, also consider configuration testing
         analysis.testable_elements.push(
-          { type: 'configuration', name: 'config_validation' },
-          { type: 'execution', name: 'execute_method' },
+          { type: "configuration", name: "config_validation" },
+          { type: "execution", name: "execute_method" },
         );
-
-      } else if (component.type === 'workflow') {
+      } else if (component.type === "workflow") {
         // YAML workflow analysis
         const steps = content.match(/^\s*-\s+name:/gm) || [];
-        analysis.lines = content.split('\n').length;
+        analysis.lines = content.split("\n").length;
         analysis.functions = steps.length; // Each step is like a function
         analysis.branches = (content.match(/\bif\b/g) || []).length; // Conditional steps
 
         analysis.testable_elements = steps.map((step, i) => ({
-          type: 'workflow_step',
+          type: "workflow_step",
           name: `step_${i + 1}`,
         }));
       }
-
     } catch (error) {
       console.warn(chalk.yellow(`Failed to analyze component for coverage: ${error.message}`));
     }
@@ -386,7 +403,7 @@ class CoverageAnalyzer {
     };
 
     try {
-      const content = await fs.readFile(testFilePath, 'utf-8');
+      const content = await fs.readFile(testFilePath, "utf-8");
 
       // Count test cases
       const testCases = content.match(/\b(?:it|test|describe)\s*\(/g) || [];
@@ -405,16 +422,15 @@ class CoverageAnalyzer {
       analysis.async_tests = asyncTests.length;
 
       // Identify test types
-      if (content.includes('integration') || testFilePath.includes('integration')) {
-        analysis.test_types.push('integration');
+      if (content.includes("integration") || testFilePath.includes("integration")) {
+        analysis.test_types.push("integration");
       }
-      if (content.includes('e2e') || testFilePath.includes('e2e')) {
-        analysis.test_types.push('e2e');
+      if (content.includes("e2e") || testFilePath.includes("e2e")) {
+        analysis.test_types.push("e2e");
       }
       if (!analysis.test_types.length) {
-        analysis.test_types.push('unit');
+        analysis.test_types.push("unit");
       }
-
     } catch (error) {
       console.warn(chalk.yellow(`Failed to analyze test file ${testFilePath}: ${error.message}`));
     }
@@ -441,8 +457,12 @@ class CoverageAnalyzer {
     weight += Math.min(testFile.async_tests * 0.4, 2);
 
     // Weight from test types
-    if (testFile.test_type === 'integration') weight += 1;
-    if (testFile.test_type === 'e2e') weight += 1.5;
+    if (testFile.test_type === "integration") {
+      weight += 1;
+    }
+    if (testFile.test_type === "e2e") {
+      weight += 1.5;
+    }
 
     return Math.min(weight, 10); // Cap at 10
   }
@@ -451,9 +471,13 @@ class CoverageAnalyzer {
    * Determine test type from file path
    */
   determineTestType(testPath) {
-    if (testPath.includes('integration')) return 'integration';
-    if (testPath.includes('e2e')) return 'e2e';
-    return 'unit';
+    if (testPath.includes("integration")) {
+      return "integration";
+    }
+    if (testPath.includes("e2e")) {
+      return "e2e";
+    }
+    return "unit";
   }
 
   /**
@@ -462,20 +486,19 @@ class CoverageAnalyzer {
   async parseCoverageFile(coverageFile, component) {
     try {
       const ext = path.extname(coverageFile);
-      
-      if (ext === '.json') {
-        const data = JSON.parse(await fs.readFile(coverageFile, 'utf-8'));
+
+      if (ext === ".json") {
+        const data = JSON.parse(await fs.readFile(coverageFile, "utf-8"));
         return this.extractCoverageFromJson(data, component);
-      } else if (ext === '.xml') {
-        const data = await fs.readFile(coverageFile, 'utf-8');
+      } else if (ext === ".xml") {
+        const data = await fs.readFile(coverageFile, "utf-8");
         return this.extractCoverageFromXml(data, component);
-      } else if (ext === '.html') {
-        const data = await fs.readFile(coverageFile, 'utf-8');
+      } else if (ext === ".html") {
+        const data = await fs.readFile(coverageFile, "utf-8");
         return this.extractCoverageFromHtml(data, component);
       }
 
       return null;
-
     } catch (error) {
       return null;
     }
@@ -492,20 +515,22 @@ class CoverageAnalyzer {
     }
 
     const fileCoverage = data[componentFile];
-    
+
     return {
       lines: {
-        covered: Object.values(fileCoverage.s || {}).filter(count => count > 0).length,
+        covered: Object.values(fileCoverage.s || {}).filter((count) => count > 0).length,
         total: Object.keys(fileCoverage.s || {}).length,
         percentage: 0,
       },
       functions: {
-        covered: Object.values(fileCoverage.f || {}).filter(count => count > 0).length,
+        covered: Object.values(fileCoverage.f || {}).filter((count) => count > 0).length,
         total: Object.keys(fileCoverage.f || {}).length,
         percentage: 0,
       },
       branches: {
-        covered: Object.values(fileCoverage.b || {}).flat().filter(count => count > 0).length,
+        covered: Object.values(fileCoverage.b || {})
+          .flat()
+          .filter((count) => count > 0).length,
         total: Object.values(fileCoverage.b || {}).flat().length,
         percentage: 0,
       },
@@ -549,11 +574,11 @@ class CoverageAnalyzer {
     if (coverage.lines_total > 0) {
       coverage.percentage = (coverage.lines_covered / coverage.lines_total) * 100;
     }
-    
+
     if (coverage.functions_total > 0) {
       coverage.function_percentage = (coverage.functions_covered / coverage.functions_total) * 100;
     }
-    
+
     if (coverage.branches_total > 0) {
       coverage.branch_percentage = (coverage.branches_covered / coverage.branches_total) * 100;
     }
@@ -562,11 +587,11 @@ class CoverageAnalyzer {
     if (coverage.lines && coverage.lines.total > 0) {
       coverage.lines.percentage = (coverage.lines.covered / coverage.lines.total) * 100;
     }
-    
+
     if (coverage.functions && coverage.functions.total > 0) {
       coverage.functions.percentage = (coverage.functions.covered / coverage.functions.total) * 100;
     }
-    
+
     if (coverage.branches && coverage.branches.total > 0) {
       coverage.branches.percentage = (coverage.branches.covered / coverage.branches.total) * 100;
     }
@@ -583,10 +608,10 @@ class CoverageAnalyzer {
       if (!coverage.has_tests) {
         gaps.push({
           component_id: componentId,
-          gap_type: 'no_tests',
-          severity: 'high',
-          description: 'Component has no test files',
-          recommendation: 'Create comprehensive test suite',
+          gap_type: "no_tests",
+          severity: "high",
+          description: "Component has no test files",
+          recommendation: "Create comprehensive test suite",
         });
       }
 
@@ -594,10 +619,10 @@ class CoverageAnalyzer {
       else if (coverage.lines.percentage < 50) {
         gaps.push({
           component_id: componentId,
-          gap_type: 'low_coverage',
-          severity: 'medium',
+          gap_type: "low_coverage",
+          severity: "medium",
           description: `Low line coverage: ${coverage.lines.percentage.toFixed(1)}%`,
-          recommendation: 'Add more test cases to improve coverage',
+          recommendation: "Add more test cases to improve coverage",
         });
       }
 
@@ -605,10 +630,10 @@ class CoverageAnalyzer {
       if (coverage.functions.total > 0 && coverage.functions.percentage < 70) {
         gaps.push({
           component_id: componentId,
-          gap_type: 'untested_functions',
-          severity: 'medium',
+          gap_type: "untested_functions",
+          severity: "medium",
           description: `${coverage.functions.total - coverage.functions.covered} functions not tested`,
-          recommendation: 'Add tests for untested functions',
+          recommendation: "Add tests for untested functions",
         });
       }
 
@@ -616,10 +641,10 @@ class CoverageAnalyzer {
       if (coverage.branches.total > 0 && coverage.branches.percentage < 60) {
         gaps.push({
           component_id: componentId,
-          gap_type: 'untested_branches',
-          severity: 'low',
+          gap_type: "untested_branches",
+          severity: "low",
           description: `${coverage.branches.total - coverage.branches.covered} branches not covered`,
-          recommendation: 'Add tests for edge cases and error paths',
+          recommendation: "Add tests for edge cases and error paths",
         });
       }
     }
@@ -636,46 +661,48 @@ class CoverageAnalyzer {
     // Overall coverage recommendations
     if (analysis.overall_coverage.percentage < 70) {
       recommendations.push({
-        type: 'overall_coverage',
-        priority: 'high',
+        type: "overall_coverage",
+        priority: "high",
         message: `Overall coverage is ${analysis.overall_coverage.percentage.toFixed(1)}% - target is 80%+`,
-        action: 'Focus on components with no tests or low coverage',
+        action: "Focus on components with no tests or low coverage",
       });
     }
 
     // Function coverage recommendations
     if (analysis.overall_coverage.function_percentage < 80) {
       recommendations.push({
-        type: 'function_coverage',
-        priority: 'medium',
+        type: "function_coverage",
+        priority: "medium",
         message: `Function coverage is ${analysis.overall_coverage.function_percentage.toFixed(1)}% - target is 90%+`,
-        action: 'Add tests for untested functions',
+        action: "Add tests for untested functions",
       });
     }
 
     // Components without tests
-    const componentsWithoutTests = Object.values(analysis.component_coverage)
-      .filter(c => !c.has_tests).length;
-    
+    const componentsWithoutTests = Object.values(analysis.component_coverage).filter(
+      (c) => !c.has_tests,
+    ).length;
+
     if (componentsWithoutTests > 0) {
       recommendations.push({
-        type: 'missing_tests',
-        priority: 'high',
+        type: "missing_tests",
+        priority: "high",
         message: `${componentsWithoutTests} components have no tests`,
-        action: 'Create test files for untested components',
+        action: "Create test files for untested components",
       });
     }
 
     // Test quality recommendations
-    const lowQualityTests = Object.values(analysis.component_coverage)
-      .filter(c => c.coverage_quality === 'poor').length;
-    
+    const lowQualityTests = Object.values(analysis.component_coverage).filter(
+      (c) => c.coverage_quality === "poor",
+    ).length;
+
     if (lowQualityTests > 0) {
       recommendations.push({
-        type: 'test_quality',
-        priority: 'medium',
+        type: "test_quality",
+        priority: "medium",
         message: `${lowQualityTests} components have poor test quality`,
-        action: 'Improve test comprehensiveness and add edge cases',
+        action: "Improve test comprehensiveness and add edge cases",
       });
     }
 
@@ -686,18 +713,28 @@ class CoverageAnalyzer {
    * Determine coverage quality rating
    */
   determineCoverageQuality(coverage) {
-    if (!coverage.has_tests) return 'none';
-    
+    if (!coverage.has_tests) {
+      return "none";
+    }
+
     const linePercentage = coverage.lines.percentage || 0;
     const functionPercentage = coverage.functions.percentage || 0;
-    
+
     const averagePercentage = (linePercentage + functionPercentage) / 2;
-    
-    if (averagePercentage >= 90) return 'excellent';
-    if (averagePercentage >= 80) return 'good';
-    if (averagePercentage >= 60) return 'fair';
-    if (averagePercentage >= 40) return 'poor';
-    return 'very_poor';
+
+    if (averagePercentage >= 90) {
+      return "excellent";
+    }
+    if (averagePercentage >= 80) {
+      return "good";
+    }
+    if (averagePercentage >= 60) {
+      return "fair";
+    }
+    if (averagePercentage >= 40) {
+      return "poor";
+    }
+    return "very_poor";
   }
 
   /**
@@ -705,16 +742,16 @@ class CoverageAnalyzer {
    */
   async identifyUntestedFunctions(component) {
     const untestedFunctions = [];
-    
+
     try {
-      if (component.type === 'util' && component.filePath) {
-        const content = await fs.readFile(component.filePath, 'utf-8');
+      if (component.type === "util" && component.filePath) {
+        const content = await fs.readFile(component.filePath, "utf-8");
         const functions = this.extractFunctionNames(content);
-        
+
         // Check if each function is tested
         const testFiles = await this.findTestFiles(component);
         const testContent = await this.getCombinedTestContent(testFiles);
-        
+
         for (const func of functions) {
           if (!testContent.includes(func.name)) {
             untestedFunctions.push(func);
@@ -724,7 +761,7 @@ class CoverageAnalyzer {
     } catch (error) {
       console.warn(chalk.yellow(`Failed to identify untested functions: ${error.message}`));
     }
-    
+
     return untestedFunctions;
   }
 
@@ -733,10 +770,10 @@ class CoverageAnalyzer {
    */
   async identifyUncoveredBranches(component) {
     const uncoveredBranches = [];
-    
+
     // This would require more sophisticated analysis
     // For now, return empty array
-    
+
     return uncoveredBranches;
   }
 
@@ -744,46 +781,52 @@ class CoverageAnalyzer {
 
   extractFunctionName(functionMatch) {
     const nameMatch = functionMatch.match(/function\s+(\w+)|(\w+)\s*[=:]/);
-    return nameMatch ? (nameMatch[1] || nameMatch[2]) : 'anonymous';
+    return nameMatch ? nameMatch[1] || nameMatch[2] : "anonymous";
   }
 
   extractFunctionNames(content) {
     const functions = [];
-    const functionMatches = content.match(/(?:function\s+(\w+)|(\w+)\s*[=:]\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/g) || [];
-    
+    const functionMatches =
+      content.match(
+        /(?:function\s+(\w+)|(\w+)\s*[=:]\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/g,
+      ) || [];
+
     for (const match of functionMatches) {
       const name = this.extractFunctionName(match);
-      if (name && name !== 'anonymous') {
+      if (name && name !== "anonymous") {
         functions.push({ name, match });
       }
     }
-    
+
     return functions;
   }
 
   async getCombinedTestContent(testFiles) {
-    let combinedContent = '';
-    
+    let combinedContent = "";
+
     for (const testFile of testFiles) {
       try {
-        const content = await fs.readFile(testFile.file_path, 'utf-8');
-        combinedContent += content + '\n';
+        const content = await fs.readFile(testFile.file_path, "utf-8");
+        combinedContent += content + "\n";
       } catch (error) {
         continue;
       }
     }
-    
+
     return combinedContent;
   }
 
   async loadExistingCoverageData() {
     // Load any existing coverage cache or history
     try {
-      const historyFile = path.join(this.coverageReportsDir, 'analysis-history.json');
-      const exists = await fs.access(historyFile).then(() => true).catch(() => false);
-      
+      const historyFile = path.join(this.coverageReportsDir, "analysis-history.json");
+      const exists = await fs
+        .access(historyFile)
+        .then(() => true)
+        .catch(() => false);
+
       if (exists) {
-        const data = JSON.parse(await fs.readFile(historyFile, 'utf-8'));
+        const data = JSON.parse(await fs.readFile(historyFile, "utf-8"));
         this.analysisHistory = data.analysis_history || [];
       }
     } catch (error) {
@@ -798,7 +841,7 @@ class CoverageAnalyzer {
       await fs.writeFile(analysisFile, JSON.stringify(analysis, null, 2));
 
       // Update history
-      const historyFile = path.join(this.coverageReportsDir, 'analysis-history.json');
+      const historyFile = path.join(this.coverageReportsDir, "analysis-history.json");
       const historyData = {
         last_updated: new Date().toISOString(),
         analysis_history: this.analysisHistory.slice(-10), // Keep last 10 analyses
@@ -806,7 +849,6 @@ class CoverageAnalyzer {
       await fs.writeFile(historyFile, JSON.stringify(historyData, null, 2));
 
       console.log(chalk.gray(`Coverage analysis saved: ${analysisFile}`));
-
     } catch (error) {
       console.warn(chalk.yellow(`Failed to save coverage analysis: ${error.message}`));
     }
@@ -817,19 +859,25 @@ class CoverageAnalyzer {
    */
   getCoverageTrends() {
     if (this.analysisHistory.length < 2) {
-      return { trend: 'insufficient_data', message: 'Need at least 2 analyses for trend calculation' };
+      return {
+        trend: "insufficient_data",
+        message: "Need at least 2 analyses for trend calculation",
+      };
     }
 
     const recent = this.analysisHistory.slice(-5); // Last 5 analyses
-    const percentages = recent.map(a => a.overall_percentage);
-    
+    const percentages = recent.map((a) => a.overall_percentage);
+
     const firstPercentage = percentages[0];
     const lastPercentage = percentages[percentages.length - 1];
     const difference = lastPercentage - firstPercentage;
 
-    let trend = 'stable';
-    if (difference > 5) trend = 'improving';
-    else if (difference < -5) trend = 'declining';
+    let trend = "stable";
+    if (difference > 5) {
+      trend = "improving";
+    } else if (difference < -5) {
+      trend = "declining";
+    }
 
     return {
       trend,
@@ -844,7 +892,7 @@ class CoverageAnalyzer {
    */
   getCoverageSummary(analysisId) {
     const analysis = this.coverageCache.get(analysisId);
-    
+
     if (!analysis) {
       return null;
     }
@@ -854,8 +902,8 @@ class CoverageAnalyzer {
       timestamp: analysis.timestamp,
       overall_percentage: analysis.overall_coverage.percentage,
       components_analyzed: analysis.components,
-      components_with_tests: Object.values(analysis.component_coverage)
-        .filter(c => c.has_tests).length,
+      components_with_tests: Object.values(analysis.component_coverage).filter((c) => c.has_tests)
+        .length,
       coverage_gaps: analysis.coverage_gaps.length,
       quality_distribution: this.calculateQualityDistribution(analysis.component_coverage),
     };

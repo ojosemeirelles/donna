@@ -8,8 +8,8 @@
  * @see .aiox-core/scripts/decision-recorder.js
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require("fs").promises;
+const path = require("path");
 
 /**
  * Load configuration to get index file location
@@ -17,17 +17,17 @@ const path = require('path');
  * @returns {Promise<Object>} Configuration object
  */
 async function loadConfig() {
-  const yaml = require('js-yaml');
+  const yaml = require("js-yaml");
   try {
-    const configContent = await fs.readFile('.aiox-core/core-config.yaml', 'utf8');
+    const configContent = await fs.readFile(".aiox-core/core-config.yaml", "utf8");
     return yaml.load(configContent);
   } catch (error) {
-    console.warn('Warning: Could not load core-config.yaml for indexing:', error.message);
+    console.warn("Warning: Could not load core-config.yaml for indexing:", error.message);
     return {
       decisionLogging: {
         enabled: true,
-        location: '.ai/',
-        indexFile: 'decision-logs-index.md',
+        location: ".ai/",
+        indexFile: "decision-logs-index.md",
       },
     };
   }
@@ -41,7 +41,7 @@ async function loadConfig() {
  */
 async function parseLogMetadata(logPath) {
   try {
-    const content = await fs.readFile(logPath, 'utf8');
+    const content = await fs.readFile(logPath, "utf8");
 
     // Extract metadata from log content
     const storyMatch = content.match(/\*\*Story:\*\* (.+)/);
@@ -53,15 +53,15 @@ async function parseLogMetadata(logPath) {
 
     // Extract story ID from filename (e.g., decision-log-6.1.2.6.2.md)
     const filenameMatch = path.basename(logPath).match(/decision-log-(.+)\.md$/);
-    const storyId = filenameMatch ? filenameMatch[1] : 'unknown';
+    const storyId = filenameMatch ? filenameMatch[1] : "unknown";
 
     return {
       storyId,
-      storyPath: storyMatch ? storyMatch[1] : '',
+      storyPath: storyMatch ? storyMatch[1] : "",
       timestamp: generatedMatch ? new Date(generatedMatch[1]) : new Date(),
-      agent: agentMatch ? agentMatch[1] : 'unknown',
-      status: statusMatch ? statusMatch[1] : 'unknown',
-      duration: executionTimeMatch ? executionTimeMatch[1] : '0s',
+      agent: agentMatch ? agentMatch[1] : "unknown",
+      status: statusMatch ? statusMatch[1] : "unknown",
+      duration: executionTimeMatch ? executionTimeMatch[1] : "0s",
       decisionCount: decisionsMatch ? parseInt(decisionsMatch[1]) : 0,
       logPath: path.normalize(logPath),
     };
@@ -79,7 +79,7 @@ async function parseLogMetadata(logPath) {
  */
 function generateIndexContent(logMetadata) {
   // Sort by timestamp (newest first)
-  const sorted = logMetadata.sort((a, b) => b.timestamp - a.timestamp);
+  const sorted = logMetadata.toSorted((a, b) => b.timestamp - a.timestamp);
 
   let markdown = `# Decision Log Index
 
@@ -103,9 +103,9 @@ Total logs: ${logMetadata.length}
 |----------|------|-------|--------|----------|-----------|----------|
 `;
 
-  sorted.forEach(meta => {
-    const date = meta.timestamp.toISOString().split('T')[0]; // YYYY-MM-DD
-    const relativePath = path.relative('.ai', meta.logPath).replace(/\\/g, '/');
+  sorted.forEach((meta) => {
+    const date = meta.timestamp.toISOString().split("T")[0]; // YYYY-MM-DD
+    const relativePath = path.relative(".ai", meta.logPath).replace(/\\/g, "/");
 
     markdown += `| ${meta.storyId} | ${date} | ${meta.agent} | ${meta.status} | ${meta.duration} | ${meta.decisionCount} | [View](${relativePath}) |\n`;
   });
@@ -141,12 +141,15 @@ async function addToIndex(logPath) {
   const config = await loadConfig();
 
   if (!config.decisionLogging?.enabled) {
-    console.log('Decision logging disabled, skipping index update');
+    console.log("Decision logging disabled, skipping index update");
     return null;
   }
 
-  const indexDir = config.decisionLogging.location || '.ai/';
-  const indexFile = path.join(indexDir, config.decisionLogging.indexFile || 'decision-logs-index.md');
+  const indexDir = config.decisionLogging.location || ".ai/";
+  const indexFile = path.join(
+    indexDir,
+    config.decisionLogging.indexFile || "decision-logs-index.md",
+  );
 
   try {
     // Create .ai directory if it doesn't exist
@@ -155,23 +158,28 @@ async function addToIndex(logPath) {
     // Parse metadata from the new log
     const newMetadata = await parseLogMetadata(logPath);
     if (!newMetadata) {
-      console.warn('Could not parse log metadata, index not updated');
+      console.warn("Could not parse log metadata, index not updated");
       return null;
     }
 
     // Read existing index (if it exists)
     let existingMetadata = [];
     try {
-      const existingContent = await fs.readFile(indexFile, 'utf8');
+      const existingContent = await fs.readFile(indexFile, "utf8");
 
       // Parse existing log entries from table
       const tableMatch = existingContent.match(/\| Story ID \|.+\n\|[-\s|]+\n((?:\|.+\n)*)/);
       if (tableMatch) {
-        const rows = tableMatch[1].trim().split('\n');
+        const rows = tableMatch[1].trim().split("\n");
         existingMetadata = rows
-          .map(row => {
-            const cells = row.split('|').map(c => c.trim()).filter(c => c);
-            if (cells.length < 7) return null;
+          .map((row) => {
+            const cells = row
+              .split("|")
+              .map((c) => c.trim())
+              .filter((c) => c);
+            if (cells.length < 7) {
+              return null;
+            }
 
             return {
               storyId: cells[0],
@@ -180,18 +188,18 @@ async function addToIndex(logPath) {
               status: cells[3],
               duration: cells[4],
               decisionCount: parseInt(cells[5]) || 0,
-              logPath: cells[6].match(/\[View\]\((.+)\)/)?.[1] || '',
+              logPath: cells[6].match(/\[View\]\((.+)\)/)?.[1] || "",
             };
           })
-          .filter(m => m !== null);
+          .filter((m) => m !== null);
       }
     } catch (_error) {
       // Index doesn't exist yet, that's okay
-      console.log('Creating new decision log index');
+      console.log("Creating new decision log index");
     }
 
     // Remove old entry for same story ID if exists
-    existingMetadata = existingMetadata.filter(m => m.storyId !== newMetadata.storyId);
+    existingMetadata = existingMetadata.filter((m) => m.storyId !== newMetadata.storyId);
 
     // Add new entry
     existingMetadata.push(newMetadata);
@@ -200,12 +208,12 @@ async function addToIndex(logPath) {
     const indexContent = generateIndexContent(existingMetadata);
 
     // Write index file
-    await fs.writeFile(indexFile, indexContent, 'utf8');
+    await fs.writeFile(indexFile, indexContent, "utf8");
 
     console.log(`✅ Decision log index updated: ${indexFile}`);
     return indexFile;
   } catch (error) {
-    console.error('Error updating decision log index:', error);
+    console.error("Error updating decision log index:", error);
     throw error;
   }
 }
@@ -219,17 +227,20 @@ async function rebuildIndex() {
   const config = await loadConfig();
 
   if (!config.decisionLogging?.enabled) {
-    console.log('Decision logging disabled, cannot rebuild index');
+    console.log("Decision logging disabled, cannot rebuild index");
     return null;
   }
 
-  const indexDir = config.decisionLogging.location || '.ai/';
-  const indexFile = path.join(indexDir, config.decisionLogging.indexFile || 'decision-logs-index.md');
+  const indexDir = config.decisionLogging.location || ".ai/";
+  const indexFile = path.join(
+    indexDir,
+    config.decisionLogging.indexFile || "decision-logs-index.md",
+  );
 
   try {
     // Find all decision log files
     const files = await fs.readdir(indexDir);
-    const logFiles = files.filter(f => f.startsWith('decision-log-') && f.endsWith('.md'));
+    const logFiles = files.filter((f) => f.startsWith("decision-log-") && f.endsWith(".md"));
 
     console.log(`Found ${logFiles.length} decision log files`);
 
@@ -247,14 +258,14 @@ async function rebuildIndex() {
     const indexContent = generateIndexContent(metadata);
 
     // Write index file
-    await fs.writeFile(indexFile, indexContent, 'utf8');
+    await fs.writeFile(indexFile, indexContent, "utf8");
 
     console.log(`✅ Decision log index rebuilt: ${indexFile}`);
     console.log(`   Indexed ${metadata.length} decision logs`);
 
     return indexFile;
   } catch (error) {
-    console.error('Error rebuilding decision log index:', error);
+    console.error("Error rebuilding decision log index:", error);
     throw error;
   }
 }
@@ -263,15 +274,15 @@ async function rebuildIndex() {
 if (require.main === module) {
   const command = process.argv[2];
 
-  if (command === 'rebuild') {
+  if (command === "rebuild") {
     rebuildIndex()
-      .then(() => console.log('Index rebuild complete'))
-      .catch(error => {
-        console.error('Index rebuild failed:', error);
+      .then(() => console.log("Index rebuild complete"))
+      .catch((error) => {
+        console.error("Index rebuild failed:", error);
         process.exit(1);
       });
   } else {
-    console.log('Usage: node decision-log-indexer.js rebuild');
+    console.log("Usage: node decision-log-indexer.js rebuild");
     process.exit(1);
   }
 }

@@ -6,20 +6,20 @@
  * @version 2.0.0
  */
 
-'use strict';
+"use strict";
 
-const path = require('path');
-const fs = require('fs').promises;
-const { TemplateLoader } = require('./loader');
-const { VariableElicitation } = require('./elicitation');
-const { TemplateRenderer } = require('./renderer');
-const { TemplateValidator } = require('./validator');
+const path = require("path");
+const fs = require("fs").promises;
+const { TemplateLoader } = require("./loader");
+const { VariableElicitation } = require("./elicitation");
+const { TemplateRenderer } = require("./renderer");
+const { TemplateValidator } = require("./validator");
 
 /**
  * Supported template types
  * @constant {Array<string>}
  */
-const SUPPORTED_TYPES = ['prd', 'prd-v2', 'adr', 'pmdr', 'dbdr', 'story', 'epic', 'task'];
+const SUPPORTED_TYPES = ["prd", "prd-v2", "adr", "pmdr", "dbdr", "story", "epic", "task"];
 
 /**
  * TemplateEngine class - Main orchestrator for template generation
@@ -37,16 +37,14 @@ class TemplateEngine {
     // Store baseDir as instance property for predictable path resolution
     this.baseDir = options.baseDir || process.cwd();
 
-    this.templatesDir = options.templatesDir ||
-      path.join(this.baseDir, '.aiox-core', 'product', 'templates');
+    this.templatesDir =
+      options.templatesDir || path.join(this.baseDir, ".aiox-core", "product", "templates");
 
-    this.schemasDir = options.schemasDir ||
-      path.join(this.templatesDir, 'engine', 'schemas');
+    this.schemasDir = options.schemasDir || path.join(this.templatesDir, "engine", "schemas");
 
-    this.outputDir = options.outputDir ||
-      path.join(this.baseDir, 'docs');
+    this.outputDir = options.outputDir || path.join(this.baseDir, "docs");
 
-    this.interactive = options.interactive !== false;
+    this.interactive = options.interactive;
 
     // Initialize components
     this.loader = new TemplateLoader({ templatesDir: this.templatesDir });
@@ -80,7 +78,7 @@ class TemplateEngine {
     if (!SUPPORTED_TYPES.includes(templateType)) {
       throw new Error(
         `Unsupported template type: ${templateType}. ` +
-        `Supported types: ${SUPPORTED_TYPES.join(', ')}`,
+          `Supported types: ${SUPPORTED_TYPES.join(", ")}`,
       );
     }
 
@@ -93,7 +91,7 @@ class TemplateEngine {
     // Validate required variables
     const elicitValidation = this.elicitation.validate(template.variables, variables);
     if (!elicitValidation.isValid) {
-      throw new Error(`Missing required variables: ${elicitValidation.errors.join(', ')}`);
+      throw new Error(`Missing required variables: ${elicitValidation.errors.join(", ")}`);
     }
 
     // Render template
@@ -105,11 +103,11 @@ class TemplateEngine {
       try {
         validation = await this.validator.validate(variables, templateType);
         if (!validation.isValid) {
-          console.warn('Template validation warnings:', validation.errors);
+          console.warn("Template validation warnings:", validation.errors);
         }
       } catch (error) {
         // Schema may not exist yet for all template types
-        if (!error.message.includes('Schema not found')) {
+        if (!error.message.includes("Schema not found")) {
           throw error;
         }
       }
@@ -149,21 +147,24 @@ class TemplateEngine {
    */
   resolveOutputPath(templateType, variables) {
     const outputDirs = {
-      prd: 'docs/prd',
-      'prd-v2': 'docs/prd',
-      adr: 'docs/architecture/decisions',
-      pmdr: 'docs/decisions',
-      dbdr: 'docs/decisions',
-      story: 'docs/stories',
-      epic: 'docs/epics',
-      task: 'docs/tasks',
+      prd: "docs/prd",
+      "prd-v2": "docs/prd",
+      adr: "docs/architecture/decisions",
+      pmdr: "docs/decisions",
+      dbdr: "docs/decisions",
+      story: "docs/stories",
+      epic: "docs/epics",
+      task: "docs/tasks",
     };
 
-    const dir = outputDirs[templateType] || 'docs';
-    const number = variables.number ? `-${String(variables.number).padStart(3, '0')}` : '';
+    const dir = outputDirs[templateType] || "docs";
+    const number = variables.number ? `-${String(variables.number).padStart(3, "0")}` : "";
     const slug = variables.title
-      ? `-${variables.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50)}`
-      : '';
+      ? `-${variables.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .slice(0, 50)}`
+      : "";
 
     // Use baseDir for predictable path resolution instead of fragile '..' navigation
     return path.join(this.baseDir, dir, `${templateType}${number}${slug}.md`);
@@ -177,7 +178,7 @@ class TemplateEngine {
   async saveOutput(content, filePath) {
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(filePath, content, 'utf-8');
+    await fs.writeFile(filePath, content, "utf-8");
   }
 
   /**
@@ -206,7 +207,7 @@ class TemplateEngine {
       type: templateType,
       name: template.metadata.template_name,
       version: template.metadata.version,
-      variables: template.variables.map(v => ({
+      variables: template.variables.map((v) => ({
         name: v.name,
         type: v.type,
         required: v.required,
@@ -231,9 +232,9 @@ class TemplateEngine {
         templates.push({
           type,
           name: type.toUpperCase(),
-          version: 'N/A',
+          version: "N/A",
           variables: [],
-          status: 'missing',
+          status: "missing",
         });
       }
     }
@@ -276,7 +277,7 @@ class TemplateEngine {
     try {
       schemaResult = await this.validator.validate(data, templateType);
     } catch (error) {
-      if (!error.message.includes('Schema not found')) {
+      if (!error.message.includes("Schema not found")) {
         throw error;
       }
     }

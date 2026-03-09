@@ -9,20 +9,20 @@
  * @story 6.9
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // Template directory
-const TEMPLATES_DIR = path.join(__dirname, '..', '..', 'templates', 'project-docs');
+const TEMPLATES_DIR = path.join(__dirname, "..", "..", "templates", "project-docs");
 
 /**
  * Template file names
  * @enum {string}
  */
 const TemplateFiles = {
-  SOURCE_TREE: 'source-tree-tmpl.md',
-  CODING_STANDARDS: 'coding-standards-tmpl.md',
-  TECH_STACK: 'tech-stack-tmpl.md',
+  SOURCE_TREE: "source-tree-tmpl.md",
+  CODING_STANDARDS: "coding-standards-tmpl.md",
+  TECH_STACK: "tech-stack-tmpl.md",
 };
 
 /**
@@ -30,9 +30,9 @@ const TemplateFiles = {
  * @enum {string}
  */
 const OutputFiles = {
-  SOURCE_TREE: 'source-tree.md',
-  CODING_STANDARDS: 'coding-standards.md',
-  TECH_STACK: 'tech-stack.md',
+  SOURCE_TREE: "source-tree.md",
+  CODING_STANDARDS: "coding-standards.md",
+  TECH_STACK: "tech-stack.md",
 };
 
 /**
@@ -61,22 +61,32 @@ const OutputFiles = {
 function buildDocContext(projectName, mode, markers, overrides = {}) {
   // Detect tech stack from markers
   const techStacks = [];
-  if (markers.hasPackageJson) techStacks.push('Node.js');
-  if (markers.hasPythonProject) techStacks.push('Python');
-  if (markers.hasGoMod) techStacks.push('Go');
-  if (markers.hasCargoToml) techStacks.push('Rust');
+  if (markers.hasPackageJson) {
+    techStacks.push("Node.js");
+  }
+  if (markers.hasPythonProject) {
+    techStacks.push("Python");
+  }
+  if (markers.hasGoMod) {
+    techStacks.push("Go");
+  }
+  if (markers.hasCargoToml) {
+    techStacks.push("Rust");
+  }
 
   // Determine file extension
-  let fileExt = 'js';
-  if (markers.hasTsconfig) fileExt = 'ts';
+  let fileExt = "js";
+  if (markers.hasTsconfig) {
+    fileExt = "ts";
+  }
 
   // Build context
   const context = {
     // Basic info
     PROJECT_NAME: projectName,
-    GENERATED_DATE: new Date().toISOString().split('T')[0],
+    GENERATED_DATE: new Date().toISOString().split("T")[0],
     INSTALLATION_MODE: mode,
-    TECH_STACK: techStacks.join(', ') || 'Unknown',
+    TECH_STACK: techStacks.join(", ") || "Unknown",
 
     // Language flags
     IS_NODE: markers.hasPackageJson || false,
@@ -87,30 +97,30 @@ function buildDocContext(projectName, mode, markers, overrides = {}) {
 
     // Node.js specific
     FILE_EXT: fileExt,
-    NODE_VERSION: '18+',
-    TYPESCRIPT_VERSION: '5.0+',
-    NPM_VERSION: '9+',
-    SEMICOLONS: 'Required',
-    SEMICOLONS_RULE: 'always',
+    NODE_VERSION: "18+",
+    TYPESCRIPT_VERSION: "5.0+",
+    NPM_VERSION: "9+",
+    SEMICOLONS: "Required",
+    SEMICOLONS_RULE: "always",
     PRETTIER_SEMI: true,
 
     // Python specific
-    PYTHON_PACKAGE_NAME: projectName.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-    PYTHON_VERSION: '3.11+',
-    PYTHON_SHORT_VERSION: '311',
-    POETRY_VERSION: '1.5+',
+    PYTHON_PACKAGE_NAME: projectName.toLowerCase().replace(/[^a-z0-9]/g, "_"),
+    PYTHON_VERSION: "3.11+",
+    PYTHON_SHORT_VERSION: "311",
+    POETRY_VERSION: "1.5+",
 
     // Go specific
-    GO_VERSION: '1.21+',
+    GO_VERSION: "1.21+",
     GO_MODULE: `github.com/user/${projectName}`,
 
     // Rust specific
-    RUST_VERSION: '1.70+',
+    RUST_VERSION: "1.70+",
 
     // Deployment
     DEPLOYMENT_PLATFORM: null,
-    PRODUCTION_BRANCH: 'main',
-    STAGING_BRANCH: 'staging',
+    PRODUCTION_BRANCH: "main",
+    STAGING_BRANCH: "staging",
     HAS_STAGING: false,
 
     // Database
@@ -118,7 +128,7 @@ function buildDocContext(projectName, mode, markers, overrides = {}) {
     CACHE: null,
 
     // Quality gates
-    QUALITY_GATES: ['Lint', 'Type Check', 'Tests'],
+    QUALITY_GATES: ["Lint", "Type Check", "Tests"],
 
     // Dependencies (to be populated by analyzer)
     DEPENDENCIES: [],
@@ -156,7 +166,7 @@ function renderTemplate(template, context) {
   });
 
   // Clean up empty lines from removed blocks
-  result = result.replace(/\n{3,}/g, '\n\n');
+  result = result.replace(/\n{3,}/g, "\n\n");
 
   return result;
 }
@@ -182,7 +192,7 @@ function processIfBlocks(template, context) {
       if (value) {
         return content;
       }
-      return '';
+      return "";
     });
     iterations++;
   }
@@ -203,13 +213,13 @@ function processEachBlocks(template, context) {
   return template.replace(eachRegex, (match, arrayName, content) => {
     const array = context[arrayName];
     if (!Array.isArray(array) || array.length === 0) {
-      return '';
+      return "";
     }
 
     return array
       .map((item) => {
         let itemContent = content;
-        if (typeof item === 'object') {
+        if (typeof item === "object") {
           // Replace {{this.property}} with item properties
           itemContent = itemContent.replace(/\{\{this\.(\w+)\}\}/g, (m, prop) => {
             return item[prop] !== undefined ? String(item[prop]) : m;
@@ -220,7 +230,7 @@ function processEachBlocks(template, context) {
         }
         return itemContent;
       })
-      .join('');
+      .join("");
   });
 }
 
@@ -232,7 +242,7 @@ function processEachBlocks(template, context) {
  * @returns {*} Value at path or undefined
  */
 function getNestedValue(obj, path) {
-  return path.split('.').reduce((current, key) => {
+  return path.split(".").reduce((current, key) => {
     return current && current[key] !== undefined ? current[key] : undefined;
   }, obj);
 }
@@ -251,7 +261,7 @@ function loadTemplate(templateName) {
     throw new Error(`Template not found: ${templatePath}`);
   }
 
-  return fs.readFileSync(templatePath, 'utf8');
+  return fs.readFileSync(templatePath, "utf8");
 }
 
 /**
@@ -264,7 +274,7 @@ function loadTemplate(templateName) {
  * @returns {Object} Generated files with content
  */
 function generateDocs(targetDir, context, options = {}) {
-  const docsDir = path.join(targetDir, 'docs', 'architecture');
+  const docsDir = path.join(targetDir, "docs", "architecture");
   const results = {};
 
   // Ensure docs directory exists
@@ -292,7 +302,7 @@ function generateDocs(targetDir, context, options = {}) {
       };
 
       if (!options.dryRun) {
-        fs.writeFileSync(outputPath, rendered, 'utf8');
+        fs.writeFileSync(outputPath, rendered, "utf8");
       }
     } catch (error) {
       results[output] = {

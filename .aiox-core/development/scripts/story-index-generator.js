@@ -9,31 +9,31 @@
  * @created 2025-01-16 (Story 6.1.2.6)
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require("fs").promises;
+const path = require("path");
 
 /**
  * Status emoji mapping
  */
 const STATUS_EMOJI = {
-  'Draft': '📝',
-  'Approved': '✅',
-  'Ready for Dev': '🚀',
-  'In Progress': '⚙️',
-  'Ready for Review': '👀',
-  'Completed': '✅',
-  'On Hold': '⏸️',
-  'Cancelled': '❌',
+  Draft: "📝",
+  Approved: "✅",
+  "Ready for Dev": "🚀",
+  "In Progress": "⚙️",
+  "Ready for Review": "👀",
+  Completed: "✅",
+  "On Hold": "⏸️",
+  Cancelled: "❌",
 };
 
 /**
  * Priority emoji mapping
  */
 const PRIORITY_EMOJI = {
-  'Critical': '🔴',
-  'High': '🟠',
-  'Medium': '🟡',
-  'Low': '🟢',
+  Critical: "🔴",
+  High: "🟠",
+  Medium: "🟡",
+  Low: "🟢",
 };
 
 /**
@@ -44,8 +44,8 @@ const PRIORITY_EMOJI = {
  */
 async function extractStoryMetadata(filePath) {
   try {
-    const content = await fs.readFile(filePath, 'utf8');
-    const lines = content.split('\n');
+    const content = await fs.readFile(filePath, "utf8");
+    const lines = content.split("\n");
 
     const metadata = {
       filePath,
@@ -60,18 +60,18 @@ async function extractStoryMetadata(filePath) {
       const line = lines[i].trim();
 
       // YAML frontmatter detection
-      if (line === '---' && i < 10) {
+      if (line === "---" && i < 10) {
         inYamlBlock = !inYamlBlock;
         continue;
       }
 
       // Metadata section detection
-      if (line.startsWith('## Metadata') || line.startsWith('# Metadata')) {
+      if (line.startsWith("## Metadata") || line.startsWith("# Metadata")) {
         inMetadataSection = true;
         continue;
       }
 
-      if (line.startsWith('## ') || line.startsWith('# ')) {
+      if (line.startsWith("## ") || line.startsWith("# ")) {
         inMetadataSection = false;
       }
 
@@ -79,24 +79,44 @@ async function extractStoryMetadata(filePath) {
         // Extract key-value pairs
         const match = line.match(/^[-*]?\s*\*?\*?([A-Za-z\s]+)\*?\*?:\s*(.+)$/);
         if (match) {
-          const key = match[1].trim().toLowerCase().replace(/\s+/g, '_');
-          const value = match[2].trim().replace(/^`|`$/g, '');
+          const key = match[1].trim().toLowerCase().replace(/\s+/g, "_");
+          const value = match[2].trim().replace(/^`|`$/g, "");
 
           // Map to standard fields
-          if (key === 'story_id' || key === 'id') metadata.storyId = value;
-          if (key === 'title') metadata.title = value;
-          if (key === 'epic') metadata.epic = value;
-          if (key === 'status') metadata.status = value;
-          if (key === 'priority') metadata.priority = value;
-          if (key === 'owner' || key === 'assigned_to') metadata.owner = value;
-          if (key === 'estimate' || key === 'effort') metadata.estimate = value;
-          if (key === 'created') metadata.created = value;
-          if (key === 'updated') metadata.updated = value;
+          if (key === "story_id" || key === "id") {
+            metadata.storyId = value;
+          }
+          if (key === "title") {
+            metadata.title = value;
+          }
+          if (key === "epic") {
+            metadata.epic = value;
+          }
+          if (key === "status") {
+            metadata.status = value;
+          }
+          if (key === "priority") {
+            metadata.priority = value;
+          }
+          if (key === "owner" || key === "assigned_to") {
+            metadata.owner = value;
+          }
+          if (key === "estimate" || key === "effort") {
+            metadata.estimate = value;
+          }
+          if (key === "created") {
+            metadata.created = value;
+          }
+          if (key === "updated") {
+            metadata.updated = value;
+          }
         }
       }
 
       // Stop after metadata section
-      if (i > 100) break;
+      if (i > 100) {
+        break;
+      }
     }
 
     // Extract title from first H1 if not in metadata
@@ -164,8 +184,8 @@ async function scanStoriesDirectory(dirPath, stories = []) {
 function groupStoriesByEpic(stories) {
   const grouped = {};
 
-  stories.forEach(story => {
-    const epic = story.epic || 'Unassigned';
+  stories.forEach((story) => {
+    const epic = story.epic || "Unassigned";
     if (!grouped[epic]) {
       grouped[epic] = [];
     }
@@ -173,15 +193,17 @@ function groupStoriesByEpic(stories) {
   });
 
   // Sort stories within each epic by story ID
-  Object.keys(grouped).forEach(epic => {
+  Object.keys(grouped).forEach((epic) => {
     grouped[epic].sort((a, b) => {
-      const aId = a.storyId.split('.').map(Number);
-      const bId = b.storyId.split('.').map(Number);
+      const aId = a.storyId.split(".").map(Number);
+      const bId = b.storyId.split(".").map(Number);
 
       for (let i = 0; i < Math.max(aId.length, bId.length); i++) {
         const aNum = aId[i] || 0;
         const bNum = bId[i] || 0;
-        if (aNum !== bNum) return aNum - bNum;
+        if (aNum !== bNum) {
+          return aNum - bNum;
+        }
       }
       return 0;
     });
@@ -197,15 +219,15 @@ function groupStoriesByEpic(stories) {
  * @param {string} baseDir - Base directory for relative paths
  * @returns {string} Markdown table row
  */
-function generateStoryRow(story, baseDir = 'docs/stories') {
-  const statusEmoji = STATUS_EMOJI[story.status] || '❓';
-  const priorityEmoji = story.priority ? PRIORITY_EMOJI[story.priority] : '';
+function generateStoryRow(story, baseDir = "docs/stories") {
+  const statusEmoji = STATUS_EMOJI[story.status] || "❓";
+  const priorityEmoji = story.priority ? PRIORITY_EMOJI[story.priority] : "";
 
   // Create relative path for link
-  const relativePath = path.relative(baseDir, story.filePath).replace(/\\/g, '/');
+  const relativePath = path.relative(baseDir, story.filePath).replace(/\\/g, "/");
   const link = `[${story.title || story.fileName}](${relativePath})`;
 
-  return `| ${story.storyId} | ${link} | ${statusEmoji} ${story.status || 'Unknown'} | ${priorityEmoji} ${story.priority || 'N/A'} | ${story.owner || 'Unassigned'} | ${story.estimate || 'TBD'} |`;
+  return `| ${story.storyId} | ${link} | ${statusEmoji} ${story.status || "Unknown"} | ${priorityEmoji} ${story.priority || "N/A"} | ${story.owner || "Unassigned"} | ${story.estimate || "TBD"} |`;
 }
 
 /**
@@ -216,7 +238,7 @@ function generateStoryRow(story, baseDir = 'docs/stories') {
  */
 function generateIndexMarkdown(stories) {
   const grouped = groupStoriesByEpic(stories);
-  const epics = Object.keys(grouped).sort();
+  const epics = Object.keys(grouped).toSorted();
 
   let markdown = `# Story Index
 
@@ -232,48 +254,49 @@ function generateIndexMarkdown(stories) {
 
   // Status summary
   const statusCounts = {};
-  stories.forEach(story => {
-    const status = story.status || 'Unknown';
+  stories.forEach((story) => {
+    const status = story.status || "Unknown";
     statusCounts[status] = (statusCounts[status] || 0) + 1;
   });
 
   Object.entries(statusCounts)
-    .sort((a, b) => b[1] - a[1])
+    .toSorted((a, b) => b[1] - a[1])
     .forEach(([status, count]) => {
-      const emoji = STATUS_EMOJI[status] || '❓';
+      const emoji = STATUS_EMOJI[status] || "❓";
       markdown += `- ${emoji} **${status}**: ${count}\n`;
     });
 
-  markdown += '\n---\n\n## 📚 Stories by Epic\n\n';
+  markdown += "\n---\n\n## 📚 Stories by Epic\n\n";
 
   // Stories grouped by epic
-  epics.forEach(epic => {
+  epics.forEach((epic) => {
     const epicStories = grouped[epic];
     markdown += `### ${epic} (${epicStories.length} stories)\n\n`;
-    markdown += '| Story ID | Title | Status | Priority | Owner | Estimate |\n';
-    markdown += '|----------|-------|--------|----------|-------|----------|\n';
+    markdown += "| Story ID | Title | Status | Priority | Owner | Estimate |\n";
+    markdown += "|----------|-------|--------|----------|-------|----------|\n";
 
-    epicStories.forEach(story => {
-      markdown += generateStoryRow(story) + '\n';
+    epicStories.forEach((story) => {
+      markdown += generateStoryRow(story) + "\n";
     });
 
-    markdown += '\n';
+    markdown += "\n";
   });
 
-  markdown += '---\n\n';
-  markdown += '## 🔍 Legend\n\n';
-  markdown += '### Status\n';
+  markdown += "---\n\n";
+  markdown += "## 🔍 Legend\n\n";
+  markdown += "### Status\n";
   Object.entries(STATUS_EMOJI).forEach(([status, emoji]) => {
     markdown += `- ${emoji} **${status}**\n`;
   });
-  markdown += '\n### Priority\n';
+  markdown += "\n### Priority\n";
   Object.entries(PRIORITY_EMOJI).forEach(([priority, emoji]) => {
     markdown += `- ${emoji} **${priority}**\n`;
   });
 
-  markdown += '\n---\n\n';
-  markdown += '*Auto-generated by AIOX Story Index Generator (Story 6.1.2.6)*\n';
-  markdown += '*Update: Run `npm run stories:index` or `node .aiox-core/scripts/story-index-generator.js docs/stories`*\n';
+  markdown += "\n---\n\n";
+  markdown += "*Auto-generated by AIOX Story Index Generator (Story 6.1.2.6)*\n";
+  markdown +=
+    "*Update: Run `npm run stories:index` or `node .aiox-core/scripts/story-index-generator.js docs/stories`*\n";
 
   return markdown;
 }
@@ -285,8 +308,8 @@ function generateIndexMarkdown(stories) {
  * @param {string} outputPath - Path to output index file
  * @returns {Promise<Object>} Generation results
  */
-async function generateStoryIndex(storiesDir = 'docs/stories', outputPath = null) {
-  const output = outputPath || path.join(storiesDir, 'index.md');
+async function generateStoryIndex(storiesDir = "docs/stories", outputPath = null) {
+  const output = outputPath || path.join(storiesDir, "index.md");
 
   console.log(`📚 Scanning stories in: ${storiesDir}`);
 
@@ -296,7 +319,7 @@ async function generateStoryIndex(storiesDir = 'docs/stories', outputPath = null
 
   const markdown = generateIndexMarkdown(stories);
 
-  await fs.writeFile(output, markdown, 'utf8');
+  await fs.writeFile(output, markdown, "utf8");
 
   console.log(`✅ Story index generated: ${output}`);
 
@@ -309,18 +332,18 @@ async function generateStoryIndex(storiesDir = 'docs/stories', outputPath = null
 
 // CLI execution support
 if (require.main === module) {
-  const storiesDir = process.argv[2] || 'docs/stories';
+  const storiesDir = process.argv[2] || "docs/stories";
   const outputPath = process.argv[3] || null;
 
   generateStoryIndex(storiesDir, outputPath)
-    .then(result => {
-      console.log('\n📊 Generation Complete!');
+    .then((result) => {
+      console.log("\n📊 Generation Complete!");
       console.log(`Total Stories: ${result.totalStories}`);
       console.log(`Output: ${result.outputPath}`);
       process.exit(0);
     })
-    .catch(error => {
-      console.error('❌ Generation failed:', error);
+    .catch((error) => {
+      console.error("❌ Generation failed:", error);
       process.exit(1);
     });
 }

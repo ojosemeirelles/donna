@@ -1,4 +1,4 @@
-// Lobster palette tokens for CLI/UI theming. "lobster seam" == use this palette.
+// Donna palette tokens for CLI/UI theming. "lobster seam" == use this palette.
 // Keep in sync with docs/cli/index.md (CLI palette section).
 
 /** Dark terminal palette (default). High-saturation colors for dark backgrounds. */

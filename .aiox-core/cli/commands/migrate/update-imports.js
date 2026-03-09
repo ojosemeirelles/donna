@@ -8,9 +8,9 @@
  * @story 2.14 - Migration Script v2.0 → v4.0.4
  */
 
-const fs = require('fs');
-const path = require('path');
-const { MODULE_MAPPING, categorizeFile } = require('./analyze');
+const fs = require("fs");
+const path = require("path");
+const { MODULE_MAPPING, categorizeFile } = require("./analyze");
 
 /**
  * Regex patterns for import detection
@@ -46,7 +46,7 @@ function buildPathTransformMap(plan) {
       transformMap.set(oldPath, newPath);
 
       // Also store without .js extension for require compatibility
-      if (oldPath.endsWith('.js')) {
+      if (oldPath.endsWith(".js")) {
         const noExt = oldPath.slice(0, -3);
         const newNoExt = newPath.slice(0, -3);
         transformMap.set(noExt, newNoExt);
@@ -63,7 +63,7 @@ function buildPathTransformMap(plan) {
  * @returns {Promise<Object[]>} Array of import info
  */
 async function scanFileImports(filePath) {
-  const content = await fs.promises.readFile(filePath, 'utf8');
+  const content = await fs.promises.readFile(filePath, "utf8");
   const imports = [];
 
   for (const [patternName, pattern] of Object.entries(IMPORT_PATTERNS)) {
@@ -102,21 +102,21 @@ function transformImportPath(importPath, currentFileModule, currentFilePath, tra
   // We need to detect if it's pointing to a file that moved
 
   // For paths starting with ../, they might reference files now in different modules
-  if (importPath.startsWith('../') || importPath.startsWith('./')) {
+  if (importPath.startsWith("../") || importPath.startsWith("./")) {
     // This is a complex transformation - need to figure out what file it's importing
     // and where that file now lives
 
     // For now, we'll use heuristics:
     // 1. If the path goes up to .aiox-core root and then into a folder, update it
 
-    const parts = importPath.split('/');
+    const parts = importPath.split("/");
     let upCount = 0;
     const restParts = [];
 
     for (const part of parts) {
-      if (part === '..') {
+      if (part === "..") {
         upCount++;
-      } else if (part !== '.') {
+      } else if (part !== ".") {
         restParts.push(part);
       }
     }
@@ -147,9 +147,9 @@ function transformImportPath(importPath, currentFileModule, currentFilePath, tra
             // Need: ../../core/registry/...
 
             const currentDepth = currentFilePath.split(path.sep).length - 1;
-            const ups = '../'.repeat(currentDepth + 1); // +1 to get out of module dir
+            const ups = "../".repeat(currentDepth + 1); // +1 to get out of module dir
 
-            return `${ups}${moduleName}/${restParts.join('/')}`;
+            return `${ups}${moduleName}/${restParts.join("/")}`;
           }
         }
       }
@@ -179,22 +179,17 @@ async function updateFileImports(filePath, transformMap, fileModule, options = {
   };
 
   try {
-    let content = await fs.promises.readFile(filePath, 'utf8');
+    let content = await fs.promises.readFile(filePath, "utf8");
     const originalContent = content;
     const imports = await scanFileImports(filePath);
 
     for (const imp of imports) {
       const relativePath = path.relative(
-        path.dirname(filePath).split('.aiox-core')[1]?.slice(1) || '',
-        '',
+        path.dirname(filePath).split(".aiox-core")[1]?.slice(1) || "",
+        "",
       );
 
-      const newPath = transformImportPath(
-        imp.importPath,
-        fileModule,
-        filePath,
-        transformMap,
-      );
+      const newPath = transformImportPath(imp.importPath, fileModule, filePath, transformMap);
 
       if (newPath && newPath !== imp.importPath) {
         // Replace in content
@@ -216,11 +211,10 @@ async function updateFileImports(filePath, transformMap, fileModule, options = {
 
     // Write updated content if changes were made
     if (content !== originalContent && !dryRun) {
-      await fs.promises.writeFile(filePath, content, 'utf8');
+      await fs.promises.writeFile(filePath, content, "utf8");
     }
 
     result.modified = content !== originalContent;
-
   } catch (error) {
     result.errors.push(error.message);
   }
@@ -248,15 +242,17 @@ async function updateAllImports(aioxCoreDir, plan, options = {}) {
     details: [],
   };
 
-  onProgress({ phase: 'scan', message: 'Scanning for import statements...' });
+  onProgress({ phase: "scan", message: "Scanning for import statements..." });
 
   // Process each module
-  const modules = ['core', 'development', 'product', 'infrastructure'];
+  const modules = ["core", "development", "product", "infrastructure"];
 
   for (const moduleName of modules) {
     const moduleDir = path.join(aioxCoreDir, moduleName);
 
-    if (!fs.existsSync(moduleDir)) continue;
+    if (!fs.existsSync(moduleDir)) {
+      continue;
+    }
 
     // Get all JS/TS files in module
     const files = await getJsFiles(moduleDir);
@@ -264,12 +260,10 @@ async function updateAllImports(aioxCoreDir, plan, options = {}) {
     for (const file of files) {
       result.totalFiles++;
 
-      const updateResult = await updateFileImports(
-        file,
-        transformMap,
-        moduleName,
-        { dryRun, verbose },
-      );
+      const updateResult = await updateFileImports(file, transformMap, moduleName, {
+        dryRun,
+        verbose,
+      });
 
       if (updateResult.modified) {
         result.filesModified++;
@@ -278,16 +272,18 @@ async function updateAllImports(aioxCoreDir, plan, options = {}) {
       result.importsUpdated += updateResult.updated;
 
       if (updateResult.errors.length > 0) {
-        result.errors.push(...updateResult.errors.map(e => ({
-          file,
-          error: e,
-        })));
+        result.errors.push(
+          ...updateResult.errors.map((e) => ({
+            file,
+            error: e,
+          })),
+        );
       }
 
       if (verbose && updateResult.updated > 0) {
         result.details.push(updateResult);
         onProgress({
-          phase: 'file',
+          phase: "file",
           message: `  → ${path.relative(aioxCoreDir, file)} (${updateResult.updated} imports)`,
         });
       }
@@ -295,7 +291,7 @@ async function updateAllImports(aioxCoreDir, plan, options = {}) {
   }
 
   onProgress({
-    phase: 'complete',
+    phase: "complete",
     message: `Found ${result.importsUpdated} imports to update`,
   });
 
@@ -337,12 +333,14 @@ async function verifyImports(aioxCoreDir) {
     warnings: [],
   };
 
-  const modules = ['core', 'development', 'product', 'infrastructure'];
+  const modules = ["core", "development", "product", "infrastructure"];
 
   for (const moduleName of modules) {
     const moduleDir = path.join(aioxCoreDir, moduleName);
 
-    if (!fs.existsSync(moduleDir)) continue;
+    if (!fs.existsSync(moduleDir)) {
+      continue;
+    }
 
     const files = await getJsFiles(moduleDir);
 
@@ -353,11 +351,11 @@ async function verifyImports(aioxCoreDir) {
         result.totalImports++;
 
         // Try to resolve the import
-        if (imp.importPath.startsWith('.')) {
+        if (imp.importPath.startsWith(".")) {
           const resolvedPath = path.resolve(path.dirname(file), imp.importPath);
 
           // Check various extensions
-          const extensions = ['', '.js', '.ts', '.json', '/index.js', '/index.ts'];
+          const extensions = ["", ".js", ".ts", ".json", "/index.js", "/index.ts"];
           let found = false;
 
           for (const ext of extensions) {

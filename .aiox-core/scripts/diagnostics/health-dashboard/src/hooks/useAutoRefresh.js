@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const DEFAULT_INTERVAL = 30000; // 30 seconds
 
@@ -61,7 +61,9 @@ function useAutoRefresh(options = {}) {
     if (isEnabled && !isRefreshing) {
       countdownRef.current = setInterval(() => {
         setCountdown((prev) => {
-          if (prev <= 1) return interval / 1000;
+          if (prev <= 1) {
+            return interval / 1000;
+          }
           return prev - 1;
         });
       }, 1000);

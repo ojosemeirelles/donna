@@ -8,31 +8,31 @@
  * @see .aiox-core/scripts/decision-log-generator.js - Generates final log from this context
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
+const { execSync } = require("child_process");
+const path = require("path");
 
 /**
  * Decision classification types (AC7)
  */
 const DECISION_TYPES = {
-  'library-choice': 'Selecting external dependencies',
-  'architecture': 'System design and structural decisions',
-  'algorithm': 'Algorithm selection and optimization',
-  'error-handling': 'Error handling and recovery strategies',
-  'testing-strategy': 'Test approach and coverage decisions',
-  'performance': 'Performance optimization choices',
-  'security': 'Security implementation decisions',
-  'database': 'Data model and query optimization',
+  "library-choice": "Selecting external dependencies",
+  architecture: "System design and structural decisions",
+  algorithm: "Algorithm selection and optimization",
+  "error-handling": "Error handling and recovery strategies",
+  "testing-strategy": "Test approach and coverage decisions",
+  performance: "Performance optimization choices",
+  security: "Security implementation decisions",
+  database: "Data model and query optimization",
 };
 
 /**
  * Priority levels for decisions (AC7)
  */
 const PRIORITY_LEVELS = {
-  'critical': 'High-impact architectural decisions with long-term consequences',
-  'high': 'Significant technical choices affecting multiple components',
-  'medium': 'Standard implementation decisions with local impact',
-  'low': 'Minor preference decisions with minimal impact',
+  critical: "High-impact architectural decisions with long-term consequences",
+  high: "Significant technical choices affecting multiple components",
+  medium: "Standard implementation decisions with local impact",
+  low: "Minor preference decisions with minimal impact",
 };
 
 /**
@@ -54,8 +54,8 @@ class DecisionContext {
     this.storyPath = storyPath;
     this.startTime = Date.now();
     this.endTime = null;
-    this.status = 'running';
-    this.enabled = options.enabled !== false;
+    this.status = "running";
+    this.enabled = options.enabled;
 
     // Core tracking arrays
     this.decisions = [];
@@ -68,10 +68,10 @@ class DecisionContext {
 
     // Capture git commit for rollback (AC5)
     try {
-      this.commitBefore = execSync('git rev-parse HEAD').toString().trim();
+      this.commitBefore = execSync("git rev-parse HEAD").toString().trim();
     } catch (error) {
-      this.commitBefore = 'unknown';
-      console.warn('Warning: Could not capture git commit hash:', error.message);
+      this.commitBefore = "unknown";
+      console.warn("Warning: Could not capture git commit hash:", error.message);
     }
   }
 
@@ -86,17 +86,25 @@ class DecisionContext {
    * @param {string} decision.priority - Priority level (from PRIORITY_LEVELS)
    * @returns {Object} The recorded decision with timestamp
    */
-  recordDecision({ description, reason, alternatives = [], type = 'architecture', priority = 'medium' }) {
-    if (!this.enabled) return null;
+  recordDecision({
+    description,
+    reason,
+    alternatives = [],
+    type = "architecture",
+    priority = "medium",
+  }) {
+    if (!this.enabled) {
+      return null;
+    }
 
     // Validate decision type and priority
     if (!DECISION_TYPES[type]) {
       console.warn(`Warning: Unknown decision type "${type}", using "architecture"`);
-      type = 'architecture';
+      type = "architecture";
     }
     if (!PRIORITY_LEVELS[priority]) {
       console.warn(`Warning: Unknown priority level "${priority}", using "medium"`);
-      priority = 'medium';
+      priority = "medium";
     }
 
     const decision = {
@@ -118,18 +126,20 @@ class DecisionContext {
    * @param {string} filePath - Path to modified file
    * @param {string} action - Action performed ('created', 'modified', 'deleted')
    */
-  trackFile(filePath, action = 'modified') {
-    if (!this.enabled) return;
+  trackFile(filePath, action = "modified") {
+    if (!this.enabled) {
+      return;
+    }
 
     const normalizedPath = path.normalize(filePath);
 
     // Avoid duplicates - update existing entry if path already tracked
-    const existingIndex = this.filesModified.findIndex(f =>
-      (typeof f === 'string' ? f : f.path) === normalizedPath,
+    const existingIndex = this.filesModified.findIndex(
+      (f) => (typeof f === "string" ? f : f.path) === normalizedPath,
     );
 
     if (existingIndex >= 0) {
-      if (typeof this.filesModified[existingIndex] === 'string') {
+      if (typeof this.filesModified[existingIndex] === "string") {
         this.filesModified[existingIndex] = { path: normalizedPath, action };
       } else {
         this.filesModified[existingIndex].action = action;
@@ -149,7 +159,9 @@ class DecisionContext {
    * @param {string} test.error - Error message if failed
    */
   trackTest({ name, passed, duration, error }) {
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      return;
+    }
 
     this.testsRun.push({
       name,
@@ -168,7 +180,9 @@ class DecisionContext {
    * @param {number} metrics.taskExecutionTime - Task execution time in ms
    */
   updateMetrics(metrics) {
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      return;
+    }
     this.metrics = { ...this.metrics, ...metrics };
   }
 
@@ -177,7 +191,7 @@ class DecisionContext {
    *
    * @param {string} status - Final status ('completed', 'failed', 'cancelled')
    */
-  complete(status = 'completed') {
+  complete(status = "completed") {
     this.endTime = Date.now();
     this.status = status;
     this.metrics.taskExecutionTime = this.endTime - this.startTime;
@@ -213,8 +227,8 @@ class DecisionContext {
       decisionsCount: this.decisions.length,
       filesModifiedCount: this.filesModified.length,
       testsRunCount: this.testsRun.length,
-      testsPassed: this.testsRun.filter(t => t.passed).length,
-      testsFailed: this.testsRun.filter(t => !t.passed).length,
+      testsPassed: this.testsRun.filter((t) => t.passed).length,
+      testsFailed: this.testsRun.filter((t) => !t.passed).length,
       duration: this.endTime ? this.endTime - this.startTime : Date.now() - this.startTime,
       status: this.status,
     };

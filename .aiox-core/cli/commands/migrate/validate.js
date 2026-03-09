@@ -8,11 +8,11 @@
  * @story 2.14 - Migration Script v2.0 → v4.0.4
  */
 
-const fs = require('fs');
-const path = require('path');
-const { spawn } = require('child_process');
-const { MODULE_MAPPING } = require('./analyze');
-const { verifyImports } = require('./update-imports');
+const fs = require("fs");
+const path = require("path");
+const { spawn } = require("child_process");
+const { MODULE_MAPPING } = require("./analyze");
+const { verifyImports } = require("./update-imports");
 // formatSize available but currently unused
 // const { formatSize } = require('./analyze');
 
@@ -29,7 +29,7 @@ async function validateStructure(aioxCoreDir) {
     warnings: [],
   };
 
-  const expectedModules = ['core', 'development', 'product', 'infrastructure'];
+  const expectedModules = ["core", "development", "product", "infrastructure"];
 
   for (const moduleName of expectedModules) {
     const moduleDir = path.join(aioxCoreDir, moduleName);
@@ -62,7 +62,7 @@ async function validateStructure(aioxCoreDir) {
       if (moduleResult.missingDirs.length > 0) {
         result.warnings.push({
           module: moduleName,
-          message: `Missing expected directories: ${moduleResult.missingDirs.join(', ')}`,
+          message: `Missing expected directories: ${moduleResult.missingDirs.join(", ")}`,
         });
       }
     } else {
@@ -84,7 +84,7 @@ async function validateStructure(aioxCoreDir) {
       for (const config of Object.values(MODULE_MAPPING)) {
         if (config.directories.includes(entry.name)) {
           result.warnings.push({
-            type: 'leftover',
+            type: "leftover",
             message: `Leftover v2.0 directory found: ${entry.name}/ (should be in module)`,
           });
         }
@@ -140,50 +140,50 @@ async function runLintCheck(projectRoot, options = {}) {
       passed: false,
       errors: 0,
       warnings: 0,
-      output: '',
+      output: "",
       error: null,
     };
 
     // Check if package.json has lint script
-    const packageJsonPath = path.join(projectRoot, 'package.json');
+    const packageJsonPath = path.join(projectRoot, "package.json");
 
     if (!fs.existsSync(packageJsonPath)) {
-      result.error = 'No package.json found';
+      result.error = "No package.json found";
       resolve(result);
       return;
     }
 
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
     if (!packageJson.scripts?.lint) {
-      result.error = 'No lint script found in package.json';
+      result.error = "No lint script found in package.json";
       resolve(result);
       return;
     }
 
     result.ran = true;
 
-    const isWindows = process.platform === 'win32';
-    const shell = isWindows ? 'cmd' : '/bin/sh';
-    const shellArgs = isWindows ? ['/c', 'npm run lint'] : ['-c', 'npm run lint'];
+    const isWindows = process.platform === "win32";
+    const shell = isWindows ? "cmd" : "/bin/sh";
+    const shellArgs = isWindows ? ["/c", "npm run lint"] : ["-c", "npm run lint"];
 
     const child = spawn(shell, shellArgs, {
       cwd: projectRoot,
       timeout,
     });
 
-    let stdout = '';
-    let stderr = '';
+    let stdout = "";
+    let stderr = "";
 
-    child.stdout?.on('data', (data) => {
+    child.stdout?.on("data", (data) => {
       stdout += data.toString();
     });
 
-    child.stderr?.on('data', (data) => {
+    child.stderr?.on("data", (data) => {
       stderr += data.toString();
     });
 
-    child.on('close', (code) => {
+    child.on("close", (code) => {
       result.output = stdout + stderr;
       result.passed = code === 0;
 
@@ -191,13 +191,17 @@ async function runLintCheck(projectRoot, options = {}) {
       const errorMatch = result.output.match(/(\d+)\s*error/i);
       const warningMatch = result.output.match(/(\d+)\s*warning/i);
 
-      if (errorMatch) result.errors = parseInt(errorMatch[1], 10);
-      if (warningMatch) result.warnings = parseInt(warningMatch[1], 10);
+      if (errorMatch) {
+        result.errors = parseInt(errorMatch[1], 10);
+      }
+      if (warningMatch) {
+        result.warnings = parseInt(warningMatch[1], 10);
+      }
 
       resolve(result);
     });
 
-    child.on('error', (err) => {
+    child.on("error", (err) => {
       result.error = err.message;
       resolve(result);
     });
@@ -220,51 +224,51 @@ async function runTests(projectRoot, options = {}) {
       total: 0,
       passed: 0,
       failed: 0,
-      output: '',
+      output: "",
       error: null,
     };
 
     // Check if package.json has test script
-    const packageJsonPath = path.join(projectRoot, 'package.json');
+    const packageJsonPath = path.join(projectRoot, "package.json");
 
     if (!fs.existsSync(packageJsonPath)) {
-      result.error = 'No package.json found';
+      result.error = "No package.json found";
       resolve(result);
       return;
     }
 
-    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 
     if (!packageJson.scripts?.test) {
-      result.error = 'No test script found in package.json';
+      result.error = "No test script found in package.json";
       resolve(result);
       return;
     }
 
     result.ran = true;
 
-    const isWindows = process.platform === 'win32';
-    const shell = isWindows ? 'cmd' : '/bin/sh';
-    const shellArgs = isWindows ? ['/c', 'npm test'] : ['-c', 'npm test'];
+    const isWindows = process.platform === "win32";
+    const shell = isWindows ? "cmd" : "/bin/sh";
+    const shellArgs = isWindows ? ["/c", "npm test"] : ["-c", "npm test"];
 
     const child = spawn(shell, shellArgs, {
       cwd: projectRoot,
       timeout,
-      env: { ...process.env, CI: 'true' }, // Disable watch mode
+      env: { ...process.env, CI: "true" }, // Disable watch mode
     });
 
-    let stdout = '';
-    let stderr = '';
+    let stdout = "";
+    let stderr = "";
 
-    child.stdout?.on('data', (data) => {
+    child.stdout?.on("data", (data) => {
       stdout += data.toString();
     });
 
-    child.stderr?.on('data', (data) => {
+    child.stderr?.on("data", (data) => {
       stderr += data.toString();
     });
 
-    child.on('close', (code) => {
+    child.on("close", (code) => {
       result.output = stdout + stderr;
       result.passed = code === 0;
 
@@ -273,14 +277,20 @@ async function runTests(projectRoot, options = {}) {
       const failedMatch = result.output.match(/(\d+)\s*failed/i);
       const totalMatch = result.output.match(/Tests:\s*(\d+)/i);
 
-      if (passedMatch) result.passedCount = parseInt(passedMatch[1], 10);
-      if (failedMatch) result.failed = parseInt(failedMatch[1], 10);
-      if (totalMatch) result.total = parseInt(totalMatch[1], 10);
+      if (passedMatch) {
+        result.passedCount = parseInt(passedMatch[1], 10);
+      }
+      if (failedMatch) {
+        result.failed = parseInt(failedMatch[1], 10);
+      }
+      if (totalMatch) {
+        result.total = parseInt(totalMatch[1], 10);
+      }
 
       resolve(result);
     });
 
-    child.on('error', (err) => {
+    child.on("error", (err) => {
       result.error = err.message;
       resolve(result);
     });
@@ -295,7 +305,7 @@ async function runTests(projectRoot, options = {}) {
  */
 async function runFullValidation(projectRoot, options = {}) {
   const { onProgress = () => {}, skipTests = false, skipLint = false } = options;
-  const aioxCoreDir = path.join(projectRoot, '.aiox-core');
+  const aioxCoreDir = path.join(projectRoot, ".aiox-core");
 
   const result = {
     valid: true,
@@ -311,30 +321,30 @@ async function runFullValidation(projectRoot, options = {}) {
   };
 
   // Validate structure
-  onProgress({ phase: 'structure', message: '✓ Validating structure...' });
+  onProgress({ phase: "structure", message: "✓ Validating structure..." });
   result.structure = await validateStructure(aioxCoreDir);
 
   if (result.structure.errors.length > 0) {
     result.valid = false;
-    result.summary.failed.push('Structure validation');
+    result.summary.failed.push("Structure validation");
   } else {
-    result.summary.passed.push('Structure validation');
+    result.summary.passed.push("Structure validation");
   }
 
   // Verify imports
-  onProgress({ phase: 'imports', message: '✓ Verifying imports...' });
+  onProgress({ phase: "imports", message: "✓ Verifying imports..." });
   result.imports = await verifyImports(aioxCoreDir);
 
   if (!result.imports.valid) {
     result.valid = false;
-    result.summary.failed.push('Import verification');
+    result.summary.failed.push("Import verification");
   } else {
-    result.summary.passed.push('Import verification');
+    result.summary.passed.push("Import verification");
   }
 
   // Run lint
   if (!skipLint) {
-    onProgress({ phase: 'lint', message: '✓ Running lint...' });
+    onProgress({ phase: "lint", message: "✓ Running lint..." });
     result.lint = await runLintCheck(projectRoot);
 
     if (result.lint.ran) {
@@ -345,29 +355,29 @@ async function runFullValidation(projectRoot, options = {}) {
         result.summary.failed.push(`Lint (${result.lint.errors} errors)`);
       }
     } else {
-      result.summary.skipped.push('Lint (no script)');
+      result.summary.skipped.push("Lint (no script)");
     }
   } else {
-    result.summary.skipped.push('Lint (skipped)');
+    result.summary.skipped.push("Lint (skipped)");
   }
 
   // Run tests
   if (!skipTests) {
-    onProgress({ phase: 'tests', message: '✓ Running tests...' });
+    onProgress({ phase: "tests", message: "✓ Running tests..." });
     result.tests = await runTests(projectRoot);
 
     if (result.tests.ran) {
       if (result.tests.passed) {
-        result.summary.passed.push(`Tests (${result.tests.passedCount || 'all'} passed)`);
+        result.summary.passed.push(`Tests (${result.tests.passedCount || "all"} passed)`);
       } else {
         result.valid = false;
         result.summary.failed.push(`Tests (${result.tests.failed} failed)`);
       }
     } else {
-      result.summary.skipped.push('Tests (no script)');
+      result.summary.skipped.push("Tests (no script)");
     }
   } else {
-    result.summary.skipped.push('Tests (skipped)');
+    result.summary.skipped.push("Tests (skipped)");
   }
 
   return result;
@@ -385,16 +395,16 @@ function generateSummary(migrationResult, validationResult, options = {}) {
 
   const lines = [];
 
-  lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
   if (validationResult?.valid !== false) {
-    lines.push('✅ Migration complete!' + (duration ? ` (${duration})` : ''));
+    lines.push("✅ Migration complete!" + (duration ? ` (${duration})` : ""));
   } else {
-    lines.push('⚠️  Migration completed with issues');
+    lines.push("⚠️  Migration completed with issues");
   }
 
-  lines.push('');
-  lines.push('Summary:');
+  lines.push("");
+  lines.push("Summary:");
   lines.push(`  • Files migrated: ${migrationResult.totalFiles}`);
 
   if (migrationResult.modules) {
@@ -415,31 +425,31 @@ function generateSummary(migrationResult, validationResult, options = {}) {
 
   if (validationResult?.summary) {
     if (validationResult.summary.passed.length > 0) {
-      lines.push('');
-      lines.push('Passed:');
+      lines.push("");
+      lines.push("Passed:");
       for (const item of validationResult.summary.passed) {
         lines.push(`  ✓ ${item}`);
       }
     }
 
     if (validationResult.summary.failed.length > 0) {
-      lines.push('');
-      lines.push('Failed:');
+      lines.push("");
+      lines.push("Failed:");
       for (const item of validationResult.summary.failed) {
         lines.push(`  ✗ ${item}`);
       }
     }
   }
 
-  lines.push('');
-  lines.push('Next steps:');
-  lines.push('  1. Test your project: npm test');
-  lines.push('  2. Review changes: git diff');
-  lines.push('  3. Report issues: github.com/aiox/issues');
-  lines.push('');
-  lines.push('To rollback: aiox migrate --rollback');
+  lines.push("");
+  lines.push("Next steps:");
+  lines.push("  1. Test your project: npm test");
+  lines.push("  2. Review changes: git diff");
+  lines.push("  3. Report issues: github.com/aiox/issues");
+  lines.push("");
+  lines.push("To rollback: aiox migrate --rollback");
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 module.exports = {

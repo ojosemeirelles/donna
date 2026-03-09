@@ -8,18 +8,18 @@
  * @story 2.8-2.9 - Discovery CLI Info & List
  */
 
-const yaml = require('js-yaml');
+const yaml = require("js-yaml");
 
 /**
  * Box drawing characters
  */
 const BOX = {
-  horizontal: '━',
-  vertical: '│',
-  topLeft: '┌',
-  topRight: '┐',
-  bottomLeft: '└',
-  bottomRight: '┘',
+  horizontal: "━",
+  vertical: "│",
+  topLeft: "┌",
+  topRight: "┐",
+  bottomLeft: "└",
+  bottomRight: "┘",
 };
 
 /**
@@ -34,11 +34,11 @@ function formatInfoPretty(worker, options = {}) {
   const { relatedWorkers = [], verbose = false } = options;
   const lineWidth = 50;
 
-  let output = '';
+  let output = "";
 
   // Header with worker name
   output += `\n📦 ${worker.name}\n`;
-  output += BOX.horizontal.repeat(lineWidth) + '\n\n';
+  output += BOX.horizontal.repeat(lineWidth) + "\n\n";
 
   // Metadata section
   output += `ID:           ${worker.id}\n`;
@@ -46,79 +46,79 @@ function formatInfoPretty(worker, options = {}) {
   if (worker.subcategory) {
     output += ` / ${worker.subcategory}`;
   }
-  output += '\n';
-  output += `Executor:     ${(worker.executorTypes || ['Agent']).join(', ')}\n`;
-  output += `Task Format:  ${worker.taskFormat || 'TASK-FORMAT-V1'}\n`;
+  output += "\n";
+  output += `Executor:     ${(worker.executorTypes || ["Agent"]).join(", ")}\n`;
+  output += `Task Format:  ${worker.taskFormat || "TASK-FORMAT-V1"}\n`;
   output += `Path:         ${worker.path}\n`;
 
   // Description section
-  output += '\nDescription:\n';
-  const description = worker.description || 'No description available';
+  output += "\nDescription:\n";
+  const description = worker.description || "No description available";
   // Word wrap description at ~60 chars
   const wrapped = wrapText(description, 58);
-  wrapped.forEach(line => {
+  wrapped.forEach((line) => {
     output += `  ${line}\n`;
   });
 
   // Inputs section
   if (worker.inputs && worker.inputs.length > 0) {
-    output += '\nInputs:\n';
-    worker.inputs.forEach(input => {
+    output += "\nInputs:\n";
+    worker.inputs.forEach((input) => {
       output += `  - ${input}\n`;
     });
   }
 
   // Outputs section
   if (worker.outputs && worker.outputs.length > 0) {
-    output += '\nOutputs:\n';
-    worker.outputs.forEach(out => {
+    output += "\nOutputs:\n";
+    worker.outputs.forEach((out) => {
       output += `  - ${out}\n`;
     });
   }
 
   // Performance section
   if (worker.performance) {
-    output += '\nPerformance:\n';
+    output += "\nPerformance:\n";
     if (worker.performance.avgDuration) {
       output += `  Avg Duration:    ${worker.performance.avgDuration}\n`;
     }
     if (worker.performance.cacheable !== undefined) {
-      output += `  Cacheable:       ${worker.performance.cacheable ? 'Yes' : 'No'}\n`;
+      output += `  Cacheable:       ${worker.performance.cacheable ? "Yes" : "No"}\n`;
     }
     if (worker.performance.parallelizable !== undefined) {
-      output += `  Parallelizable:  ${worker.performance.parallelizable ? 'Yes' : 'No'}\n`;
+      output += `  Parallelizable:  ${worker.performance.parallelizable ? "Yes" : "No"}\n`;
     }
   }
 
   // Tags section
   if (worker.tags && worker.tags.length > 0) {
-    output += `\nTags: ${worker.tags.join(', ')}\n`;
+    output += `\nTags: ${worker.tags.join(", ")}\n`;
   }
 
   // Agents section
   if (worker.agents && worker.agents.length > 0) {
-    output += `\nAgents: ${worker.agents.map(a => '@' + a).join(', ')}\n`;
+    output += `\nAgents: ${worker.agents.map((a) => "@" + a).join(", ")}\n`;
   }
 
-  output += '\n' + BOX.horizontal.repeat(lineWidth) + '\n';
+  output += "\n" + BOX.horizontal.repeat(lineWidth) + "\n";
 
   // Usage example section
-  output += '\nUsage Example:\n';
+  output += "\nUsage Example:\n";
   output += `  aiox task run ${worker.id}\n`;
 
   // Related workers section
   if (relatedWorkers.length > 0) {
-    output += '\nRelated Workers:\n';
-    relatedWorkers.slice(0, 5).forEach(related => {
+    output += "\nRelated Workers:\n";
+    relatedWorkers.slice(0, 5).forEach((related) => {
       output += `  - ${related.id}\n`;
     });
   }
 
   // Verbose debug info
   if (verbose) {
-    output += '\n[Debug Info]\n';
-    output += `  Source: ${worker.metadata?.source || 'unknown'}\n`;
-    output += `  Added Version: ${worker.metadata?.addedVersion || 'unknown'}\n`;
+    output += "\n[Debug Info]\n";
+    output += `  Source: ${worker.metadata?.source || "unknown"}\n`;
+    output += `  Added Version: ${worker.metadata?.addedVersion || "unknown"}\n`;
     if (worker.path) {
       output += `  Full Path: ${worker.path}\n`;
     }
@@ -152,7 +152,7 @@ function formatInfoJSON(worker, options = {}) {
     performance: worker.performance || null,
     agents: worker.agents || [],
     metadata: worker.metadata || {},
-    relatedWorkers: relatedWorkers.slice(0, 5).map(w => w.id),
+    relatedWorkers: relatedWorkers.slice(0, 5).map((w) => w.id),
   };
 
   return JSON.stringify(output, null, 2);
@@ -183,7 +183,7 @@ function formatInfoYAML(worker, options = {}) {
     performance: worker.performance || null,
     agents: worker.agents || [],
     metadata: worker.metadata || {},
-    relatedWorkers: relatedWorkers.slice(0, 5).map(w => w.id),
+    relatedWorkers: relatedWorkers.slice(0, 5).map((w) => w.id),
   };
 
   return yaml.dump(output, {
@@ -203,14 +203,14 @@ function formatInfoYAML(worker, options = {}) {
  * @returns {string} Formatted output
  */
 function formatInfo(worker, options = {}) {
-  const format = (options.format || 'pretty').toLowerCase();
+  const format = (options.format || "pretty").toLowerCase();
 
   switch (format) {
-    case 'json':
+    case "json":
       return formatInfoJSON(worker, options);
-    case 'yaml':
+    case "yaml":
       return formatInfoYAML(worker, options);
-    case 'pretty':
+    case "pretty":
     default:
       return formatInfoPretty(worker, options);
   }
@@ -226,8 +226,8 @@ function formatNotFoundError(id, suggestions = []) {
   let output = `Error: Worker '${id}' not found in registry.\n`;
 
   if (suggestions.length > 0) {
-    output += '\nDid you mean:\n';
-    suggestions.slice(0, 5).forEach(worker => {
+    output += "\nDid you mean:\n";
+    suggestions.slice(0, 5).forEach((worker) => {
       output += `  - ${worker.id}\n`;
     });
   }
@@ -244,24 +244,30 @@ function formatNotFoundError(id, suggestions = []) {
  * @returns {Array<string>} Array of wrapped lines
  */
 function wrapText(text, width) {
-  if (!text) return [''];
+  if (!text) {
+    return [""];
+  }
 
   const words = text.split(/\s+/);
   const lines = [];
-  let currentLine = '';
+  let currentLine = "";
 
   for (const word of words) {
     if (currentLine.length + word.length + 1 <= width) {
-      currentLine += (currentLine ? ' ' : '') + word;
+      currentLine += (currentLine ? " " : "") + word;
     } else {
-      if (currentLine) lines.push(currentLine);
+      if (currentLine) {
+        lines.push(currentLine);
+      }
       currentLine = word;
     }
   }
 
-  if (currentLine) lines.push(currentLine);
+  if (currentLine) {
+    lines.push(currentLine);
+  }
 
-  return lines.length > 0 ? lines : [''];
+  return lines.length > 0 ? lines : [""];
 }
 
 module.exports = {

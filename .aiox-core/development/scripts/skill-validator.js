@@ -6,17 +6,19 @@
  * Claude Code and Gemini CLI environments.
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs");
+const path = require("path");
+const yaml = require("js-yaml");
 
 /**
  * Skill Validator - Ensures cross-CLI compatibility
  */
 class SkillValidator {
   constructor(config = {}) {
-    this.agentsDir = config.agentsDir || path.join(process.cwd(), '.aiox-core', 'development', 'agents');
-    this.tasksDir = config.tasksDir || path.join(process.cwd(), '.aiox-core', 'development', 'tasks');
+    this.agentsDir =
+      config.agentsDir || path.join(process.cwd(), ".aiox-core", "development", "agents");
+    this.tasksDir =
+      config.tasksDir || path.join(process.cwd(), ".aiox-core", "development", "tasks");
     this.errors = [];
     this.warnings = [];
   }
@@ -42,7 +44,9 @@ class SkillValidator {
     for (const file of agentFiles) {
       const result = await this.validateAgentSkill(file);
       results.agents.push(result);
-      if (!result.valid) results.compatible = false;
+      if (!result.valid) {
+        results.compatible = false;
+      }
     }
 
     // Validate tasks
@@ -50,7 +54,9 @@ class SkillValidator {
     for (const file of taskFiles) {
       const result = await this.validateTask(file);
       results.tasks.push(result);
-      if (!result.valid) results.compatible = false;
+      if (!result.valid) {
+        results.compatible = false;
+      }
     }
 
     results.errors = this.errors;
@@ -76,12 +82,12 @@ class SkillValidator {
     };
 
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // Extract YAML frontmatter
       const yamlMatch = content.match(/```yaml\n([\s\S]*?)```/);
       if (!yamlMatch) {
-        result.errors.push('No YAML block found');
+        result.errors.push("No YAML block found");
         result.valid = false;
         this.errors.push(`${result.file}: No YAML block found`);
         return result;
@@ -90,7 +96,7 @@ class SkillValidator {
       const agentDef = yaml.load(yamlMatch[1]);
 
       // Required fields for both CLIs
-      const requiredFields = ['agent.name', 'agent.id', 'agent.title'];
+      const requiredFields = ["agent.name", "agent.id", "agent.title"];
       for (const field of requiredFields) {
         if (!this.getNestedValue(agentDef, field)) {
           result.errors.push(`Missing required field: ${field}`);
@@ -101,7 +107,7 @@ class SkillValidator {
       // Check commands format (both CLIs support * prefix)
       if (agentDef.commands) {
         if (!Array.isArray(agentDef.commands)) {
-          result.errors.push('Commands must be an array');
+          result.errors.push("Commands must be an array");
           result.valid = false;
         }
       }
@@ -113,7 +119,7 @@ class SkillValidator {
 
       // Check persona (optional but recommended)
       if (!agentDef.persona) {
-        result.warnings.push('No persona defined - recommended for consistent behavior');
+        result.warnings.push("No persona defined - recommended for consistent behavior");
         this.warnings.push(`${result.file}: No persona defined`);
       }
 
@@ -149,7 +155,7 @@ class SkillValidator {
     if (agentDef.commands) {
       for (const cmd of agentDef.commands) {
         // Commands should not have leading slash (added by system)
-        if (typeof cmd === 'string' && cmd.startsWith('/')) {
+        if (typeof cmd === "string" && cmd.startsWith("/")) {
           result.warnings.push(`Command "${cmd}" should not start with /`);
         }
       }
@@ -166,8 +172,8 @@ class SkillValidator {
     // Check for any Gemini-specific requirements
 
     // Gemini requires activation-instructions
-    if (!agentDef['activation-instructions']) {
-      result.warnings.push('No activation-instructions - may affect Gemini CLI behavior');
+    if (!agentDef["activation-instructions"]) {
+      result.warnings.push("No activation-instructions - may affect Gemini CLI behavior");
     }
 
     // Check for hooks integration hints
@@ -182,16 +188,20 @@ class SkillValidator {
    * @param {Object} result - Result object to update
    */
   validateDependencies(deps, result) {
-    const validTypes = ['tasks', 'templates', 'checklists', 'data', 'scripts', 'tools'];
+    const validTypes = new Set(["tasks", "templates", "checklists", "data", "scripts", "tools"]);
 
     for (const [type, items] of Object.entries(deps)) {
-      if (!validTypes.includes(type) && type !== 'git_restrictions' && type !== 'coderabbit_integration') {
+      if (
+        !validTypes.has(type) &&
+        type !== "git_restrictions" &&
+        type !== "coderabbit_integration"
+      ) {
         result.warnings.push(`Unknown dependency type: ${type}`);
       }
 
       if (Array.isArray(items)) {
         for (const item of items) {
-          if (typeof item !== 'string') {
+          if (typeof item !== "string") {
             result.errors.push(`Invalid dependency item in ${type}`);
           }
         }
@@ -214,20 +224,20 @@ class SkillValidator {
     };
 
     try {
-      const content = fs.readFileSync(filePath, 'utf8');
+      const content = fs.readFileSync(filePath, "utf8");
 
       // Check for basic structure
-      if (!content.includes('# ') && !content.includes('## ')) {
-        result.warnings.push('No markdown headers found');
+      if (!content.includes("# ") && !content.includes("## ")) {
+        result.warnings.push("No markdown headers found");
       }
 
       // Check for task definition section
-      if (!content.includes('## Instructions') && !content.includes('## Purpose')) {
-        result.warnings.push('No Instructions or Purpose section found');
+      if (!content.includes("## Instructions") && !content.includes("## Purpose")) {
+        result.warnings.push("No Instructions or Purpose section found");
       }
 
       // Check for YAML frontmatter (optional)
-      if (content.startsWith('---')) {
+      if (content.startsWith("---")) {
         const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
         if (frontmatterMatch) {
           try {
@@ -253,7 +263,7 @@ class SkillValidator {
    * @returns {*} Value or undefined
    */
   getNestedValue(obj, path) {
-    return path.split('.').reduce((curr, key) => curr?.[key], obj);
+    return path.split(".").reduce((curr, key) => curr?.[key], obj);
   }
 
   /**
@@ -268,7 +278,7 @@ class SkillValidator {
 
     return fs
       .readdirSync(dir)
-      .filter((f) => f.endsWith('.md'))
+      .filter((f) => f.endsWith(".md"))
       .map((f) => path.join(dir, f));
   }
 
@@ -278,12 +288,12 @@ class SkillValidator {
    * @returns {string} Formatted report
    */
   generateReport(results) {
-    let report = '# AIOX Skills Cross-CLI Compatibility Report\n\n';
+    let report = "# AIOX Skills Cross-CLI Compatibility Report\n\n";
 
-    report += `**Overall Status:** ${results.compatible ? '✅ Compatible' : '❌ Issues Found'}\n\n`;
+    report += `**Overall Status:** ${results.compatible ? "✅ Compatible" : "❌ Issues Found"}\n\n`;
 
     // Summary
-    report += '## Summary\n\n';
+    report += "## Summary\n\n";
     report += `- Agents validated: ${results.agents.length}\n`;
     report += `- Tasks validated: ${results.tasks.length}\n`;
     report += `- Errors: ${results.errors.length}\n`;
@@ -291,34 +301,34 @@ class SkillValidator {
 
     // Agents
     if (results.agents.length > 0) {
-      report += '## Agents\n\n';
+      report += "## Agents\n\n";
       for (const agent of results.agents) {
-        const icon = agent.valid ? '✅' : '❌';
+        const icon = agent.valid ? "✅" : "❌";
         report += `### ${icon} ${agent.file}\n`;
-        report += `- Claude Compatible: ${agent.claudeCompatible ? 'Yes' : 'No'}\n`;
-        report += `- Gemini Compatible: ${agent.geminiCompatible ? 'Yes' : 'No'}\n`;
+        report += `- Claude Compatible: ${agent.claudeCompatible ? "Yes" : "No"}\n`;
+        report += `- Gemini Compatible: ${agent.geminiCompatible ? "Yes" : "No"}\n`;
         if (agent.errors.length > 0) {
-          report += `- Errors: ${agent.errors.join(', ')}\n`;
+          report += `- Errors: ${agent.errors.join(", ")}\n`;
         }
         if (agent.warnings.length > 0) {
-          report += `- Warnings: ${agent.warnings.join(', ')}\n`;
+          report += `- Warnings: ${agent.warnings.join(", ")}\n`;
         }
-        report += '\n';
+        report += "\n";
       }
     }
 
     // Errors
     if (results.errors.length > 0) {
-      report += '## Errors\n\n';
+      report += "## Errors\n\n";
       for (const error of results.errors) {
         report += `- ❌ ${error}\n`;
       }
-      report += '\n';
+      report += "\n";
     }
 
     // Warnings
     if (results.warnings.length > 0) {
-      report += '## Warnings\n\n';
+      report += "## Warnings\n\n";
       for (const warning of results.warnings) {
         report += `- ⚠️ ${warning}\n`;
       }

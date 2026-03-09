@@ -65,9 +65,7 @@ export function createSpinner(opts: LoadingOptions): LoadingHandle {
  * - Visual: animated bar using cursor manipulation
  * - Accessible: prints `"Progress: 0/<total> — <message>"` with updates
  */
-export function createProgressBar(
-  opts: LoadingOptions & { total: number },
-): ProgressHandle {
+export function createProgressBar(opts: LoadingOptions & { total: number }): ProgressHandle {
   const mode = resolveMode(opts);
 
   if (mode === "accessible") {
@@ -89,11 +87,15 @@ function createAccessibleSpinner(opts: LoadingOptions): LoadingHandle {
 
   return {
     update(message: string) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       stream.write(`Loading: ${message}\n`);
     },
     stop(finalMessage?: string) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       stopped = true;
       if (finalMessage) {
         stream.write(`Done: ${finalMessage}\n`);
@@ -104,9 +106,7 @@ function createAccessibleSpinner(opts: LoadingOptions): LoadingHandle {
   };
 }
 
-function createAccessibleProgressBar(
-  opts: LoadingOptions & { total: number },
-): ProgressHandle {
+function createAccessibleProgressBar(opts: LoadingOptions & { total: number }): ProgressHandle {
   const stream = opts.stream ?? process.stderr;
   let current = 0;
   let stopped = false;
@@ -116,21 +116,29 @@ function createAccessibleProgressBar(
 
   return {
     update(message: string) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       stream.write(`Progress: ${current}/${total} — ${message}\n`);
     },
     increment(by = 1) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       current = Math.min(total, current + by);
       stream.write(`Progress: ${current}/${total} complete\n`);
     },
     setProgress(value: number) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       current = Math.max(0, Math.min(total, value));
       stream.write(`Progress: ${current}/${total} complete\n`);
     },
     stop(finalMessage?: string) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       stopped = true;
       if (finalMessage) {
         stream.write(`Done: ${finalMessage}\n`);
@@ -160,14 +168,20 @@ function createVisualSpinner(opts: LoadingOptions): LoadingHandle {
     stream.write(`${message}\n`);
     return {
       update(msg: string) {
-        if (stopped) return;
+        if (stopped) {
+          return;
+        }
         message = msg;
         stream.write(`${msg}\n`);
       },
       stop(finalMessage?: string) {
-        if (stopped) return;
+        if (stopped) {
+          return;
+        }
         stopped = true;
-        if (finalMessage) stream.write(`${finalMessage}\n`);
+        if (finalMessage) {
+          stream.write(`${finalMessage}\n`);
+        }
       },
     };
   }
@@ -183,11 +197,15 @@ function createVisualSpinner(opts: LoadingOptions): LoadingHandle {
 
   return {
     update(msg: string) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       message = msg;
     },
     stop(finalMessage?: string) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       stopped = true;
       clearInterval(interval);
       stream.write("\r\x1b[2K");
@@ -198,9 +216,7 @@ function createVisualSpinner(opts: LoadingOptions): LoadingHandle {
   };
 }
 
-function createVisualProgressBar(
-  opts: LoadingOptions & { total: number },
-): ProgressHandle {
+function createVisualProgressBar(opts: LoadingOptions & { total: number }): ProgressHandle {
   const stream = opts.stream ?? process.stderr;
   let current = 0;
   let stopped = false;
@@ -227,22 +243,30 @@ function createVisualProgressBar(
 
   return {
     update(msg: string) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       message = msg;
       render();
     },
     increment(by = 1) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       current = Math.min(total, current + by);
       render();
     },
     setProgress(value: number) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       current = Math.max(0, Math.min(total, value));
       render();
     },
     stop(finalMessage?: string) {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
       stopped = true;
       if (isTty) {
         stream.write("\r\x1b[2K");
@@ -259,7 +283,11 @@ function createVisualProgressBar(
 // ---------------------------------------------------------------------------
 
 function resolveMode(opts: LoadingOptions): OutputMode {
-  if (opts.accessible === true) return "accessible";
-  if (opts.accessible === false) return "visual";
+  if (opts.accessible === true) {
+    return "accessible";
+  }
+  if (opts.accessible === false) {
+    return "visual";
+  }
   return getOutputMode();
 }

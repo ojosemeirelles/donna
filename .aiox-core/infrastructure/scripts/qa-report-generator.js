@@ -22,8 +22,8 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 //                              CONFIGURATION
@@ -31,14 +31,14 @@ const path = require('path');
 
 const CONFIG = {
   // AC7: Dashboard integration paths
-  dashboardStatusPath: '.aiox/dashboard/status.json',
-  legacyStatusPath: '.aiox/status.json',
+  dashboardStatusPath: ".aiox/dashboard/status.json",
+  legacyStatusPath: ".aiox/status.json",
   // Template path
-  templatePath: '.aiox-core/product/templates/qa-report-tmpl.md',
+  templatePath: ".aiox-core/product/templates/qa-report-tmpl.md",
   // Default output filename
-  defaultOutputFile: 'qa_report.md',
+  defaultOutputFile: "qa_report.md",
   // Version
-  version: '1.0.0',
+  version: "1.0.0",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -49,40 +49,40 @@ const CONFIG = {
  * Issue severity levels (AC3)
  */
 const Severity = {
-  CRITICAL: 'critical', // Blocks release
-  MAJOR: 'major', // Important to fix
-  MINOR: 'minor', // Nice to fix
+  CRITICAL: "critical", // Blocks release
+  MAJOR: "major", // Important to fix
+  MINOR: "minor", // Nice to fix
 };
 
 /**
  * Issue categories
  */
 const Category = {
-  FUNCTIONAL: 'functional',
-  PERFORMANCE: 'performance',
-  SECURITY: 'security',
-  USABILITY: 'usability',
-  ACCESSIBILITY: 'accessibility',
-  REGRESSION: 'regression',
-  COMPATIBILITY: 'compatibility',
-  DOCUMENTATION: 'documentation',
+  FUNCTIONAL: "functional",
+  PERFORMANCE: "performance",
+  SECURITY: "security",
+  USABILITY: "usability",
+  ACCESSIBILITY: "accessibility",
+  REGRESSION: "regression",
+  COMPATIBILITY: "compatibility",
+  DOCUMENTATION: "documentation",
 };
 
 /**
  * Verdict types (AC4)
  */
 const Verdict = {
-  APPROVE: 'APPROVE',
-  REJECT: 'REJECT',
+  APPROVE: "APPROVE",
+  REJECT: "REJECT",
 };
 
 /**
  * Build status types
  */
 const BuildStatus = {
-  PASSING: 'passing',
-  FAILING: 'failing',
-  UNKNOWN: 'unknown',
+  PASSING: "passing",
+  FAILING: "failing",
+  UNKNOWN: "unknown",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -102,7 +102,7 @@ class QAReportGenerator {
   constructor(storyId, options = {}) {
     this.storyId = storyId;
     this.rootPath = options.rootPath || process.cwd();
-    this.agentName = options.agentName || 'Quinn (QA Guardian)';
+    this.agentName = options.agentName || "Quinn (QA Guardian)";
 
     // Initialize report data
     this.data = {
@@ -110,7 +110,7 @@ class QAReportGenerator {
       generatedAt: new Date().toISOString(),
       agentName: this.agentName,
       verdict: null,
-      verdictReason: '',
+      verdictReason: "",
       totalIssues: 0,
       issuesBySeverity: {
         critical: 0,
@@ -156,7 +156,7 @@ class QAReportGenerator {
   loadTestResults(source) {
     let results;
 
-    if (typeof source === 'string') {
+    if (typeof source === "string") {
       // Load from file
       const filePath = path.isAbsolute(source) ? source : path.join(this.rootPath, source);
 
@@ -164,7 +164,7 @@ class QAReportGenerator {
         throw new Error(`Test results file not found: ${filePath}`);
       }
 
-      results = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      results = JSON.parse(fs.readFileSync(filePath, "utf-8"));
     } else {
       results = source;
     }
@@ -235,19 +235,19 @@ class QAReportGenerator {
 
     if (!Object.values(Severity).includes(severity)) {
       throw new Error(
-        `Invalid severity: ${severity}. Must be one of: ${Object.values(Severity).join(', ')}`
+        `Invalid severity: ${severity}. Must be one of: ${Object.values(Severity).join(", ")}`,
       );
     }
 
     const normalizedIssue = {
       id: issue.id || `ISSUE-${this.data.totalIssues + 1}`,
-      title: issue.title || 'Untitled Issue',
+      title: issue.title || "Untitled Issue",
       severity,
-      location: issue.location || 'unknown',
+      location: issue.location || "unknown",
       category: issue.category || Category.FUNCTIONAL,
-      description: issue.description || '',
-      expected: issue.expected || '',
-      actual: issue.actual || '',
+      description: issue.description || "",
+      expected: issue.expected || "",
+      actual: issue.actual || "",
       verification: issue.verification || [],
     };
 
@@ -297,30 +297,30 @@ class QAReportGenerator {
 
     // Critical patterns
     const criticalPatterns = [
-      'crash',
-      'data loss',
-      'security',
-      'vulnerability',
-      'broken',
-      'fails',
-      'exception',
-      'error',
-      'critical',
-      'blocking',
-      'blocker',
+      "crash",
+      "data loss",
+      "security",
+      "vulnerability",
+      "broken",
+      "fails",
+      "exception",
+      "error",
+      "critical",
+      "blocking",
+      "blocker",
     ];
 
     // Major patterns
     const majorPatterns = [
-      'incorrect',
-      'wrong',
-      'bug',
-      'defect',
-      'issue',
-      'problem',
-      'unexpected',
-      'missing',
-      'incomplete',
+      "incorrect",
+      "wrong",
+      "bug",
+      "defect",
+      "issue",
+      "problem",
+      "unexpected",
+      "missing",
+      "incomplete",
     ];
 
     for (const pattern of criticalPatterns) {
@@ -352,7 +352,7 @@ class QAReportGenerator {
     this.data.regression.items.push({
       file: regression.file,
       description: regression.description,
-      commit: regression.commit || 'unknown',
+      commit: regression.commit || "unknown",
     });
     return this;
   }
@@ -365,10 +365,10 @@ class QAReportGenerator {
    */
   addSecurityVulnerability(vulnerability) {
     this.data.security.vulnerabilities.push({
-      severity: vulnerability.severity || 'medium',
-      type: vulnerability.type || 'unknown',
-      location: vulnerability.location || 'unknown',
-      description: vulnerability.description || '',
+      severity: vulnerability.severity || "medium",
+      type: vulnerability.type || "unknown",
+      location: vulnerability.location || "unknown",
+      description: vulnerability.description || "",
     });
 
     // Reduce security score based on severity
@@ -431,10 +431,10 @@ class QAReportGenerator {
       if (this.data.issuesBySeverity.minor > 0) {
         parts.push(`${this.data.issuesBySeverity.minor} minor issue(s)`);
       }
-      this.data.verdictReason = `Approved with ${parts.join(' and ')} noted for follow-up.`;
+      this.data.verdictReason = `Approved with ${parts.join(" and ")} noted for follow-up.`;
       this._generateSuggestions();
     } else {
-      this.data.verdictReason = 'All acceptance criteria met. No blocking issues found.';
+      this.data.verdictReason = "All acceptance criteria met. No blocking issues found.";
     }
 
     return this.data.verdict;
@@ -462,12 +462,12 @@ class QAReportGenerator {
 
     // Security vulnerabilities
     const criticalVulns = this.data.security.vulnerabilities.filter(
-      (v) => v.severity === 'critical' || v.severity === 'high'
+      (v) => v.severity === "critical" || v.severity === "high",
     );
 
     if (criticalVulns.length > 0) {
       this.data.requiredActions.push(
-        `Address ${criticalVulns.length} critical/high security vulnerability(ies)`
+        `Address ${criticalVulns.length} critical/high security vulnerability(ies)`,
       );
     }
   }
@@ -487,14 +487,14 @@ class QAReportGenerator {
     // Coverage suggestion
     if (this.data.coverage < 80) {
       this.data.suggestions.push(
-        `Improve test coverage (currently ${this.data.coverage}%, target 80%)`
+        `Improve test coverage (currently ${this.data.coverage}%, target 80%)`,
       );
     }
 
     // Minor issues summary
     if (this.data.issuesBySeverity.minor > 0) {
       this.data.suggestions.push(
-        `${this.data.issuesBySeverity.minor} minor issue(s) can be addressed in future iterations`
+        `${this.data.issuesBySeverity.minor} minor issue(s) can be addressed in future iterations`,
       );
     }
   }
@@ -537,23 +537,23 @@ class QAReportGenerator {
     // Issues by severity
     markdown = markdown.replace(
       /\{\{issuesBySeverity\.critical\}\}/g,
-      String(report.issuesBySeverity.critical)
+      String(report.issuesBySeverity.critical),
     );
     markdown = markdown.replace(
       /\{\{issuesBySeverity\.major\}\}/g,
-      String(report.issuesBySeverity.major)
+      String(report.issuesBySeverity.major),
     );
     markdown = markdown.replace(
       /\{\{issuesBySeverity\.minor\}\}/g,
-      String(report.issuesBySeverity.minor)
+      String(report.issuesBySeverity.minor),
     );
 
     // Test results
-    for (const type of ['unit', 'integration', 'e2e']) {
-      for (const metric of ['total', 'pass', 'fail', 'skip']) {
+    for (const type of ["unit", "integration", "e2e"]) {
+      for (const metric of ["total", "pass", "fail", "skip"]) {
         markdown = markdown.replace(
-          new RegExp(`\\{\\{tests\\.${type}\\.${metric}\\}\\}`, 'g'),
-          String(report.tests[type][metric])
+          new RegExp(`\\{\\{tests\\.${type}\\.${metric}\\}\\}`, "g"),
+          String(report.tests[type][metric]),
         );
       }
     }
@@ -578,7 +578,7 @@ class QAReportGenerator {
     const templatePath = path.join(this.rootPath, CONFIG.templatePath);
 
     if (fs.existsSync(templatePath)) {
-      return fs.readFileSync(templatePath, 'utf-8');
+      return fs.readFileSync(templatePath, "utf-8");
     }
 
     // Fallback inline template
@@ -662,15 +662,15 @@ class QAReportGenerator {
 
     // Critical issues
     if (report.issues.critical.length > 0) {
-      const issuesList = report.issues.critical.map((issue) => this._renderIssue(issue)).join('\n');
+      const issuesList = report.issues.critical.map((issue) => this._renderIssue(issue)).join("\n");
       result = result.replace(
         /\{\{#if issues\.critical\.length\}\}([\s\S]*?)\{\{#each issues\.critical\}\}[\s\S]*?\{\{\/each\}\}([\s\S]*?)\{\{else\}\}[\s\S]*?\{\{\/if\}\}/g,
-        `$1${issuesList}$2`
+        `$1${issuesList}$2`,
       );
     } else {
       result = result.replace(
         /\{\{#if issues\.critical\.length\}\}[\s\S]*?\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
-        '$1'
+        "$1",
       );
     }
 
@@ -678,15 +678,15 @@ class QAReportGenerator {
     if (report.issues.major.length > 0) {
       const issuesList = report.issues.major
         .map((issue) => this._renderIssue(issue, false))
-        .join('\n');
+        .join("\n");
       result = result.replace(
         /\{\{#if issues\.major\.length\}\}([\s\S]*?)\{\{#each issues\.major\}\}[\s\S]*?\{\{\/each\}\}([\s\S]*?)\{\{else\}\}[\s\S]*?\{\{\/if\}\}/g,
-        `$1${issuesList}$2`
+        `$1${issuesList}$2`,
       );
     } else {
       result = result.replace(
         /\{\{#if issues\.major\.length\}\}[\s\S]*?\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
-        '$1'
+        "$1",
       );
     }
 
@@ -694,15 +694,15 @@ class QAReportGenerator {
     if (report.issues.minor.length > 0) {
       const issuesList = report.issues.minor
         .map((issue) => this._renderIssue(issue, false, true))
-        .join('\n');
+        .join("\n");
       result = result.replace(
         /\{\{#if issues\.minor\.length\}\}([\s\S]*?)\{\{#each issues\.minor\}\}[\s\S]*?\{\{\/each\}\}([\s\S]*?)\{\{else\}\}[\s\S]*?\{\{\/if\}\}/g,
-        `$1${issuesList}$2`
+        `$1${issuesList}$2`,
       );
     } else {
       result = result.replace(
         /\{\{#if issues\.minor\.length\}\}[\s\S]*?\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
-        '$1'
+        "$1",
       );
     }
 
@@ -710,15 +710,15 @@ class QAReportGenerator {
     if (report.regression.detected) {
       const regressionList = report.regression.items
         .map((r) => `- **${r.file}**: ${r.description} (introduced in ${r.commit})`)
-        .join('\n');
+        .join("\n");
       result = result.replace(
         /\{\{#if regression\.detected\}\}[\s\S]*?\{\{#each regression\.items\}\}[\s\S]*?\{\{\/each\}\}([\s\S]*?)\{\{else\}\}[\s\S]*?\{\{\/if\}\}/g,
-        `### Regression Detected\n\n${regressionList}$1`
+        `### Regression Detected\n\n${regressionList}$1`,
       );
     } else {
       result = result.replace(
         /\{\{#if regression\.detected\}\}[\s\S]*?\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
-        '$1'
+        "$1",
       );
     }
 
@@ -726,38 +726,38 @@ class QAReportGenerator {
     if (report.security.vulnerabilities.length > 0) {
       const vulnRows = report.security.vulnerabilities
         .map((v) => `| ${v.severity} | ${v.type} | \`${v.location}\` | ${v.description} |`)
-        .join('\n');
+        .join("\n");
       result = result.replace(
         /\{\{#if security\.vulnerabilities\.length\}\}[\s\S]*?\{\{#each security\.vulnerabilities\}\}[\s\S]*?\{\{\/each\}\}([\s\S]*?)\{\{else\}\}[\s\S]*?\{\{\/if\}\}/g,
-        `### Vulnerabilities Found\n\n| Severity | Type | Location | Description |\n|----------|------|----------|-------------|\n${vulnRows}$1`
+        `### Vulnerabilities Found\n\n| Severity | Type | Location | Description |\n|----------|------|----------|-------------|\n${vulnRows}$1`,
       );
     } else {
       result = result.replace(
         /\{\{#if security\.vulnerabilities\.length\}\}[\s\S]*?\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g,
-        '$1'
+        "$1",
       );
     }
 
     // Required actions (for REJECT)
     if (report.verdict === Verdict.REJECT && report.requiredActions.length > 0) {
-      const actionsList = report.requiredActions.map((a, i) => `${i + 1}. ${a}`).join('\n');
+      const actionsList = report.requiredActions.map((a, i) => `${i + 1}. ${a}`).join("\n");
       result = result.replace(
         /\{\{#if verdict === 'REJECT'\}\}[\s\S]*?\{\{#each requiredActions\}\}[\s\S]*?\{\{\/each\}\}([\s\S]*?)\{\{\/if\}\}/g,
-        `### Required Actions Before Approval\n\n${actionsList}$1`
+        `### Required Actions Before Approval\n\n${actionsList}$1`,
       );
     } else {
-      result = result.replace(/\{\{#if verdict === 'REJECT'\}\}[\s\S]*?\{\{\/if\}\}/g, '');
+      result = result.replace(/\{\{#if verdict === 'REJECT'\}\}[\s\S]*?\{\{\/if\}\}/g, "");
     }
 
     // Suggestions
     if (report.suggestions.length > 0) {
-      const suggestionsList = report.suggestions.map((s) => `- ${s}`).join('\n');
+      const suggestionsList = report.suggestions.map((s) => `- ${s}`).join("\n");
       result = result.replace(
         /\{\{#if suggestions\.length\}\}[\s\S]*?\{\{#each suggestions\}\}[\s\S]*?\{\{\/each\}\}([\s\S]*?)\{\{\/if\}\}/g,
-        `### Suggestions for Improvement\n\n${suggestionsList}$1`
+        `### Suggestions for Improvement\n\n${suggestionsList}$1`,
       );
     } else {
-      result = result.replace(/\{\{#if suggestions\.length\}\}[\s\S]*?\{\{\/if\}\}/g, '');
+      result = result.replace(/\{\{#if suggestions\.length\}\}[\s\S]*?\{\{\/if\}\}/g, "");
     }
 
     return result;
@@ -777,8 +777,8 @@ class QAReportGenerator {
     md += `**Description:**\n${issue.description}\n\n`;
 
     if (!isMinor) {
-      md += `**Expected Behavior:**\n${issue.expected || 'N/A'}\n\n`;
-      md += `**Actual Behavior:**\n${issue.actual || 'N/A'}\n\n`;
+      md += `**Expected Behavior:**\n${issue.expected || "N/A"}\n\n`;
+      md += `**Actual Behavior:**\n${issue.actual || "N/A"}\n\n`;
     }
 
     if (includeVerification && issue.verification && issue.verification.length > 0) {
@@ -786,10 +786,10 @@ class QAReportGenerator {
       issue.verification.forEach((step, i) => {
         md += `${i + 1}. ${step}\n`;
       });
-      md += '\n';
+      md += "\n";
     }
 
-    md += '---\n';
+    md += "---\n";
     return md;
   }
 
@@ -807,7 +807,7 @@ class QAReportGenerator {
       savePath = path.isAbsolute(outputPath) ? outputPath : path.join(this.rootPath, outputPath);
     } else {
       // Default to docs/stories/{storyId}/qa_report.md
-      savePath = path.join(this.rootPath, 'docs/stories', this.storyId, CONFIG.defaultOutputFile);
+      savePath = path.join(this.rootPath, "docs/stories", this.storyId, CONFIG.defaultOutputFile);
     }
 
     // Ensure directory exists
@@ -816,7 +816,7 @@ class QAReportGenerator {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(savePath, markdown, 'utf-8');
+    fs.writeFileSync(savePath, markdown, "utf-8");
     return savePath;
   }
 
@@ -848,14 +848,16 @@ class QAReportGenerator {
 
     if (fs.existsSync(statusPath)) {
       try {
-        status = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
+        status = JSON.parse(fs.readFileSync(statusPath, "utf-8"));
       } catch {
         status = {};
       }
     }
 
     // Initialize structure if needed
-    if (!status.version) status.version = '1.0';
+    if (!status.version) {
+      status.version = "1.0";
+    }
     if (!status.stories) {
       status.stories = { inProgress: [], completed: [] };
     }
@@ -892,7 +894,7 @@ class QAReportGenerator {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(statusPath, JSON.stringify(status, null, 2), 'utf-8');
+    fs.writeFileSync(statusPath, JSON.stringify(status, null, 2), "utf-8");
   }
 
   /**
@@ -904,7 +906,7 @@ class QAReportGenerator {
     const report = this.generateReport();
 
     return {
-      schema: 'aiox-qa-report-v1',
+      schema: "aiox-qa-report-v1",
       storyId: report.storyId,
       generatedAt: report.generatedAt,
       agent: report.agentName,
@@ -996,7 +998,7 @@ function generateAndSaveReport(storyId, options = {}) {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
+  if (args.length < 1 || args.includes("--help") || args.includes("-h")) {
     console.log(`
 QA Report Generator - AIOX QA Evolution (Story 6.2)
 
@@ -1033,12 +1035,12 @@ Acceptance Criteria Coverage:
   AC6: Schema JSON for automated parsing
   AC7: Integrates with .aiox/dashboard/status.json
 `);
-    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
+    process.exit(args.includes("--help") || args.includes("-h") ? 0 : 1);
   }
 
   // Parse arguments
   let storyId = null;
-  let command = 'generate';
+  let command = "generate";
   let outputPath = null;
   let testResultsPath = null;
   let agentName = null;
@@ -1047,15 +1049,15 @@ Acceptance Criteria Coverage:
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--output' && args[i + 1]) {
+    if (arg === "--output" && args[i + 1]) {
       outputPath = args[++i];
-    } else if (arg === '--test-results' && args[i + 1]) {
+    } else if (arg === "--test-results" && args[i + 1]) {
       testResultsPath = args[++i];
-    } else if (arg === '--agent' && args[i + 1]) {
+    } else if (arg === "--agent" && args[i + 1]) {
       agentName = args[++i];
-    } else if (arg === '--quiet' || arg === '-q') {
+    } else if (arg === "--quiet" || arg === "-q") {
       quiet = true;
-    } else if (!arg.startsWith('-')) {
+    } else if (!arg.startsWith("-")) {
       if (!storyId) {
         storyId = arg;
       } else {
@@ -1065,13 +1067,15 @@ Acceptance Criteria Coverage:
   }
 
   if (!storyId) {
-    console.error('Error: Story ID required');
+    console.error("Error: Story ID required");
     process.exit(1);
   }
 
   try {
     const options = {};
-    if (agentName) options.agentName = agentName;
+    if (agentName) {
+      options.agentName = agentName;
+    }
 
     const generator = new QAReportGenerator(storyId, options);
 
@@ -1081,33 +1085,37 @@ Acceptance Criteria Coverage:
     }
 
     switch (command) {
-      case 'generate':
+      case "generate":
         generator.generateReport();
         if (!quiet) {
           console.log(generator.toMarkdown());
         }
         break;
 
-      case 'json':
+      case "json":
         generator.generateReport();
         console.log(JSON.stringify(generator.toJSON(), null, 2));
         break;
 
-      case 'save': {
+      case "save": {
         generator.generateReport();
         const savePath = generator.saveReport(outputPath);
-        if (!quiet) console.log(`QA report saved to: ${savePath}`);
+        if (!quiet) {
+          console.log(`QA report saved to: ${savePath}`);
+        }
         break;
       }
 
-      case 'update': {
+      case "update": {
         generator.generateReport();
         const updatePath = generator.updateStatusJson();
-        if (!quiet) console.log(`Dashboard status.json updated: ${updatePath}`);
+        if (!quiet) {
+          console.log(`Dashboard status.json updated: ${updatePath}`);
+        }
         break;
       }
 
-      case 'all': {
+      case "all": {
         generator.generateReport();
         const reportPath = generator.saveReport(outputPath);
         const statusPath = generator.updateStatusJson();

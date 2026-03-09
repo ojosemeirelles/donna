@@ -14,10 +14,10 @@
  * @see Story SQS-3: Squad Validator + JSON Schema
  */
 
-const Ajv = require('ajv');
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const Ajv = require("ajv");
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
 /**
  * Load schema - handle both require and dynamic loading
@@ -25,7 +25,7 @@ const yaml = require('js-yaml');
  */
 function loadSchema() {
   try {
-    return require('../../../schemas/squad-schema.json');
+    return require("../../../schemas/squad-schema.json");
   } catch {
     // Fallback for test environments
     return null;
@@ -36,20 +36,20 @@ function loadSchema() {
  * Supported manifest file names in order of preference
  * @constant {string[]}
  */
-const MANIFEST_FILES = ['squad.yaml', 'config.yaml'];
+const MANIFEST_FILES = ["squad.yaml", "config.yaml"];
 
 /**
  * Required fields in tasks (TASK-FORMAT-SPECIFICATION-V1)
  * @constant {string[]}
  */
 const TASK_REQUIRED_FIELDS = [
-  'task',
-  'responsavel',
-  'responsavel_type',
-  'atomic_layer',
-  'Entrada',
-  'Saida',
-  'Checklist',
+  "task",
+  "responsavel",
+  "responsavel_type",
+  "atomic_layer",
+  "Entrada",
+  "Saida",
+  "Checklist",
 ];
 
 /**
@@ -57,17 +57,17 @@ const TASK_REQUIRED_FIELDS = [
  * @enum {string}
  */
 const ValidationErrorCodes = {
-  MANIFEST_NOT_FOUND: 'MANIFEST_NOT_FOUND',
-  YAML_PARSE_ERROR: 'YAML_PARSE_ERROR',
-  SCHEMA_ERROR: 'SCHEMA_ERROR',
-  DEPRECATED_MANIFEST: 'DEPRECATED_MANIFEST',
-  MISSING_DIRECTORY: 'MISSING_DIRECTORY',
-  NO_TASKS: 'NO_TASKS',
-  TASK_MISSING_FIELD: 'TASK_MISSING_FIELD',
-  TASK_READ_ERROR: 'TASK_READ_ERROR',
-  AGENT_INVALID_FORMAT: 'AGENT_INVALID_FORMAT',
-  FILE_NOT_FOUND: 'FILE_NOT_FOUND',
-  INVALID_NAMING: 'INVALID_NAMING',
+  MANIFEST_NOT_FOUND: "MANIFEST_NOT_FOUND",
+  YAML_PARSE_ERROR: "YAML_PARSE_ERROR",
+  SCHEMA_ERROR: "SCHEMA_ERROR",
+  DEPRECATED_MANIFEST: "DEPRECATED_MANIFEST",
+  MISSING_DIRECTORY: "MISSING_DIRECTORY",
+  NO_TASKS: "NO_TASKS",
+  TASK_MISSING_FIELD: "TASK_MISSING_FIELD",
+  TASK_READ_ERROR: "TASK_READ_ERROR",
+  AGENT_INVALID_FORMAT: "AGENT_INVALID_FORMAT",
+  FILE_NOT_FOUND: "FILE_NOT_FOUND",
+  INVALID_NAMING: "INVALID_NAMING",
 };
 
 /**
@@ -187,7 +187,7 @@ class SquadValidator {
       result.valid = false;
     }
 
-    this._log(`Validation complete: ${result.valid ? 'VALID' : 'INVALID'}`);
+    this._log(`Validation complete: ${result.valid ? "VALID" : "INVALID"}`);
     return result;
   }
 
@@ -214,18 +214,18 @@ class SquadValidator {
       result.errors.push({
         code: ValidationErrorCodes.MANIFEST_NOT_FOUND,
         message: `No manifest found in ${squadPath}/ (expected squad.yaml or config.yaml)`,
-        suggestion: 'Create squad.yaml with required fields: name, version',
+        suggestion: "Create squad.yaml with required fields: name, version",
       });
       return result;
     }
 
     // Deprecation warning for config.yaml
     const manifestFilename = path.basename(manifestPath);
-    if (manifestFilename === 'config.yaml') {
+    if (manifestFilename === "config.yaml") {
       result.warnings.push({
         code: ValidationErrorCodes.DEPRECATED_MANIFEST,
-        message: 'config.yaml is deprecated, rename to squad.yaml',
-        suggestion: 'mv config.yaml squad.yaml',
+        message: "config.yaml is deprecated, rename to squad.yaml",
+        suggestion: "mv config.yaml squad.yaml",
         file: manifestFilename,
       });
     }
@@ -233,14 +233,14 @@ class SquadValidator {
     // Parse YAML
     let manifest;
     try {
-      const content = await fs.readFile(manifestPath, 'utf-8');
+      const content = await fs.readFile(manifestPath, "utf-8");
       manifest = yaml.load(content);
     } catch (error) {
       result.valid = false;
       result.errors.push({
         code: ValidationErrorCodes.YAML_PARSE_ERROR,
         message: `Failed to parse manifest: ${error.message}`,
-        suggestion: 'Check YAML syntax - use a YAML linter',
+        suggestion: "Check YAML syntax - use a YAML linter",
         file: manifestFilename,
       });
       return result;
@@ -254,7 +254,7 @@ class SquadValidator {
         for (const err of this.validateSchema.errors) {
           result.errors.push({
             code: ValidationErrorCodes.SCHEMA_ERROR,
-            path: err.instancePath || '/',
+            path: err.instancePath || "/",
             message: err.message,
             suggestion: this._getSchemaSuggestion(err),
           });
@@ -262,7 +262,7 @@ class SquadValidator {
       }
     }
 
-    this._log(`Manifest validation: ${result.valid ? 'PASS' : 'FAIL'}`);
+    this._log(`Manifest validation: ${result.valid ? "PASS" : "FAIL"}`);
     return result;
   }
 
@@ -285,15 +285,15 @@ class SquadValidator {
     };
 
     // Expected directories (task-first: tasks and agents are primary)
-    const expectedDirs = ['tasks', 'agents'];
+    const expectedDirs = ["tasks", "agents"];
     const _optionalDirs = [
-      'workflows',
-      'checklists',
-      'templates',
-      'tools',
-      'scripts',
-      'data',
-      'config',
+      "workflows",
+      "checklists",
+      "templates",
+      "tools",
+      "scripts",
+      "data",
+      "config",
     ];
 
     // Check expected directories (warn if missing)
@@ -312,22 +312,20 @@ class SquadValidator {
     const manifestPath = await this._findManifest(squadPath);
     if (manifestPath) {
       try {
-        const content = await fs.readFile(manifestPath, 'utf-8');
+        const content = await fs.readFile(manifestPath, "utf-8");
         const manifest = yaml.load(content);
 
         if (manifest && manifest.components) {
-          await this._validateReferencedFiles(
-            squadPath,
-            manifest.components,
-            result,
-          );
+          await this._validateReferencedFiles(squadPath, manifest.components, result);
         }
       } catch {
         // Already handled in manifest validation
       }
     }
 
-    this._log(`Structure validation: ${result.errors.length} errors, ${result.warnings.length} warnings`);
+    this._log(
+      `Structure validation: ${result.errors.length} errors, ${result.warnings.length} warnings`,
+    );
     return result;
   }
 
@@ -347,7 +345,7 @@ class SquadValidator {
       suggestions: [],
     };
 
-    const tasksDir = path.join(squadPath, 'tasks');
+    const tasksDir = path.join(squadPath, "tasks");
 
     // Check if tasks directory exists
     if (!(await this._pathExists(tasksDir))) {
@@ -367,13 +365,13 @@ class SquadValidator {
       return result;
     }
 
-    const taskFiles = files.filter((f) => f.endsWith('.md'));
+    const taskFiles = files.filter((f) => f.endsWith(".md"));
 
     if (taskFiles.length === 0) {
       result.warnings.push({
         code: ValidationErrorCodes.NO_TASKS,
-        message: 'No task files found in tasks/',
-        suggestion: 'Task-first architecture: Create at least one task file',
+        message: "No task files found in tasks/",
+        suggestion: "Task-first architecture: Create at least one task file",
       });
       return result;
     }
@@ -415,7 +413,7 @@ class SquadValidator {
 
     let manifest;
     try {
-      const content = await fs.readFile(manifestPath, 'utf-8');
+      const content = await fs.readFile(manifestPath, "utf-8");
       manifest = yaml.load(content);
     } catch {
       return result; // Already handled in manifest validation
@@ -426,16 +424,18 @@ class SquadValidator {
       return result; // No config section to validate
     }
 
-    const configFields = ['coding-standards', 'tech-stack', 'source-tree'];
+    const configFields = ["coding-standards", "tech-stack", "source-tree"];
 
     for (const field of configFields) {
       const configPath = manifest.config[field];
-      if (!configPath) continue;
+      if (!configPath) {
+        continue;
+      }
 
       const resolvedPath = await this._resolveConfigPath(squadPath, configPath);
       if (!resolvedPath) {
         // Check if this is a project-level reference that doesn't exist
-        if (configPath.includes('..') || configPath.includes('docs/framework')) {
+        if (configPath.includes("..") || configPath.includes("docs/framework")) {
           result.warnings.push({
             code: ValidationErrorCodes.FILE_NOT_FOUND,
             message: `Config reference not found: ${configPath}`,
@@ -453,7 +453,9 @@ class SquadValidator {
       }
     }
 
-    this._log(`Config validation: ${result.errors.length} errors, ${result.warnings.length} warnings`);
+    this._log(
+      `Config validation: ${result.errors.length} errors, ${result.warnings.length} warnings`,
+    );
     return result;
   }
 
@@ -473,7 +475,7 @@ class SquadValidator {
       suggestions: [],
     };
 
-    const agentsDir = path.join(squadPath, 'agents');
+    const agentsDir = path.join(squadPath, "agents");
 
     // Check if agents directory exists
     if (!(await this._pathExists(agentsDir))) {
@@ -488,35 +490,34 @@ class SquadValidator {
       return result;
     }
 
-    const agentFiles = files.filter((f) => f.endsWith('.md'));
+    const agentFiles = files.filter((f) => f.endsWith(".md"));
 
     // Validate each agent file
     for (const agentFile of agentFiles) {
       const agentPath = path.join(agentsDir, agentFile);
       try {
-        const content = await fs.readFile(agentPath, 'utf-8');
+        const content = await fs.readFile(agentPath, "utf-8");
 
         // Check for basic agent structure (YAML frontmatter or markdown structure)
-        const hasYamlFrontmatter = content.includes('agent:');
+        const hasYamlFrontmatter = content.includes("agent:");
         const hasMarkdownHeading = content.match(/^#\s+.+/m);
 
         if (!hasYamlFrontmatter && !hasMarkdownHeading) {
           result.warnings.push({
             code: ValidationErrorCodes.AGENT_INVALID_FORMAT,
             file: agentFile,
-            message: 'Agent file may not follow AIOX agent definition format',
-            suggestion:
-              'Use agent: YAML frontmatter or markdown heading structure',
+            message: "Agent file may not follow AIOX agent definition format",
+            suggestion: "Use agent: YAML frontmatter or markdown heading structure",
           });
         }
 
         // Check naming convention (kebab-case)
-        if (!this._isKebabCase(path.basename(agentFile, '.md'))) {
+        if (!this._isKebabCase(path.basename(agentFile, ".md"))) {
           result.warnings.push({
             code: ValidationErrorCodes.INVALID_NAMING,
             file: agentFile,
-            message: 'Agent filename should be kebab-case',
-            suggestion: 'Rename to use lowercase letters and hyphens only',
+            message: "Agent filename should be kebab-case",
+            suggestion: "Rename to use lowercase letters and hyphens only",
           });
         }
       } catch (error) {
@@ -544,47 +545,47 @@ class SquadValidator {
     const lines = [];
 
     lines.push(`Validating squad: ${squadPath}/`);
-    lines.push('');
+    lines.push("");
 
     // Errors
     if (result.errors.length > 0) {
       lines.push(`Errors: ${result.errors.length}`);
       for (const err of result.errors) {
-        const filePart = err.file ? ` (${err.file})` : '';
-        const pathPart = err.path ? ` at ${err.path}` : '';
+        const filePart = err.file ? ` (${err.file})` : "";
+        const pathPart = err.path ? ` at ${err.path}` : "";
         lines.push(`  - [${err.code}]${pathPart}${filePart}: ${err.message}`);
         if (err.suggestion) {
           lines.push(`    Suggestion: ${err.suggestion}`);
         }
       }
-      lines.push('');
+      lines.push("");
     }
 
     // Warnings
     if (result.warnings.length > 0) {
       lines.push(`Warnings: ${result.warnings.length}`);
       for (const warn of result.warnings) {
-        const filePart = warn.file ? ` (${warn.file})` : '';
+        const filePart = warn.file ? ` (${warn.file})` : "";
         lines.push(`  - [${warn.code}]${filePart}: ${warn.message}`);
         if (warn.suggestion) {
           lines.push(`    Suggestion: ${warn.suggestion}`);
         }
       }
-      lines.push('');
+      lines.push("");
     }
 
     // Result
     if (result.valid) {
       if (result.warnings.length > 0) {
-        lines.push('Result: VALID (with warnings)');
+        lines.push("Result: VALID (with warnings)");
       } else {
-        lines.push('Result: VALID');
+        lines.push("Result: VALID");
       }
     } else {
-      lines.push('Result: INVALID');
+      lines.push("Result: INVALID");
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -603,7 +604,7 @@ class SquadValidator {
       suggestions: [],
     };
 
-    const workflowsDir = path.join(squadPath, 'workflows');
+    const workflowsDir = path.join(squadPath, "workflows");
 
     if (!(await this._pathExists(workflowsDir))) {
       return result; // No workflows dir is fine
@@ -616,9 +617,7 @@ class SquadValidator {
       return result;
     }
 
-    const yamlFiles = files.filter(
-      (f) => f.endsWith('.yaml') || f.endsWith('.yml'),
-    );
+    const yamlFiles = files.filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"));
 
     if (yamlFiles.length === 0) {
       return result; // No workflow files to validate
@@ -627,22 +626,22 @@ class SquadValidator {
     // Import WorkflowValidator
     let WorkflowValidator;
     try {
-      ({ WorkflowValidator } = require('../workflow-validator'));
+      ({ WorkflowValidator } = require("../workflow-validator"));
     } catch {
       result.warnings.push({
-        code: 'WORKFLOW_VALIDATOR_UNAVAILABLE',
-        message: 'WorkflowValidator module not found, skipping workflow content validation',
-        suggestion: 'Ensure workflow-validator.js exists in .aiox-core/development/scripts/',
+        code: "WORKFLOW_VALIDATOR_UNAVAILABLE",
+        message: "WorkflowValidator module not found, skipping workflow content validation",
+        suggestion: "Ensure workflow-validator.js exists in .aiox-core/development/scripts/",
       });
       return result;
     }
 
-    const coreAgentsPath = path.join(process.cwd(), '.aiox-core', 'development', 'agents');
+    const coreAgentsPath = path.join(process.cwd(), ".aiox-core", "development", "agents");
     const validator = new WorkflowValidator({
       verbose: this.verbose,
       strict: this.strict,
       agentsPath: coreAgentsPath,
-      squadAgentsPath: path.join(squadPath, 'agents'),
+      squadAgentsPath: path.join(squadPath, "agents"),
     });
 
     for (const yamlFile of yamlFiles) {
@@ -695,7 +694,9 @@ class SquadValidator {
    * @private
    */
   async _resolveConfigPath(squadPath, configPath) {
-    if (!configPath) return null;
+    if (!configPath) {
+      return null;
+    }
 
     // Resolve path relative to squad directory
     // path.resolve handles both local paths (config/file.md) and relative paths (../../docs/framework/...)
@@ -724,19 +725,16 @@ class SquadValidator {
     const filename = path.basename(taskPath);
 
     try {
-      const content = await fs.readFile(taskPath, 'utf-8');
+      const content = await fs.readFile(taskPath, "utf-8");
 
       // Check for required fields (case-insensitive, handle accents)
       for (const field of TASK_REQUIRED_FIELDS) {
         // Create patterns that handle Portuguese accents
         const patterns = [
-          new RegExp(`^[#*-]*\\s*${field}\\s*:`, 'im'),
-          new RegExp(
-            `^[#*-]*\\s*${field.replace(/a/g, '[aá]').replace(/i/g, '[ií]')}\\s*:`,
-            'im',
-          ),
+          new RegExp(`^[#*-]*\\s*${field}\\s*:`, "im"),
+          new RegExp(`^[#*-]*\\s*${field.replace(/a/g, "[aá]").replace(/i/g, "[ií]")}\\s*:`, "im"),
           // Also check for markdown headers with the field
-          new RegExp(`^#+\\s*${field}`, 'im'),
+          new RegExp(`^#+\\s*${field}`, "im"),
         ];
 
         const found = patterns.some((p) => p.test(content));
@@ -751,12 +749,12 @@ class SquadValidator {
       }
 
       // Check naming convention
-      if (!this._isKebabCase(path.basename(filename, '.md'))) {
+      if (!this._isKebabCase(path.basename(filename, ".md"))) {
         result.warnings.push({
           code: ValidationErrorCodes.INVALID_NAMING,
           file: filename,
-          message: 'Task filename should be kebab-case',
-          suggestion: 'Rename to use lowercase letters and hyphens only',
+          message: "Task filename should be kebab-case",
+          suggestion: "Rename to use lowercase letters and hyphens only",
         });
       }
     } catch (error) {
@@ -777,13 +775,13 @@ class SquadValidator {
    */
   async _validateReferencedFiles(squadPath, components, result) {
     const componentDirs = {
-      tasks: 'tasks',
-      agents: 'agents',
-      workflows: 'workflows',
-      checklists: 'checklists',
-      templates: 'templates',
-      tools: 'tools',
-      scripts: 'scripts',
+      tasks: "tasks",
+      agents: "agents",
+      workflows: "workflows",
+      checklists: "checklists",
+      templates: "templates",
+      tools: "tools",
+      scripts: "scripts",
     };
 
     for (const [component, dir] of Object.entries(componentDirs)) {
@@ -817,12 +815,11 @@ class SquadValidator {
    */
   _getSchemaSuggestion(error) {
     const suggestions = {
-      'must match pattern':
-        'Use correct format (kebab-case for names, semver for versions)',
-      'must be string': 'Wrap value in quotes',
-      'must be array': 'Use YAML array syntax: [item1, item2] or - item',
-      'must have required property': 'Add the missing required property',
-      'must be equal to one of the allowed values': 'Use one of the allowed values',
+      "must match pattern": "Use correct format (kebab-case for names, semver for versions)",
+      "must be string": "Wrap value in quotes",
+      "must be array": "Use YAML array syntax: [item1, item2] or - item",
+      "must have required property": "Add the missing required property",
+      "must be equal to one of the allowed values": "Use one of the allowed values",
     };
 
     for (const [key, suggestion] of Object.entries(suggestions)) {
@@ -830,7 +827,7 @@ class SquadValidator {
         return suggestion;
       }
     }
-    return 'Check squad.yaml syntax against the schema';
+    return "Check squad.yaml syntax against the schema";
   }
 
   /**

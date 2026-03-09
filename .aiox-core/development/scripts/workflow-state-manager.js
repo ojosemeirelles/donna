@@ -20,11 +20,11 @@
  * @version 2.0.0
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
-const WORKFLOW_STATE_VERSION = '2.0';
+const WORKFLOW_STATE_VERSION = "2.0";
 
 class WorkflowStateManager {
   /**
@@ -35,7 +35,7 @@ class WorkflowStateManager {
   constructor(options = {}) {
     this.basePath = options.basePath || process.cwd();
     this.verbose = options.verbose || false;
-    this.stateDir = path.join(this.basePath, '.aiox');
+    this.stateDir = path.join(this.basePath, ".aiox");
   }
 
   /**
@@ -61,7 +61,7 @@ class WorkflowStateManager {
   async createState(workflowData, instanceConfig = {}) {
     const wf = workflowData.workflow || workflowData;
     if (!wf || !wf.id) {
-      throw new Error('workflow.id is required to create workflow state');
+      throw new Error("workflow.id is required to create workflow state");
     }
     const instanceId = this._generateInstanceId(wf.id);
 
@@ -70,11 +70,11 @@ class WorkflowStateManager {
       workflow_id: wf.id,
       workflow_name: wf.name || wf.id,
       instance_id: instanceId,
-      target_context: instanceConfig.target_context || 'core',
+      target_context: instanceConfig.target_context || "core",
       squad_name: instanceConfig.squad_name || null,
       started_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      status: 'active',
+      status: "active",
       current_phase: null,
       current_step_index: 0,
       steps: [],
@@ -86,13 +86,20 @@ class WorkflowStateManager {
     if (wf.sequence && Array.isArray(wf.sequence)) {
       state.steps = wf.sequence.map((step, index) => {
         // Determine action description
-        let action = '';
-        if (step.creates) action = `creates: ${step.creates}`;
-        else if (step.updates) action = `updates: ${step.updates}`;
-        else if (step.validates) action = `validates: ${step.validates}`;
-        else if (step.action) action = step.action;
-        else if (step.repeat_development_cycle) action = 'repeat_development_cycle';
-        else if (step.workflow_end) action = 'workflow_end';
+        let action = "";
+        if (step.creates) {
+          action = `creates: ${step.creates}`;
+        } else if (step.updates) {
+          action = `updates: ${step.updates}`;
+        } else if (step.validates) {
+          action = `validates: ${step.validates}`;
+        } else if (step.action) {
+          action = step.action;
+        } else if (step.repeat_development_cycle) {
+          action = "repeat_development_cycle";
+        } else if (step.workflow_end) {
+          action = "workflow_end";
+        }
 
         const isOptional = step.optional === true || !!step.condition;
 
@@ -101,7 +108,7 @@ class WorkflowStateManager {
           phase: step.agent ? `${step.agent}: ${action}` : action,
           agent: step.agent || null,
           action: action,
-          status: 'pending',
+          status: "pending",
           optional: isOptional,
           started_at: null,
           completed_at: null,
@@ -124,7 +131,7 @@ class WorkflowStateManager {
             name: step.creates,
             created_by_step: i,
             path: null,
-            status: 'pending',
+            status: "pending",
           });
         }
       }
@@ -155,33 +162,33 @@ class WorkflowStateManager {
    * @returns {{ state: string, reasons: string[], normalized: Object }}
    */
   evaluateExecutionState(signals = {}) {
-    const storyStatus = String(signals.story_status || 'unknown').toLowerCase();
-    const qaStatus = String(signals.qa_status || 'unknown').toLowerCase();
-    const ciStatus = String(signals.ci_status || 'unknown').toLowerCase();
+    const storyStatus = String(signals.story_status || "unknown").toLowerCase();
+    const qaStatus = String(signals.qa_status || "unknown").toLowerCase();
+    const ciStatus = String(signals.ci_status || "unknown").toLowerCase();
     const hasUncommitted = Boolean(signals.has_uncommitted_changes);
 
     const reasons = [];
-    let state = 'unknown';
+    let state = "unknown";
 
-    if (storyStatus === 'blocked') {
-      state = 'blocked';
-      reasons.push('story status is blocked');
-    } else if (qaStatus === 'rejected' || qaStatus === 'fail' || qaStatus === 'failed') {
-      state = 'qa_rejected';
+    if (storyStatus === "blocked") {
+      state = "blocked";
+      reasons.push("story status is blocked");
+    } else if (qaStatus === "rejected" || qaStatus === "fail" || qaStatus === "failed") {
+      state = "qa_rejected";
       reasons.push(`qa status is ${qaStatus}`);
-    } else if (ciStatus === 'red' || ciStatus === 'failed' || ciStatus === 'error') {
-      state = 'ci_red';
+    } else if (ciStatus === "red" || ciStatus === "failed" || ciStatus === "error") {
+      state = "ci_red";
       reasons.push(`ci status is ${ciStatus}`);
-    } else if (storyStatus === 'done' || storyStatus === 'completed') {
-      state = 'completed';
+    } else if (storyStatus === "done" || storyStatus === "completed") {
+      state = "completed";
       reasons.push(`story status is ${storyStatus}`);
-    } else if (storyStatus === 'in_progress' || storyStatus === 'review') {
+    } else if (storyStatus === "in_progress" || storyStatus === "review") {
       if (hasUncommitted) {
-        state = 'in_development';
-        reasons.push('story in progress with uncommitted changes');
+        state = "in_development";
+        reasons.push("story in progress with uncommitted changes");
       } else {
-        state = 'ready_for_validation';
-        reasons.push('story in progress with clean working tree');
+        state = "ready_for_validation";
+        reasons.push("story in progress with clean working tree");
       }
     }
 
@@ -207,49 +214,49 @@ class WorkflowStateManager {
    */
   getNextActionRecommendation(signals = {}, options = {}) {
     const result = this.evaluateExecutionState(signals);
-    const storyArg = options.story ? ` ${options.story}` : '';
+    const storyArg = options.story ? ` ${options.story}` : "";
 
     const map = {
       blocked: {
         command: `*orchestrate-status${storyArg}`,
-        agent: '@po',
-        rationale: 'Story is blocked. Surface blockers and unblock path first.',
+        agent: "@po",
+        rationale: "Story is blocked. Surface blockers and unblock path first.",
         confidence: 0.95,
       },
       qa_rejected: {
         command: `*apply-qa-fixes${storyArg}`,
-        agent: '@dev',
-        rationale: 'QA rejected the story. Apply fixes before progressing.',
+        agent: "@dev",
+        rationale: "QA rejected the story. Apply fixes before progressing.",
         confidence: 0.95,
       },
       ci_red: {
-        command: '*run-tests',
-        agent: '@dev',
-        rationale: 'CI is red. Reproduce and fix failing tests/checks first.',
+        command: "*run-tests",
+        agent: "@dev",
+        rationale: "CI is red. Reproduce and fix failing tests/checks first.",
         confidence: 0.92,
       },
       completed: {
         command: `*close-story${storyArg}`,
-        agent: '@po',
-        rationale: 'Story is complete. Close lifecycle and move to next item.',
+        agent: "@po",
+        rationale: "Story is complete. Close lifecycle and move to next item.",
         confidence: 0.9,
       },
       in_development: {
-        command: '*run-tests',
-        agent: '@dev',
-        rationale: 'Code is in progress with local changes. Validate before QA handoff.',
+        command: "*run-tests",
+        agent: "@dev",
+        rationale: "Code is in progress with local changes. Validate before QA handoff.",
         confidence: 0.85,
       },
       ready_for_validation: {
         command: `*review-build${storyArg}`,
-        agent: '@qa',
-        rationale: 'Development appears stable. Proceed to QA structured review.',
+        agent: "@qa",
+        rationale: "Development appears stable. Proceed to QA structured review.",
         confidence: 0.82,
       },
       unknown: {
         command: `*next${storyArg}`,
-        agent: '@dev',
-        rationale: 'Context is incomplete. Request explicit workflow guidance.',
+        agent: "@dev",
+        rationale: "Context is incomplete. Request explicit workflow guidance.",
         confidence: 0.4,
       },
     };
@@ -272,12 +279,12 @@ class WorkflowStateManager {
   async loadState(instanceId) {
     const statePath = this._resolveStatePath(instanceId);
     try {
-      const content = await fs.readFile(statePath, 'utf-8');
+      const content = await fs.readFile(statePath, "utf-8");
       const state = yaml.load(content);
       this._log(`State loaded: ${instanceId}`);
       return state;
     } catch (error) {
-      if (error.code === 'ENOENT') {
+      if (error.code === "ENOENT") {
         this._log(`State not found: ${instanceId}`);
         return null;
       }
@@ -295,7 +302,7 @@ class WorkflowStateManager {
     const statePath = this._resolveStatePath(state.instance_id);
     await this._ensureStateDir();
     const content = yaml.dump(state, { lineWidth: 120, noRefs: true });
-    await fs.writeFile(statePath, content, 'utf-8');
+    await fs.writeFile(statePath, content, "utf-8");
     this._log(`State saved: ${state.instance_id}`);
   }
 
@@ -308,13 +315,13 @@ class WorkflowStateManager {
 
     try {
       const files = await fs.readdir(this.stateDir);
-      const stateFiles = files.filter((f) => f.endsWith('-state.yaml'));
+      const stateFiles = files.filter((f) => f.endsWith("-state.yaml"));
 
       for (const file of stateFiles) {
         try {
-          const content = await fs.readFile(path.join(this.stateDir, file), 'utf-8');
+          const content = await fs.readFile(path.join(this.stateDir, file), "utf-8");
           const state = yaml.load(content);
-          if (state && state.status === 'active') {
+          if (state && state.status === "active") {
             results.push({
               instanceId: state.instance_id,
               workflowId: state.workflow_id,
@@ -329,7 +336,7 @@ class WorkflowStateManager {
         }
       }
     } catch {
-      this._log('State directory does not exist yet');
+      this._log("State directory does not exist yet");
     }
 
     return results;
@@ -347,7 +354,7 @@ class WorkflowStateManager {
 
     // Find next pending step after current
     for (let i = currentIndex + 1; i < state.steps.length; i++) {
-      if (state.steps[i].status === 'pending') {
+      if (state.steps[i].status === "pending") {
         state.current_step_index = i;
         state.current_phase = state.steps[i].phase;
         this._log(`Advanced to step ${i}: ${state.steps[i].phase}`);
@@ -356,9 +363,9 @@ class WorkflowStateManager {
     }
 
     // No more pending steps — workflow is complete
-    state.status = 'completed';
-    state.current_phase = 'Workflow complete';
-    this._log('All steps completed');
+    state.status = "completed";
+    state.current_phase = "Workflow complete";
+    this._log("All steps completed");
     return state;
   }
 
@@ -375,7 +382,7 @@ class WorkflowStateManager {
     }
 
     const step = state.steps[stepIndex];
-    step.status = 'completed';
+    step.status = "completed";
     step.completed_at = new Date().toISOString();
     step.artifacts_created = artifacts;
 
@@ -383,7 +390,7 @@ class WorkflowStateManager {
     for (const artifactName of artifacts) {
       const artifact = state.artifacts.find((a) => a.name === artifactName);
       if (artifact) {
-        artifact.status = 'created';
+        artifact.status = "created";
       }
     }
 
@@ -407,7 +414,7 @@ class WorkflowStateManager {
       throw new Error(`Step ${stepIndex} is not optional and cannot be skipped`);
     }
 
-    step.status = 'skipped';
+    step.status = "skipped";
     step.completed_at = new Date().toISOString();
 
     this._log(`Step ${stepIndex} marked skipped`);
@@ -422,7 +429,7 @@ class WorkflowStateManager {
    * @returns {Object|null} Current step or null if all complete
    */
   getCurrentStep(state) {
-    if (state.status === 'completed' || state.status === 'aborted') {
+    if (state.status === "completed" || state.status === "aborted") {
       return null;
     }
     return state.steps[state.current_step_index] || null;
@@ -436,7 +443,7 @@ class WorkflowStateManager {
   getProgress(state) {
     const total = state.steps.length;
     const completed = state.steps.filter(
-      (s) => s.status === 'completed' || s.status === 'skipped',
+      (s) => s.status === "completed" || s.status === "skipped",
     ).length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -454,8 +461,8 @@ class WorkflowStateManager {
    * @returns {Object} { created: [], pending: [] }
    */
   getArtifactStatus(state) {
-    const created = state.artifacts.filter((a) => a.status === 'created');
-    const pending = state.artifacts.filter((a) => a.status === 'pending');
+    const created = state.artifacts.filter((a) => a.status === "created");
+    const pending = state.artifacts.filter((a) => a.status === "pending");
     return { created, pending };
   }
 
@@ -472,17 +479,17 @@ class WorkflowStateManager {
     const artifacts = this.getArtifactStatus(state);
 
     const lines = [
-      '## Workflow Handoff Context',
-      '',
+      "## Workflow Handoff Context",
+      "",
       `**Workflow:** ${state.workflow_name} (${state.instance_id})`,
       `**Status:** ${state.status}`,
       `**Progress:** ${progress.completed}/${progress.total} steps (${progress.percentage}%)`,
       `**Current Phase:** ${state.current_phase}`,
-      '',
+      "",
     ];
 
     if (currentStep) {
-      lines.push('### Current Step');
+      lines.push("### Current Step");
       lines.push(`- **Step ${currentStep.step_index + 1}:** ${currentStep.phase}`);
       if (currentStep.agent) {
         lines.push(`- **Agent:** @${currentStep.agent}`);
@@ -491,37 +498,37 @@ class WorkflowStateManager {
       if (currentStep.notes) {
         lines.push(`- **Notes:** ${currentStep.notes}`);
       }
-      lines.push('');
+      lines.push("");
     }
 
     if (artifacts.created.length > 0) {
-      lines.push('### Completed Artifacts');
+      lines.push("### Completed Artifacts");
       for (const a of artifacts.created) {
-        lines.push(`- ${a.name}${a.path ? ` (${a.path})` : ''}`);
+        lines.push(`- ${a.name}${a.path ? ` (${a.path})` : ""}`);
       }
-      lines.push('');
+      lines.push("");
     }
 
     if (artifacts.pending.length > 0) {
-      lines.push('### Pending Artifacts');
+      lines.push("### Pending Artifacts");
       for (const a of artifacts.pending) {
         lines.push(`- ${a.name}`);
       }
-      lines.push('');
+      lines.push("");
     }
 
     if (state.decisions.length > 0) {
-      lines.push('### Key Decisions');
+      lines.push("### Key Decisions");
       for (const d of state.decisions) {
         lines.push(`- Step ${d.step_index + 1}: ${d.decision}`);
       }
-      lines.push('');
+      lines.push("");
     }
 
-    lines.push('### Resume Command');
+    lines.push("### Resume Command");
     lines.push(`\`*run-workflow ${state.workflow_id} continue\``);
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -535,7 +542,7 @@ class WorkflowStateManager {
     // Build progress bar
     const barLength = 20;
     const filledLength = Math.round((progress.percentage / 100) * barLength);
-    const bar = '█'.repeat(filledLength) + '░'.repeat(barLength - filledLength);
+    const bar = "█".repeat(filledLength) + "░".repeat(barLength - filledLength);
 
     const lines = [
       `=== Workflow Status: ${state.workflow_name} ===`,
@@ -543,48 +550,55 @@ class WorkflowStateManager {
       `Status: ${state.status.toUpperCase()}`,
       `Started: ${state.started_at}`,
       `Updated: ${state.updated_at}`,
-      '',
+      "",
       `Progress: [${bar}] ${progress.percentage}% (${progress.completed}/${progress.total})`,
-      '',
-      '--- Steps ---',
+      "",
+      "--- Steps ---",
     ];
 
     for (const step of state.steps) {
       let statusIcon;
       switch (step.status) {
-        case 'completed': statusIcon = '[x]'; break;
-        case 'skipped': statusIcon = '[-]'; break;
-        case 'in_progress': statusIcon = '[>]'; break;
-        default: statusIcon = '[ ]';
+        case "completed":
+          statusIcon = "[x]";
+          break;
+        case "skipped":
+          statusIcon = "[-]";
+          break;
+        case "in_progress":
+          statusIcon = "[>]";
+          break;
+        default:
+          statusIcon = "[ ]";
       }
 
-      const isCurrent = step.step_index === state.current_step_index && state.status === 'active';
-      const marker = isCurrent ? ' <-- current' : '';
-      const optional = step.optional ? ' (optional)' : '';
+      const isCurrent = step.step_index === state.current_step_index && state.status === "active";
+      const marker = isCurrent ? " <-- current" : "";
+      const optional = step.optional ? " (optional)" : "";
 
       lines.push(`  ${statusIcon} Step ${step.step_index + 1}: ${step.phase}${optional}${marker}`);
     }
 
     // Artifacts summary
     if (state.artifacts.length > 0) {
-      lines.push('');
-      lines.push('--- Artifacts ---');
+      lines.push("");
+      lines.push("--- Artifacts ---");
       for (const a of state.artifacts) {
-        const icon = a.status === 'created' ? '[x]' : '[ ]';
-        lines.push(`  ${icon} ${a.name}${a.path ? ` → ${a.path}` : ''}`);
+        const icon = a.status === "created" ? "[x]" : "[ ]";
+        lines.push(`  ${icon} ${a.name}${a.path ? ` → ${a.path}` : ""}`);
       }
     }
 
     // Decisions
     if (state.decisions.length > 0) {
-      lines.push('');
-      lines.push('--- Decisions ---');
+      lines.push("");
+      lines.push("--- Decisions ---");
       for (const d of state.decisions) {
         lines.push(`  Step ${d.step_index + 1}: ${d.decision}`);
       }
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   // ============ Agent Path Resolution ============
@@ -597,22 +611,23 @@ class WorkflowStateManager {
    * @returns {{ corePath: string, squadPath: string|null }} Agent directory paths
    */
   resolveAgentPaths(state) {
-    const corePath = path.join(this.basePath, '.aiox-core', 'development', 'agents');
+    const corePath = path.join(this.basePath, ".aiox-core", "development", "agents");
 
-    if (state.target_context === 'core') {
+    if (state.target_context === "core") {
       return { corePath, squadPath: null };
     }
 
     // Sanitize squad_name to prevent path traversal
     const squadName = state.squad_name;
-    if (squadName && (squadName.includes('..') || squadName.includes('/') || squadName.includes('\\'))) {
+    if (
+      squadName &&
+      (squadName.includes("..") || squadName.includes("/") || squadName.includes("\\"))
+    ) {
       return { corePath, squadPath: null };
     }
 
     // Both 'squad' and 'hybrid' have a squad path
-    const squadPath = squadName
-      ? path.join(this.basePath, 'squads', squadName, 'agents')
-      : null;
+    const squadPath = squadName ? path.join(this.basePath, "squads", squadName, "agents") : null;
 
     return { corePath, squadPath };
   }
@@ -631,10 +646,15 @@ class WorkflowStateManager {
    */
   _generateInstanceId(workflowId) {
     // Sanitize workflowId to prevent path traversal
-    if (!workflowId || workflowId.includes('..') || workflowId.includes('/') || workflowId.includes('\\')) {
-      throw new Error('workflow.id contains invalid path characters');
+    if (
+      !workflowId ||
+      workflowId.includes("..") ||
+      workflowId.includes("/") ||
+      workflowId.includes("\\")
+    ) {
+      throw new Error("workflow.id contains invalid path characters");
     }
-    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
     const random = Math.random().toString(36).substring(2, 8);
     return `${workflowId}-${date}-${random}`;
   }

@@ -9,8 +9,8 @@
  * @created 2025-01-16 (Story 6.1.2.6)
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require("fs").promises;
+const path = require("path");
 
 /**
  * Performance data storage
@@ -26,29 +26,29 @@ const performanceData = {
  * Performance targets (from agent-config-requirements.yaml)
  */
 const PERFORMANCE_TARGETS = {
-  critical: 30,   // aiox-master
-  high: 50,       // dev, qa, devops, security
-  medium: 75,     // po, sm, architect, data-engineer, db-sage
-  low: 100,        // pm, analyst, ux-expert
+  critical: 30, // aiox-master
+  high: 50, // dev, qa, devops, security
+  medium: 75, // po, sm, architect, data-engineer, db-sage
+  low: 100, // pm, analyst, ux-expert
 };
 
 /**
  * Agent priority mapping
  */
 const AGENT_PRIORITIES = {
-  'aiox-master': 'critical',
-  'dev': 'high',
-  'qa': 'high',
-  'devops': 'high',
-  'security': 'high',
-  'po': 'medium',
-  'sm': 'medium',
-  'architect': 'medium',
-  'data-engineer': 'medium',
-  'db-sage': 'medium',
-  'pm': 'low',
-  'analyst': 'low',
-  'ux-expert': 'low',
+  "aiox-master": "critical",
+  dev: "high",
+  qa: "high",
+  devops: "high",
+  security: "high",
+  po: "medium",
+  sm: "medium",
+  architect: "medium",
+  "data-engineer": "medium",
+  "db-sage": "medium",
+  pm: "low",
+  analyst: "low",
+  "ux-expert": "low",
 };
 
 /**
@@ -71,9 +71,10 @@ function trackConfigLoad(loadData) {
     cacheHit: loadData.cacheHit,
     sectionsLoaded: loadData.sectionsLoaded,
     sectionsCount: loadData.sectionsLoaded?.length || 0,
-    priority: AGENT_PRIORITIES[loadData.agentId] || 'unknown',
+    priority: AGENT_PRIORITIES[loadData.agentId] || "unknown",
     target: PERFORMANCE_TARGETS[AGENT_PRIORITIES[loadData.agentId]] || 100,
-    meetsTarget: loadData.loadTime <= (PERFORMANCE_TARGETS[AGENT_PRIORITIES[loadData.agentId]] || 100),
+    meetsTarget:
+      loadData.loadTime <= (PERFORMANCE_TARGETS[AGENT_PRIORITIES[loadData.agentId]] || 100),
   };
 
   performanceData.configLoads.push(entry);
@@ -97,9 +98,11 @@ function trackAgentActivation(activationData) {
     totalTime: activationData.totalTime,
     configLoadTime: activationData.configLoadTime,
     initTime: activationData.initTime,
-    priority: AGENT_PRIORITIES[activationData.agentId] || 'unknown',
+    priority: AGENT_PRIORITIES[activationData.agentId] || "unknown",
     target: PERFORMANCE_TARGETS[AGENT_PRIORITIES[activationData.agentId]] || 100,
-    meetsTarget: activationData.totalTime <= (PERFORMANCE_TARGETS[AGENT_PRIORITIES[activationData.agentId]] || 100),
+    meetsTarget:
+      activationData.totalTime <=
+      (PERFORMANCE_TARGETS[AGENT_PRIORITIES[activationData.agentId]] || 100),
   };
 
   performanceData.agentActivations.push(entry);
@@ -113,7 +116,7 @@ function trackAgentActivation(activationData) {
  * @param {string} sessionType - Type of session (e.g., 'development', 'testing')
  * @returns {string} Session ID
  */
-function startSession(sessionType = 'default') {
+function startSession(sessionType = "default") {
   const sessionId = `session-${Date.now()}`;
 
   performanceData.sessions.push({
@@ -134,18 +137,18 @@ function startSession(sessionType = 'default') {
  * @param {string} sessionId - Session to end
  */
 function endSession(sessionId) {
-  const session = performanceData.sessions.find(s => s.id === sessionId);
+  const session = performanceData.sessions.find((s) => s.id === sessionId);
   if (session) {
     session.endTime = Date.now();
     session.duration = session.endTime - session.startTime;
 
     // Count operations in this session
     session.configLoads = performanceData.configLoads.filter(
-      load => load.timestamp >= session.startTime && load.timestamp <= session.endTime,
+      (load) => load.timestamp >= session.startTime && load.timestamp <= session.endTime,
     ).length;
 
     session.agentActivations = performanceData.agentActivations.filter(
-      act => act.timestamp >= session.startTime && act.timestamp <= session.endTime,
+      (act) => act.timestamp >= session.startTime && act.timestamp <= session.endTime,
     ).length;
   }
 
@@ -170,38 +173,42 @@ function getStatistics() {
   }
 
   // Config load stats
-  const avgLoadTime = configLoads.reduce((sum, load) => sum + load.loadTime, 0) / configLoads.length;
-  const avgConfigSize = configLoads.reduce((sum, load) => sum + load.configSize, 0) / configLoads.length;
-  const cacheHits = configLoads.filter(load => load.cacheHit).length;
-  const cacheHitRate = (cacheHits / configLoads.length * 100).toFixed(1);
-  const meetsTarget = configLoads.filter(load => load.meetsTarget).length;
-  const targetSuccessRate = (meetsTarget / configLoads.length * 100).toFixed(1);
+  const avgLoadTime =
+    configLoads.reduce((sum, load) => sum + load.loadTime, 0) / configLoads.length;
+  const avgConfigSize =
+    configLoads.reduce((sum, load) => sum + load.configSize, 0) / configLoads.length;
+  const cacheHits = configLoads.filter((load) => load.cacheHit).length;
+  const cacheHitRate = ((cacheHits / configLoads.length) * 100).toFixed(1);
+  const meetsTarget = configLoads.filter((load) => load.meetsTarget).length;
+  const targetSuccessRate = ((meetsTarget / configLoads.length) * 100).toFixed(1);
 
   // Agent activation stats
-  const avgActivationTime = agentActivations.length > 0
-    ? agentActivations.reduce((sum, act) => sum + act.totalTime, 0) / agentActivations.length
-    : 0;
+  const avgActivationTime =
+    agentActivations.length > 0
+      ? agentActivations.reduce((sum, act) => sum + act.totalTime, 0) / agentActivations.length
+      : 0;
 
-  const activationTargetMet = agentActivations.filter(act => act.meetsTarget).length;
-  const activationSuccessRate = agentActivations.length > 0
-    ? (activationTargetMet / agentActivations.length * 100).toFixed(1)
-    : '0';
+  const activationTargetMet = agentActivations.filter((act) => act.meetsTarget).length;
+  const activationSuccessRate =
+    agentActivations.length > 0
+      ? ((activationTargetMet / agentActivations.length) * 100).toFixed(1)
+      : "0";
 
   // By priority stats
   const byPriority = {};
-  Object.keys(PERFORMANCE_TARGETS).forEach(priority => {
-    const loads = configLoads.filter(load => load.priority === priority);
+  Object.keys(PERFORMANCE_TARGETS).forEach((priority) => {
+    const loads = configLoads.filter((load) => load.priority === priority);
     if (loads.length > 0) {
       const avgTime = loads.reduce((sum, load) => sum + load.loadTime, 0) / loads.length;
       const target = PERFORMANCE_TARGETS[priority];
-      const meets = loads.filter(load => load.meetsTarget).length;
+      const meets = loads.filter((load) => load.meetsTarget).length;
 
       byPriority[priority] = {
         count: loads.length,
         avgTime: Math.round(avgTime),
         target,
         meetsTarget: meets,
-        successRate: ((meets / loads.length) * 100).toFixed(1) + '%',
+        successRate: ((meets / loads.length) * 100).toFixed(1) + "%",
       };
     }
   });
@@ -212,15 +219,15 @@ function getStatistics() {
       avgLoadTime: Math.round(avgLoadTime),
       avgConfigSizeKB: (avgConfigSize / 1024).toFixed(2),
       cacheHits,
-      cacheHitRate: cacheHitRate + '%',
+      cacheHitRate: cacheHitRate + "%",
       meetsTarget,
-      targetSuccessRate: targetSuccessRate + '%',
+      targetSuccessRate: targetSuccessRate + "%",
     },
     agentActivations: {
       count: agentActivations.length,
       avgActivationTime: Math.round(avgActivationTime),
       meetsTarget: activationTargetMet,
-      targetSuccessRate: activationSuccessRate + '%',
+      targetSuccessRate: activationSuccessRate + "%",
     },
     byPriority,
     overall: {
@@ -260,9 +267,14 @@ function generateReport() {
 `;
 
   Object.entries(stats.byPriority).forEach(([priority, data]) => {
-    const emoji = priority === 'critical' ? '🔴' :
-      priority === 'high' ? '🟠' :
-        priority === 'medium' ? '🟡' : '🟢';
+    const emoji =
+      priority === "critical"
+        ? "🔴"
+        : priority === "high"
+          ? "🟠"
+          : priority === "medium"
+            ? "🟡"
+            : "🟢";
 
     report += `### ${emoji} ${priority.toUpperCase()} (Target: ${data.target}ms)\n\n`;
     report += `- Loads: ${data.count}\n`;
@@ -270,25 +282,25 @@ function generateReport() {
     report += `- Meets Target: ${data.meetsTarget}/${data.count} (${data.successRate})\n\n`;
   });
 
-  report += '---\n\n## 🚀 Agent Activations\n\n';
+  report += "---\n\n## 🚀 Agent Activations\n\n";
   report += `**Total Activations:** ${stats.agentActivations.count}\n`;
   report += `**Average Time:** ${stats.agentActivations.avgActivationTime}ms\n`;
   report += `**Meets Target:** ${stats.agentActivations.meetsTarget}/${stats.agentActivations.count} (${stats.agentActivations.targetSuccessRate})\n\n`;
 
-  report += '---\n\n## 📋 Recent Operations (Last 10)\n\n';
+  report += "---\n\n## 📋 Recent Operations (Last 10)\n\n";
 
-  const recent = performanceData.configLoads.slice(-10).reverse();
-  report += '| Agent | Load Time | Config Size | Cache Hit | Meets Target |\n';
-  report += '|-------|-----------|-------------|-----------|-------------|\n';
+  const recent = performanceData.configLoads.slice(-10).toReversed();
+  report += "| Agent | Load Time | Config Size | Cache Hit | Meets Target |\n";
+  report += "|-------|-----------|-------------|-----------|-------------|\n";
 
-  recent.forEach(load => {
-    const meetsEmoji = load.meetsTarget ? '✅' : '❌';
-    const cacheEmoji = load.cacheHit ? '💚' : '💛';
+  recent.forEach((load) => {
+    const meetsEmoji = load.meetsTarget ? "✅" : "❌";
+    const cacheEmoji = load.cacheHit ? "💚" : "💛";
 
     report += `| @${load.agentId} | ${load.loadTime}ms | ${load.configSizeKB} KB | ${cacheEmoji} | ${meetsEmoji} |\n`;
   });
 
-  report += '\n---\n\n*Auto-generated by AIOX Performance Tracker (Story 6.1.2.6)*\n';
+  report += "\n---\n\n*Auto-generated by AIOX Performance Tracker (Story 6.1.2.6)*\n";
 
   return report;
 }
@@ -298,14 +310,14 @@ function generateReport() {
  *
  * @param {string} filepath - Path to save data
  */
-async function savePerformanceData(filepath = '.aiox-core/performance-data.json') {
+async function savePerformanceData(filepath = ".aiox-core/performance-data.json") {
   const data = {
     ...performanceData,
     statistics: getStatistics(),
     savedAt: new Date().toISOString(),
   };
 
-  await fs.writeFile(filepath, JSON.stringify(data, null, 2), 'utf8');
+  await fs.writeFile(filepath, JSON.stringify(data, null, 2), "utf8");
   console.log(`✅ Performance data saved: ${filepath}`);
 }
 
@@ -314,9 +326,9 @@ async function savePerformanceData(filepath = '.aiox-core/performance-data.json'
  *
  * @param {string} filepath - Path to load data from
  */
-async function loadPerformanceData(filepath = '.aiox-core/performance-data.json') {
+async function loadPerformanceData(filepath = ".aiox-core/performance-data.json") {
   try {
-    const content = await fs.readFile(filepath, 'utf8');
+    const content = await fs.readFile(filepath, "utf8");
     const data = JSON.parse(content);
 
     performanceData.sessions = data.sessions || [];
@@ -327,8 +339,8 @@ async function loadPerformanceData(filepath = '.aiox-core/performance-data.json'
     console.log(`   Config loads: ${performanceData.configLoads.length}`);
     console.log(`   Agent activations: ${performanceData.agentActivations.length}`);
   } catch (error) {
-    if (error.code !== 'ENOENT') {
-      console.error('Failed to load performance data:', error.message);
+    if (error.code !== "ENOENT") {
+      console.error("Failed to load performance data:", error.message);
     }
   }
 }
@@ -342,7 +354,7 @@ function reset() {
   performanceData.agentActivations = [];
   performanceData.startTime = Date.now();
 
-  console.log('🗑️ Performance data reset');
+  console.log("🗑️ Performance data reset");
 }
 
 // Export functions
@@ -367,73 +379,73 @@ if (require.main === module) {
   (async () => {
     try {
       switch (command) {
-        case 'stats':
+        case "stats":
           await loadPerformanceData();
           const stats = getStatistics();
           console.log(JSON.stringify(stats, null, 2));
           break;
 
-        case 'report':
+        case "report":
           await loadPerformanceData();
           const report = generateReport();
-          const outputPath = 'docs/architecture/performance-report.md';
-          await fs.writeFile(outputPath, report, 'utf8');
+          const outputPath = "docs/architecture/performance-report.md";
+          await fs.writeFile(outputPath, report, "utf8");
           console.log(`✅ Report generated: ${outputPath}`);
           break;
 
-        case 'test':
-          console.log('\n🧪 Testing performance tracker...\n');
+        case "test":
+          console.log("\n🧪 Testing performance tracker...\n");
 
           // Simulate some operations
-          console.log('Test 1: Track config loads');
+          console.log("Test 1: Track config loads");
           trackConfigLoad({
-            agentId: 'dev',
+            agentId: "dev",
             loadTime: 45,
             configSize: 1024,
             cacheHit: false,
-            sectionsLoaded: ['frameworkDocsLocation', 'devLoadAlwaysFiles'],
+            sectionsLoaded: ["frameworkDocsLocation", "devLoadAlwaysFiles"],
           });
 
           trackConfigLoad({
-            agentId: 'dev',
+            agentId: "dev",
             loadTime: 2,
             configSize: 1024,
             cacheHit: true,
-            sectionsLoaded: ['frameworkDocsLocation', 'devLoadAlwaysFiles'],
+            sectionsLoaded: ["frameworkDocsLocation", "devLoadAlwaysFiles"],
           });
 
           trackConfigLoad({
-            agentId: 'pm',
+            agentId: "pm",
             loadTime: 30,
             configSize: 512,
             cacheHit: false,
-            sectionsLoaded: ['frameworkDocsLocation'],
+            sectionsLoaded: ["frameworkDocsLocation"],
           });
 
-          console.log('  ✅ Tracked 3 config loads\n');
+          console.log("  ✅ Tracked 3 config loads\n");
 
-          console.log('Test 2: Track agent activations');
+          console.log("Test 2: Track agent activations");
           trackAgentActivation({
-            agentId: 'dev',
+            agentId: "dev",
             totalTime: 50,
             configLoadTime: 45,
             initTime: 5,
           });
 
-          console.log('  ✅ Tracked 1 activation\n');
+          console.log("  ✅ Tracked 1 activation\n");
 
-          console.log('Test 3: Get statistics');
+          console.log("Test 3: Get statistics");
           const testStats = getStatistics();
           console.log(`  Config loads: ${testStats.configLoads.count}`);
           console.log(`  Avg load time: ${testStats.configLoads.avgLoadTime}ms`);
           console.log(`  Cache hit rate: ${testStats.configLoads.cacheHitRate}`);
           console.log(`  Target success: ${testStats.configLoads.targetSuccessRate}\n`);
 
-          console.log('Test 4: Generate report');
+          console.log("Test 4: Generate report");
           const testReport = generateReport();
           console.log(`  ✅ Report length: ${testReport.length} chars\n`);
 
-          console.log('✅ All tests passed!\n');
+          console.log("✅ All tests passed!\n");
           break;
 
         default:
@@ -445,7 +457,7 @@ Usage:
           `);
       }
     } catch (error) {
-      console.error('Error:', error.message);
+      console.error("Error:", error.message);
       process.exit(1);
     }
   })();

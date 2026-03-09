@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-'use strict';
+"use strict";
 
 /**
  * Scoring weights for confidence calculation
@@ -100,7 +100,7 @@ class ConfidenceScorer {
     }
 
     // Command contains trigger keyword
-    if (normalizedLast.includes(normalizedTrigger.split(' ')[0])) {
+    if (normalizedLast.includes(normalizedTrigger.split(" ")[0])) {
       return 0.7;
     }
 
@@ -127,7 +127,7 @@ class ConfidenceScorer {
       return 0;
     }
 
-    const normalizedAgent = currentAgent.replace('@', '').toLowerCase();
+    const normalizedAgent = currentAgent.replace("@", "").toLowerCase();
 
     // Check if current agent is in the sequence
     const agentIndex = agentSequence.findIndex((agent) => agent.toLowerCase() === normalizedAgent);
@@ -206,9 +206,9 @@ class ConfidenceScorer {
     if (projectState.hasUncommittedChanges) {
       // Git-related suggestions get higher score
       if (
-        suggestion.trigger?.includes('git') ||
-        suggestion.trigger?.includes('commit') ||
-        suggestion.trigger?.includes('push')
+        suggestion.trigger?.includes("git") ||
+        suggestion.trigger?.includes("commit") ||
+        suggestion.trigger?.includes("push")
       ) {
         factors.push(0.3);
       }
@@ -218,9 +218,9 @@ class ConfidenceScorer {
     if (projectState.failingTests) {
       // QA-related suggestions get higher score
       if (
-        suggestion.trigger?.includes('test') ||
-        suggestion.trigger?.includes('qa') ||
-        suggestion.trigger?.includes('fix')
+        suggestion.trigger?.includes("test") ||
+        suggestion.trigger?.includes("qa") ||
+        suggestion.trigger?.includes("fix")
       ) {
         factors.push(0.3);
       }
@@ -242,14 +242,16 @@ class ConfidenceScorer {
    * @returns {string} Normalized command
    */
   normalizeCommand(command) {
-    if (!command) return '';
+    if (!command) {
+      return "";
+    }
 
     return command
       .toLowerCase()
-      .replace(/\s+completed\s*$/i, '')
-      .replace(/\s+successfully\s*$/i, '')
-      .replace(/^\*/, '')
-      .replace(/['"]/g, '')
+      .replace(/\s+completed\s*$/i, "")
+      .replace(/\s+successfully\s*$/i, "")
+      .replace(/^\*/, "")
+      .replace(/['"]/g, "")
       .trim();
   }
 
@@ -278,7 +280,7 @@ class ConfidenceScorer {
         ...suggestion,
         score: this.score(suggestion, context),
       }))
-      .sort((a, b) => b.score - a.score);
+      .toSorted((a, b) => b.score - a.score);
   }
 
   /**

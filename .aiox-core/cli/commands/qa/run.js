@@ -9,23 +9,23 @@
  * @story 2.10 - Quality Gate Manager
  */
 
-const { Command } = require('commander');
-const { QualityGateManager } = require('../../../core/quality-gates/quality-gate-manager');
+const { Command } = require("commander");
+const { QualityGateManager } = require("../../../core/quality-gates/quality-gate-manager");
 
 /**
  * Create the run subcommand
  * @returns {Command} Commander command instance
  */
 function createRunCommand() {
-  const run = new Command('run');
+  const run = new Command("run");
 
   run
-    .description('Execute quality gate pipeline')
-    .option('-l, --layer <number>', 'Run specific layer only (1, 2, or 3)')
-    .option('-v, --verbose', 'Show detailed output', false)
-    .option('-s, --story <id>', 'Story ID for reporting')
-    .option('--save-report', 'Save detailed report to file', false)
-    .option('--no-fail-fast', 'Continue on Layer 1 failures')
+    .description("Execute quality gate pipeline")
+    .option("-l, --layer <number>", "Run specific layer only (1, 2, or 3)")
+    .option("-v, --verbose", "Show detailed output", false)
+    .option("-s, --story <id>", "Story ID for reporting")
+    .option("--save-report", "Save detailed report to file", false)
+    .option("--no-fail-fast", "Continue on Layer 1 failures")
     .action(async (options) => {
       try {
         const manager = await QualityGateManager.load();
@@ -42,13 +42,13 @@ function createRunCommand() {
           // Run specific layer
           const layerNum = parseInt(options.layer, 10);
           if (![1, 2, 3].includes(layerNum)) {
-            console.error('Error: Layer must be 1, 2, or 3');
+            console.error("Error: Layer must be 1, 2, or 3");
             process.exit(1);
           }
 
           if (context.verbose) {
             console.log(`\n🔍 Running Layer ${layerNum} only`);
-            console.log('━'.repeat(50));
+            console.log("━".repeat(50));
           }
 
           result = await manager.runLayer(layerNum, context);
@@ -99,12 +99,12 @@ function printLayerResult(result, verbose = false) {
     return;
   }
 
-  const icon = result.pass ? '✅' : '❌';
+  const icon = result.pass ? "✅" : "❌";
   console.log(`\n${icon} ${result.layer}`);
 
   result.results?.forEach((check) => {
-    const checkIcon = check.pass ? '✓' : '✗';
-    const skipped = check.skipped ? ' (skipped)' : '';
+    const checkIcon = check.pass ? "✓" : "✗";
+    const skipped = check.skipped ? " (skipped)" : "";
     console.log(`  ${checkIcon} ${check.check}: ${check.message}${skipped}`);
   });
 
@@ -116,27 +116,26 @@ function printLayerResult(result, verbose = false) {
  * @param {Object} result - Pipeline result
  */
 function printSummary(result) {
-  console.log('\n🔍 Quality Gate Pipeline');
-  console.log('━'.repeat(50));
+  console.log("\n🔍 Quality Gate Pipeline");
+  console.log("━".repeat(50));
 
   result.layers?.forEach((layer) => {
-    const icon = layer.pass ? '✅' : '❌';
-    const status = layer.pass ? 'PASSED' : 'FAILED';
+    const icon = layer.pass ? "✅" : "❌";
+    const status = layer.pass ? "PASSED" : "FAILED";
     console.log(`\n${layer.layer}`);
 
     layer.results?.forEach((check) => {
-      const checkIcon = check.pass ? '✓' : '✗';
-      const skipped = check.skipped ? ' (skipped)' : '';
+      const checkIcon = check.pass ? "✓" : "✗";
+      const skipped = check.skipped ? " (skipped)" : "";
       console.log(`  ${checkIcon} ${check.check}: ${check.message}${skipped}`);
     });
 
     console.log(`  ${icon} ${status}`);
   });
 
-  console.log('\n━'.repeat(50));
+  console.log("\n━".repeat(50));
 
-  const statusIcon = result.status === 'passed' ? '✅' :
-    result.status === 'pending' ? '⏳' : '❌';
+  const statusIcon = result.status === "passed" ? "✅" : result.status === "pending" ? "⏳" : "❌";
 
   console.log(`Result: ${statusIcon} ${result.status.toUpperCase()}`);
   console.log(`Duration: ${formatDuration(result.duration)}`);
@@ -152,9 +151,15 @@ function printSummary(result) {
  * @returns {string} Formatted duration
  */
 function formatDuration(ms) {
-  if (!ms) return '0ms';
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  if (!ms) {
+    return "0ms";
+  }
+  if (ms < 1000) {
+    return `${ms}ms`;
+  }
+  if (ms < 60000) {
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
   return `${(ms / 60000).toFixed(1)}m`;
 }
 

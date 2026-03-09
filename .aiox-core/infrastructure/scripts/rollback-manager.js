@@ -22,15 +22,15 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const fsPromises = require('fs').promises;
-const path = require('path');
-const readline = require('readline');
+const fs = require("fs");
+const fsPromises = require("fs").promises;
+const path = require("path");
+const readline = require("readline");
 
 // Handle different execa versions (v5 exports directly, v6+ exports under .execa)
 let execa;
 try {
-  const execaModule = require('execa');
+  const execaModule = require("execa");
   execa = execaModule.execa || execaModule;
 } catch {
   execa = null;
@@ -42,12 +42,12 @@ try {
 
 const CONFIG = {
   // File names for recovery data
-  commitsFile: 'commits.json',
-  rollbackLogFile: 'rollback-log.json',
+  commitsFile: "commits.json",
+  rollbackLogFile: "rollback-log.json",
   // Default recovery directory relative to story path
-  defaultRecoveryDir: 'recovery',
+  defaultRecoveryDir: "recovery",
   // Stories base path
-  storiesBasePath: 'docs/stories',
+  storiesBasePath: "docs/stories",
 };
 
 // ===============================================================================
@@ -92,7 +92,7 @@ class RollbackManager {
           this.rootPath,
           CONFIG.storiesBasePath,
           this.storyId,
-          CONFIG.defaultRecoveryDir
+          CONFIG.defaultRecoveryDir,
         );
       }
     }
@@ -111,7 +111,7 @@ class RollbackManager {
     const searchPaths = [
       path.join(this.rootPath, CONFIG.storiesBasePath, this.storyId),
       path.join(this.rootPath, CONFIG.storiesBasePath, this.storyId.toLowerCase()),
-      path.join(this.rootPath, CONFIG.storiesBasePath, this.storyId.replace(/[_]/g, '-')),
+      path.join(this.rootPath, CONFIG.storiesBasePath, this.storyId.replace(/[_]/g, "-")),
     ];
 
     // Also search in epic-based directories
@@ -126,7 +126,7 @@ class RollbackManager {
         for (const epicDir of epicDirs) {
           searchPaths.push(
             path.join(storiesDir, epicDir, this.storyId),
-            path.join(storiesDir, epicDir, this.storyId.toLowerCase())
+            path.join(storiesDir, epicDir, this.storyId.toLowerCase()),
           );
         }
       } catch {
@@ -160,7 +160,7 @@ class RollbackManager {
   async loadCommits() {
     try {
       if (fs.existsSync(this.commitsPath)) {
-        const content = await fsPromises.readFile(this.commitsPath, 'utf-8');
+        const content = await fsPromises.readFile(this.commitsPath, "utf-8");
         return JSON.parse(content);
       }
     } catch (error) {
@@ -180,7 +180,7 @@ class RollbackManager {
    */
   async saveCommits(commitsData) {
     await this._ensureRecoveryDir();
-    await fsPromises.writeFile(this.commitsPath, JSON.stringify(commitsData, null, 2), 'utf-8');
+    await fsPromises.writeFile(this.commitsPath, JSON.stringify(commitsData, null, 2), "utf-8");
   }
 
   /**
@@ -190,7 +190,7 @@ class RollbackManager {
   async loadRollbackLog() {
     try {
       if (fs.existsSync(this.rollbackLogPath)) {
-        const content = await fsPromises.readFile(this.rollbackLogPath, 'utf-8');
+        const content = await fsPromises.readFile(this.rollbackLogPath, "utf-8");
         return JSON.parse(content);
       }
     } catch (error) {
@@ -209,7 +209,7 @@ class RollbackManager {
    */
   async saveRollbackLog(logData) {
     await this._ensureRecoveryDir();
-    await fsPromises.writeFile(this.rollbackLogPath, JSON.stringify(logData, null, 2), 'utf-8');
+    await fsPromises.writeFile(this.rollbackLogPath, JSON.stringify(logData, null, 2), "utf-8");
   }
 
   /**
@@ -218,15 +218,15 @@ class RollbackManager {
    */
   async getCurrentCommit() {
     if (!execa) {
-      throw new Error('execa module not available for git operations');
+      throw new Error("execa module not available for git operations");
     }
     try {
-      const { stdout } = await execa('git', ['rev-parse', 'HEAD'], {
+      const { stdout } = await execa("git", ["rev-parse", "HEAD"], {
         cwd: this.rootPath,
       });
       return stdout.trim();
     } catch (error) {
-      throw new Error(`Failed to get current commit: ${error.message}`);
+      throw new Error(`Failed to get current commit: ${error.message}`, { cause: error });
     }
   }
 
@@ -256,7 +256,7 @@ class RollbackManager {
 
     console.log(`Checkpoint saved for subtask ${subtaskId}`);
     console.log(`  Commit: ${commit.substring(0, 7)}`);
-    console.log(`  Files: ${files.length > 0 ? files.join(', ') : '(none specified)'}`);
+    console.log(`  Files: ${files.length > 0 ? files.join(", ") : "(none specified)"}`);
 
     return commitsData.commits[subtaskId];
   }
@@ -287,7 +287,7 @@ class RollbackManager {
     return new Promise((resolve) => {
       rl.question(`${message} (y/N): `, (answer) => {
         rl.close();
-        resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+        resolve(answer.toLowerCase() === "y" || answer.toLowerCase() === "yes");
       });
     });
   }
@@ -302,7 +302,7 @@ class RollbackManager {
    * @returns {Promise<Object>} Rollback result
    */
   async rollback(subtaskId, options = {}) {
-    const { hard = false, reason = 'manual rollback' } = options;
+    const { hard = false, reason = "manual rollback" } = options;
 
     const result = {
       success: false,
@@ -328,17 +328,17 @@ class RollbackManager {
     // Check if already at the checkpoint
     if (currentCommit === checkpoint.lastGood) {
       console.log(
-        `Already at checkpoint ${checkpoint.lastGood.substring(0, 7)} for subtask ${subtaskId}`
+        `Already at checkpoint ${checkpoint.lastGood.substring(0, 7)} for subtask ${subtaskId}`,
       );
       result.success = true;
-      result.message = 'Already at checkpoint';
+      result.message = "Already at checkpoint";
       return result;
     }
 
     // Display warning and get confirmation (AC5)
-    console.log('\n========================================');
-    console.log('           ROLLBACK WARNING            ');
-    console.log('========================================\n');
+    console.log("\n========================================");
+    console.log("           ROLLBACK WARNING            ");
+    console.log("========================================\n");
     console.log(`Story: ${this.storyId}`);
     console.log(`Subtask: ${subtaskId}`);
     console.log(`Current commit: ${currentCommit.substring(0, 7)}`);
@@ -353,39 +353,39 @@ class RollbackManager {
       result.filesAffected = checkpoint.files;
     }
 
-    console.log('\nThis operation will:');
+    console.log("\nThis operation will:");
     if (checkpoint.files && checkpoint.files.length > 0) {
-      console.log('  - Restore specific files to their checkpoint state (targeted rollback)');
+      console.log("  - Restore specific files to their checkpoint state (targeted rollback)");
     } else {
-      console.log('  - Reset HEAD to the checkpoint commit');
+      console.log("  - Reset HEAD to the checkpoint commit");
     }
-    console.log('');
+    console.log("");
 
     // Confirm unless --hard is specified (AC7)
     if (!hard) {
-      const confirmed = await this._confirmAction('Proceed with rollback?');
+      const confirmed = await this._confirmAction("Proceed with rollback?");
       if (!confirmed) {
-        console.log('Rollback cancelled.');
-        result.message = 'Cancelled by user';
+        console.log("Rollback cancelled.");
+        result.message = "Cancelled by user";
         return result;
       }
     } else {
-      console.log('--hard flag specified, skipping confirmation...\n');
+      console.log("--hard flag specified, skipping confirmation...\n");
     }
 
     try {
       if (!execa) {
-        throw new Error('execa module not available for git operations');
+        throw new Error("execa module not available for git operations");
       }
 
       // Perform targeted rollback (AC4)
       if (checkpoint.files && checkpoint.files.length > 0) {
         // Targeted rollback: only restore specific files
-        console.log('Performing targeted rollback...');
+        console.log("Performing targeted rollback...");
 
         for (const file of checkpoint.files) {
           try {
-            await execa('git', ['checkout', checkpoint.lastGood, '--', file], {
+            await execa("git", ["checkout", checkpoint.lastGood, "--", file], {
               cwd: this.rootPath,
             });
             console.log(`  Restored: ${file}`);
@@ -395,16 +395,16 @@ class RollbackManager {
         }
       } else {
         // Full rollback: reset to checkpoint commit
-        console.log('Performing full rollback (no specific files tracked)...');
-        await execa('git', ['checkout', checkpoint.lastGood], {
+        console.log("Performing full rollback (no specific files tracked)...");
+        await execa("git", ["checkout", checkpoint.lastGood], {
           cwd: this.rootPath,
         });
       }
 
       result.success = true;
-      result.message = 'Rollback completed successfully';
+      result.message = "Rollback completed successfully";
 
-      console.log('\nRollback completed successfully!');
+      console.log("\nRollback completed successfully!");
 
       // Log the rollback (AC6)
       await this._logRollback(result);
@@ -498,7 +498,7 @@ class RollbackManager {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
+  if (args.length < 1 || args.includes("--help") || args.includes("-h")) {
     console.log(`
 Rollback Manager - AIOX Recovery System (Story 5.4)
 
@@ -547,14 +547,14 @@ Acceptance Criteria Coverage:
   AC6: Log of rollbacks in recovery/rollback-log.json
   AC7: Option --hard for force without confirmation
 `);
-    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
+    process.exit(args.includes("--help") || args.includes("-h") ? 0 : 1);
   }
 
   // Parse arguments
   const command = args[0];
   let storyId = null;
   let subtaskId = null;
-  let reason = 'manual';
+  let reason = "manual";
   let hard = false;
   let files = [];
   let commit = null;
@@ -564,17 +564,17 @@ Acceptance Criteria Coverage:
   for (let i = 1; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--hard') {
+    if (arg === "--hard") {
       hard = true;
-    } else if (arg === '--reason' && args[i + 1]) {
+    } else if (arg === "--reason" && args[i + 1]) {
       reason = args[++i];
-    } else if (arg === '--files' && args[i + 1]) {
-      files = args[++i].split(',').map((f) => f.trim());
-    } else if (arg === '--commit' && args[i + 1]) {
+    } else if (arg === "--files" && args[i + 1]) {
+      files = args[++i].split(",").map((f) => f.trim());
+    } else if (arg === "--commit" && args[i + 1]) {
       commit = args[++i];
-    } else if (arg === '--recovery-path' && args[i + 1]) {
+    } else if (arg === "--recovery-path" && args[i + 1]) {
       recoveryPath = args[++i];
-    } else if (!arg.startsWith('-')) {
+    } else if (!arg.startsWith("-")) {
       if (!storyId) {
         storyId = arg;
       } else if (!subtaskId) {
@@ -585,7 +585,7 @@ Acceptance Criteria Coverage:
 
   // Validate required arguments
   if (!storyId && !recoveryPath) {
-    console.error('Error: Story ID required');
+    console.error("Error: Story ID required");
     process.exit(1);
   }
 
@@ -596,55 +596,59 @@ Acceptance Criteria Coverage:
     });
 
     switch (command) {
-      case 'checkpoint': {
+      case "checkpoint": {
         if (!subtaskId) {
-          console.error('Error: Subtask ID required for checkpoint command');
+          console.error("Error: Subtask ID required for checkpoint command");
           process.exit(1);
         }
         const checkpointOptions = {};
-        if (files.length > 0) checkpointOptions.files = files;
-        if (commit) checkpointOptions.commit = commit;
+        if (files.length > 0) {
+          checkpointOptions.files = files;
+        }
+        if (commit) {
+          checkpointOptions.commit = commit;
+        }
 
         await manager.saveCheckpoint(subtaskId, checkpointOptions);
         break;
       }
 
-      case 'rollback': {
+      case "rollback": {
         if (!subtaskId) {
-          console.error('Error: Subtask ID required for rollback command');
+          console.error("Error: Subtask ID required for rollback command");
           process.exit(1);
         }
         const result = await manager.rollback(subtaskId, { hard, reason });
 
         if (
           !result.success &&
-          result.message !== 'Cancelled by user' &&
-          result.message !== 'Already at checkpoint'
+          result.message !== "Cancelled by user" &&
+          result.message !== "Already at checkpoint"
         ) {
           process.exit(1);
         }
         break;
       }
 
-      case 'log': {
+      case "log": {
         const log = await manager.getRollbackLog();
 
         if (log.rollbacks.length === 0) {
           console.log(`\nNo rollbacks recorded for story ${storyId}`);
         } else {
           console.log(`\nRollback History for ${storyId}:`);
-          console.log('─'.repeat(60));
+          console.log("─".repeat(60));
 
           for (const entry of log.rollbacks) {
-            const status = entry.success ? 'SUCCESS' : 'FAILED';
+            const status = entry.success ? "SUCCESS" : "FAILED";
             console.log(`\n[${entry.timestamp}] ${status}`);
             console.log(`  Subtask: ${entry.subtaskId}`);
             console.log(
-              `  From: ${entry.from?.substring(0, 7) || 'N/A'} -> To: ${entry.to?.substring(0, 7) || 'N/A'}`
+              `  From: ${entry.from?.substring(0, 7) || "N/A"} -> To: ${entry.to?.substring(0, 7) || "N/A"}`,
             );
             console.log(`  Reason: ${entry.reason}`);
             if (entry.filesAffected && entry.filesAffected.length > 0) {
-              console.log(`  Files: ${entry.filesAffected.join(', ')}`);
+              console.log(`  Files: ${entry.filesAffected.join(", ")}`);
             }
             if (entry.error) {
               console.log(`  Error: ${entry.error}`);
@@ -654,7 +658,7 @@ Acceptance Criteria Coverage:
         break;
       }
 
-      case 'list': {
+      case "list": {
         const checkpoints = await manager.listCheckpoints();
         const entries = Object.entries(checkpoints);
 
@@ -662,30 +666,30 @@ Acceptance Criteria Coverage:
           console.log(`\nNo checkpoints found for story ${storyId}`);
         } else {
           console.log(`\nCheckpoints for ${storyId}:`);
-          console.log('─'.repeat(60));
+          console.log("─".repeat(60));
 
           for (const [id, data] of entries) {
             console.log(`\n  Subtask ${id}:`);
-            console.log(`    Commit: ${data.lastGood?.substring(0, 7) || 'N/A'}`);
+            console.log(`    Commit: ${data.lastGood?.substring(0, 7) || "N/A"}`);
             console.log(`    Timestamp: ${data.timestamp}`);
             if (data.files && data.files.length > 0) {
-              console.log(`    Files: ${data.files.join(', ')}`);
+              console.log(`    Files: ${data.files.join(", ")}`);
             }
           }
         }
         break;
       }
 
-      case 'remove': {
+      case "remove": {
         if (!subtaskId) {
-          console.error('Error: Subtask ID required for remove command');
+          console.error("Error: Subtask ID required for remove command");
           process.exit(1);
         }
         await manager.removeCheckpoint(subtaskId);
         break;
       }
 
-      case 'clear': {
+      case "clear": {
         const rl = readline.createInterface({
           input: process.stdin,
           output: process.stdout,
@@ -694,21 +698,21 @@ Acceptance Criteria Coverage:
         const confirmed = await new Promise((resolve) => {
           rl.question(`Clear ALL checkpoints for ${storyId}? (y/N): `, (answer) => {
             rl.close();
-            resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+            resolve(answer.toLowerCase() === "y" || answer.toLowerCase() === "yes");
           });
         });
 
         if (confirmed) {
           await manager.clearAllCheckpoints();
         } else {
-          console.log('Operation cancelled.');
+          console.log("Operation cancelled.");
         }
         break;
       }
 
       default:
         console.error(`Unknown command: ${command}`);
-        console.log('Run with --help for usage information.');
+        console.log("Run with --help for usage information.");
         process.exit(1);
     }
   } catch (error) {

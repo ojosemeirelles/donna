@@ -26,38 +26,38 @@
  * @module pattern-extractor
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require("fs").promises;
+const path = require("path");
 
 // Pattern categories
 const PATTERN_CATEGORIES = {
-  STATE_MANAGEMENT: 'State Management',
-  API_CALLS: 'API Calls',
-  ERROR_HANDLING: 'Error Handling',
-  COMPONENTS: 'Components',
-  DATA_ACCESS: 'Data Access',
-  TESTING: 'Testing',
-  HOOKS: 'Hooks',
-  UTILITIES: 'Utilities',
+  STATE_MANAGEMENT: "State Management",
+  API_CALLS: "API Calls",
+  ERROR_HANDLING: "Error Handling",
+  COMPONENTS: "Components",
+  DATA_ACCESS: "Data Access",
+  TESTING: "Testing",
+  HOOKS: "Hooks",
+  UTILITIES: "Utilities",
 };
 
 // File extensions to analyze
-const CODE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mjs'];
+const CODE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs"];
 
 // Directories to exclude from scanning
-const EXCLUDED_DIRS = [
-  'node_modules',
-  '.git',
-  'dist',
-  'build',
-  'coverage',
-  '.next',
-  '.nuxt',
-  'tmp',
-  'temp',
-  '__pycache__',
-  '.aiox/migration-backup',
-];
+const EXCLUDED_DIRS = new Set([
+  "node_modules",
+  ".git",
+  "dist",
+  "build",
+  "coverage",
+  ".next",
+  ".nuxt",
+  "tmp",
+  "temp",
+  "__pycache__",
+  ".aiox/migration-backup",
+]);
 
 /**
  * Pattern Extractor Class
@@ -100,7 +100,7 @@ class PatternExtractor {
 
         // Skip excluded directories
         if (entry.isDirectory()) {
-          if (EXCLUDED_DIRS.includes(entry.name) || entry.name.startsWith('.')) {
+          if (EXCLUDED_DIRS.has(entry.name) || entry.name.startsWith(".")) {
             continue;
           }
           await this._walkDirectory(fullPath, files, extensions);
@@ -127,7 +127,7 @@ class PatternExtractor {
     }
 
     try {
-      const content = await fs.readFile(filePath, 'utf-8');
+      const content = await fs.readFile(filePath, "utf-8");
       this.fileCache.set(filePath, content);
       return content;
     } catch (error) {
@@ -169,9 +169,7 @@ class PatternExtractor {
       for (const pattern of patterns) {
         if (allPatterns[pattern.category]) {
           // Check for duplicates
-          const exists = allPatterns[pattern.category].some(
-            (p) => p.name === pattern.name
-          );
+          const exists = allPatterns[pattern.category].some((p) => p.name === pattern.name);
           if (!exists) {
             allPatterns[pattern.category].push(pattern);
           }
@@ -188,33 +186,47 @@ class PatternExtractor {
    */
   async detectStatePatterns(files) {
     const patterns = [];
-    const storeFiles = files.filter((f) => f.includes('store') || f.includes('Store'));
+    const storeFiles = files.filter((f) => f.includes("store") || f.includes("Store"));
 
     for (const file of storeFiles) {
       const content = await this.readFile(file);
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       // Zustand with persist middleware
-      if (content.includes('create<') && content.includes('zustand') && content.includes('persist')) {
+      if (
+        content.includes("create<") &&
+        content.includes("zustand") &&
+        content.includes("persist")
+      ) {
         const pattern = this._extractZustandPersistPattern(content, file);
-        if (pattern) patterns.push(pattern);
+        if (pattern) {
+          patterns.push(pattern);
+        }
       }
       // Zustand without persist
-      else if (content.includes('create<') && content.includes('zustand')) {
+      else if (content.includes("create<") && content.includes("zustand")) {
         const pattern = this._extractZustandPattern(content, file);
-        if (pattern) patterns.push(pattern);
+        if (pattern) {
+          patterns.push(pattern);
+        }
       }
 
       // Redux Toolkit slice
-      if (content.includes('createSlice') && content.includes('@reduxjs/toolkit')) {
+      if (content.includes("createSlice") && content.includes("@reduxjs/toolkit")) {
         const pattern = this._extractReduxSlicePattern(content, file);
-        if (pattern) patterns.push(pattern);
+        if (pattern) {
+          patterns.push(pattern);
+        }
       }
 
       // React Context
-      if (content.includes('createContext') && content.includes('useContext')) {
+      if (content.includes("createContext") && content.includes("useContext")) {
         const pattern = this._extractContextPattern(content, file);
-        if (pattern) patterns.push(pattern);
+        if (pattern) {
+          patterns.push(pattern);
+        }
       }
     }
 
@@ -230,21 +242,23 @@ class PatternExtractor {
 
     // Extract interface name
     const interfaceMatch = content.match(/interface\s+(\w+State)\s*\{/);
-    const interfaceName = interfaceMatch ? interfaceMatch[1] : 'ExampleState';
+    const interfaceName = interfaceMatch ? interfaceMatch[1] : "ExampleState";
 
     // Extract store name
     const storeMatch = content.match(/export\s+const\s+(use\w+Store)\s*=/);
-    const storeName = storeMatch ? storeMatch[1] : 'useExampleStore';
+    const storeName = storeMatch ? storeMatch[1] : "useExampleStore";
 
     // Extract persist name
     const persistMatch = content.match(/name:\s*['"`]([^'"`]+)['"`]/);
-    const persistName = persistMatch ? persistMatch[1] : 'example-storage';
+    const persistName = persistMatch ? persistMatch[1] : "example-storage";
 
     return {
       category: PATTERN_CATEGORIES.STATE_MANAGEMENT,
-      name: 'Zustand Store with Persist',
-      description: 'State management with persistence across browser sessions using Zustand and persist middleware.',
-      whenToUse: 'Any domain state that needs persistence across sessions (settings, preferences, cached data).',
+      name: "Zustand Store with Persist",
+      description:
+        "State management with persistence across browser sessions using Zustand and persist middleware.",
+      whenToUse:
+        "Any domain state that needs persistence across sessions (settings, preferences, cached data).",
       example: this._generateZustandPersistExample(interfaceName, storeName, persistName),
       filesUsing,
       confidence: 0.95,
@@ -298,9 +312,9 @@ export const ${storeName} = create<${interfaceName}>()(
 
     return {
       category: PATTERN_CATEGORIES.STATE_MANAGEMENT,
-      name: 'Zustand Store',
-      description: 'Lightweight state management with Zustand.',
-      whenToUse: 'Client-side state that does not need persistence (UI state, temporary data).',
+      name: "Zustand Store",
+      description: "Lightweight state management with Zustand.",
+      whenToUse: "Client-side state that does not need persistence (UI state, temporary data).",
       example: `\`\`\`typescript
 import { create } from 'zustand';
 
@@ -315,7 +329,7 @@ export const useUIStore = create<UIState>()((set) => ({
 }));
 \`\`\``,
       filesUsing: [relativePath],
-      confidence: 0.90,
+      confidence: 0.9,
     };
   }
 
@@ -327,9 +341,9 @@ export const useUIStore = create<UIState>()((set) => ({
 
     return {
       category: PATTERN_CATEGORIES.STATE_MANAGEMENT,
-      name: 'Redux Toolkit Slice',
-      description: 'Redux state management using Redux Toolkit createSlice.',
-      whenToUse: 'Complex application state with DevTools support and time-travel debugging needs.',
+      name: "Redux Toolkit Slice",
+      description: "Redux state management using Redux Toolkit createSlice.",
+      whenToUse: "Complex application state with DevTools support and time-travel debugging needs.",
       example: `\`\`\`typescript
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
@@ -355,7 +369,7 @@ export const { increment, decrement, incrementByAmount } = counterSlice.actions;
 export default counterSlice.reducer;
 \`\`\``,
       filesUsing: [relativePath],
-      confidence: 0.90,
+      confidence: 0.9,
     };
   }
 
@@ -367,9 +381,10 @@ export default counterSlice.reducer;
 
     return {
       category: PATTERN_CATEGORIES.STATE_MANAGEMENT,
-      name: 'React Context Pattern',
-      description: 'Native React state management using Context API.',
-      whenToUse: 'Shared state across component tree without external libraries (theme, auth, locale).',
+      name: "React Context Pattern",
+      description: "Native React state management using Context API.",
+      whenToUse:
+        "Shared state across component tree without external libraries (theme, auth, locale).",
       example: `\`\`\`typescript
 import { createContext, useContext, useState, ReactNode } from 'react';
 
@@ -411,18 +426,22 @@ export function useTheme() {
 
     for (const file of files) {
       const content = await this.readFile(file);
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       const relativePath = path.relative(this.rootPath, file);
 
       // SWR Pattern
-      if (content.includes('useSWR') && !seenPatterns.has('swr')) {
-        seenPatterns.add('swr');
+      if (content.includes("useSWR") && !seenPatterns.has("swr")) {
+        seenPatterns.add("swr");
         patterns.push({
           category: PATTERN_CATEGORIES.API_CALLS,
-          name: 'SWR Data Fetching',
-          description: 'Data fetching with automatic caching, revalidation, and optimistic updates.',
-          whenToUse: 'Client-side data fetching with automatic cache management and real-time sync.',
+          name: "SWR Data Fetching",
+          description:
+            "Data fetching with automatic caching, revalidation, and optimistic updates.",
+          whenToUse:
+            "Client-side data fetching with automatic cache management and real-time sync.",
           example: `\`\`\`typescript
 import useSWR from 'swr';
 
@@ -453,13 +472,18 @@ export function useData(id: string) {
       }
 
       // Fetch with error handling
-      if (content.includes('fetch(') && content.includes('try') && content.includes('catch') && !seenPatterns.has('fetch-error')) {
-        seenPatterns.add('fetch-error');
+      if (
+        content.includes("fetch(") &&
+        content.includes("try") &&
+        content.includes("catch") &&
+        !seenPatterns.has("fetch-error")
+      ) {
+        seenPatterns.add("fetch-error");
         patterns.push({
           category: PATTERN_CATEGORIES.API_CALLS,
-          name: 'Fetch with Error Handling',
-          description: 'Standard fetch API wrapper with proper error handling.',
-          whenToUse: 'Simple API calls without external libraries.',
+          name: "Fetch with Error Handling",
+          description: "Standard fetch API wrapper with proper error handling.",
+          whenToUse: "Simple API calls without external libraries.",
           example: `\`\`\`typescript
 async function fetchData<T>(url: string, options?: RequestInit): Promise<T> {
   try {
@@ -487,13 +511,16 @@ async function fetchData<T>(url: string, options?: RequestInit): Promise<T> {
       }
 
       // React Query / TanStack Query
-      if ((content.includes('useQuery') || content.includes('@tanstack/react-query')) && !seenPatterns.has('react-query')) {
-        seenPatterns.add('react-query');
+      if (
+        (content.includes("useQuery") || content.includes("@tanstack/react-query")) &&
+        !seenPatterns.has("react-query")
+      ) {
+        seenPatterns.add("react-query");
         patterns.push({
           category: PATTERN_CATEGORIES.API_CALLS,
-          name: 'TanStack Query',
-          description: 'Powerful data synchronization with React Query.',
-          whenToUse: 'Complex data fetching with caching, background updates, and mutations.',
+          name: "TanStack Query",
+          description: "Powerful data synchronization with React Query.",
+          whenToUse: "Complex data fetching with caching, background updates, and mutations.",
           example: `\`\`\`typescript
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -521,7 +548,7 @@ export function useCreateItem() {
 }
 \`\`\``,
           filesUsing: [relativePath],
-          confidence: 0.90,
+          confidence: 0.9,
         });
       }
     }
@@ -538,19 +565,21 @@ export function useCreateItem() {
 
     for (const file of files) {
       const content = await this.readFile(file);
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       const relativePath = path.relative(this.rootPath, file);
 
       // Try-catch with context
       if (content.match(/catch\s*\(\s*error\s*\)\s*\{[^}]*console\.error\s*\(/)) {
-        if (!seenPatterns.has('try-catch-context')) {
-          seenPatterns.add('try-catch-context');
+        if (!seenPatterns.has("try-catch-context")) {
+          seenPatterns.add("try-catch-context");
           patterns.push({
             category: PATTERN_CATEGORIES.ERROR_HANDLING,
-            name: 'Try-Catch with Context',
-            description: 'Error handling with contextual logging and re-throwing.',
-            whenToUse: 'Any async operation that needs proper error tracking.',
+            name: "Try-Catch with Context",
+            description: "Error handling with contextual logging and re-throwing.",
+            whenToUse: "Any async operation that needs proper error tracking.",
             example: `\`\`\`typescript
 async function operation(params: Params): Promise<Result> {
   try {
@@ -563,20 +592,20 @@ async function operation(params: Params): Promise<Result> {
 }
 \`\`\``,
             filesUsing: [relativePath],
-            confidence: 0.90,
+            confidence: 0.9,
           });
         }
       }
 
       // Error boundary pattern (React)
-      if (content.includes('componentDidCatch') || content.includes('ErrorBoundary')) {
-        if (!seenPatterns.has('error-boundary')) {
-          seenPatterns.add('error-boundary');
+      if (content.includes("componentDidCatch") || content.includes("ErrorBoundary")) {
+        if (!seenPatterns.has("error-boundary")) {
+          seenPatterns.add("error-boundary");
           patterns.push({
             category: PATTERN_CATEGORIES.ERROR_HANDLING,
-            name: 'React Error Boundary',
-            description: 'Catch and handle rendering errors in React component tree.',
-            whenToUse: 'Wrap component subtrees to prevent entire app crashes.',
+            name: "React Error Boundary",
+            description: "Catch and handle rendering errors in React component tree.",
+            whenToUse: "Wrap component subtrees to prevent entire app crashes.",
             example: `\`\`\`typescript
 'use client';
 
@@ -618,14 +647,17 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       // Toast notifications for errors
-      if (content.includes('toast.error') || content.includes('toast(') && content.includes('error')) {
-        if (!seenPatterns.has('toast-error')) {
-          seenPatterns.add('toast-error');
+      if (
+        content.includes("toast.error") ||
+        (content.includes("toast(") && content.includes("error"))
+      ) {
+        if (!seenPatterns.has("toast-error")) {
+          seenPatterns.add("toast-error");
           patterns.push({
             category: PATTERN_CATEGORIES.ERROR_HANDLING,
-            name: 'Toast Error Notifications',
-            description: 'User-friendly error notifications using toast library.',
-            whenToUse: 'Display errors to users in a non-intrusive way.',
+            name: "Toast Error Notifications",
+            description: "User-friendly error notifications using toast library.",
+            whenToUse: "Display errors to users in a non-intrusive way.",
             example: `\`\`\`typescript
 import { toast } from 'sonner'; // or react-hot-toast
 
@@ -655,23 +687,26 @@ async function handleSubmit(data: FormData) {
     const patterns = [];
     const seenPatterns = new Set();
 
-    const componentFiles = files.filter((f) => f.endsWith('.tsx') || f.endsWith('.jsx'));
+    const componentFiles = files.filter((f) => f.endsWith(".tsx") || f.endsWith(".jsx"));
 
     for (const file of componentFiles) {
       const content = await this.readFile(file);
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       const relativePath = path.relative(this.rootPath, file);
 
       // Memoized component pattern
-      if (content.includes('memo(function') || content.includes('memo(')) {
-        if (!seenPatterns.has('memo-component')) {
-          seenPatterns.add('memo-component');
+      if (content.includes("memo(function") || content.includes("memo(")) {
+        if (!seenPatterns.has("memo-component")) {
+          seenPatterns.add("memo-component");
           patterns.push({
             category: PATTERN_CATEGORIES.COMPONENTS,
-            name: 'Memoized Component',
-            description: 'Performance-optimized component using React.memo.',
-            whenToUse: 'Components that receive the same props frequently and are expensive to render.',
+            name: "Memoized Component",
+            description: "Performance-optimized component using React.memo.",
+            whenToUse:
+              "Components that receive the same props frequently and are expensive to render.",
             example: `\`\`\`typescript
 import { memo } from 'react';
 
@@ -691,20 +726,21 @@ export const Card = memo(function Card({ title, description, onClick }: CardProp
 });
 \`\`\``,
             filesUsing: [relativePath],
-            confidence: 0.90,
+            confidence: 0.9,
           });
         }
       }
 
       // Compound component pattern
       if (content.match(/\w+\.\w+\s*=\s*function|\w+\.\w+\s*=\s*\(/)) {
-        if (!seenPatterns.has('compound-component')) {
-          seenPatterns.add('compound-component');
+        if (!seenPatterns.has("compound-component")) {
+          seenPatterns.add("compound-component");
           patterns.push({
             category: PATTERN_CATEGORIES.COMPONENTS,
-            name: 'Compound Component',
-            description: 'Component with attached sub-components for flexible composition.',
-            whenToUse: 'Complex UI components that need flexible internal composition (Card, Menu, Dialog).',
+            name: "Compound Component",
+            description: "Component with attached sub-components for flexible composition.",
+            whenToUse:
+              "Complex UI components that need flexible internal composition (Card, Menu, Dialog).",
             example: `\`\`\`typescript
 interface CardProps {
   children: ReactNode;
@@ -736,20 +772,20 @@ export { Card };
 // </Card>
 \`\`\``,
             filesUsing: [relativePath],
-            confidence: 0.80,
+            confidence: 0.8,
           });
         }
       }
 
       // Conditional rendering with cn/clsx
-      if (content.includes('cn(') || content.includes('clsx(')) {
-        if (!seenPatterns.has('conditional-classnames')) {
-          seenPatterns.add('conditional-classnames');
+      if (content.includes("cn(") || content.includes("clsx(")) {
+        if (!seenPatterns.has("conditional-classnames")) {
+          seenPatterns.add("conditional-classnames");
           patterns.push({
             category: PATTERN_CATEGORIES.COMPONENTS,
-            name: 'Conditional Class Names',
-            description: 'Utility for conditional class name composition.',
-            whenToUse: 'Dynamic styling based on props or state.',
+            name: "Conditional Class Names",
+            description: "Utility for conditional class name composition.",
+            whenToUse: "Dynamic styling based on props or state.",
             example: `\`\`\`typescript
 import { cn } from '@/lib/utils';
 
@@ -797,23 +833,25 @@ export function Button({ variant = 'primary', size = 'md', disabled, children }:
     const patterns = [];
     const seenPatterns = new Set();
 
-    const hookFiles = files.filter((f) => f.includes('/hooks/') || f.includes('use'));
+    const hookFiles = files.filter((f) => f.includes("/hooks/") || f.includes("use"));
 
     for (const file of hookFiles) {
       const content = await this.readFile(file);
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       const relativePath = path.relative(this.rootPath, file);
 
       // Custom hook with store
-      if (content.match(/export\s+function\s+use\w+\s*\(/) && content.includes('Store')) {
-        if (!seenPatterns.has('hook-with-store')) {
-          seenPatterns.add('hook-with-store');
+      if (content.match(/export\s+function\s+use\w+\s*\(/) && content.includes("Store")) {
+        if (!seenPatterns.has("hook-with-store")) {
+          seenPatterns.add("hook-with-store");
           patterns.push({
             category: PATTERN_CATEGORIES.HOOKS,
-            name: 'Custom Hook with Store',
-            description: 'Custom hook that combines store state with additional logic.',
-            whenToUse: 'Encapsulate store access and related business logic.',
+            name: "Custom Hook with Store",
+            description: "Custom hook that combines store state with additional logic.",
+            whenToUse: "Encapsulate store access and related business logic.",
             example: `\`\`\`typescript
 import { useAgentStore } from '@/stores/agent-store';
 import { useCallback, useMemo } from 'react';
@@ -842,20 +880,20 @@ export function useAgents() {
 }
 \`\`\``,
             filesUsing: [relativePath],
-            confidence: 0.90,
+            confidence: 0.9,
           });
         }
       }
 
       // useEffect with cleanup
-      if (content.includes('useEffect') && content.match(/return\s*\(\)\s*=>/)) {
-        if (!seenPatterns.has('useeffect-cleanup')) {
-          seenPatterns.add('useeffect-cleanup');
+      if (content.includes("useEffect") && content.match(/return\s*\(\)\s*=>/)) {
+        if (!seenPatterns.has("useeffect-cleanup")) {
+          seenPatterns.add("useeffect-cleanup");
           patterns.push({
             category: PATTERN_CATEGORIES.HOOKS,
-            name: 'useEffect with Cleanup',
-            description: 'Effect hook with proper cleanup function.',
-            whenToUse: 'Effects that create subscriptions, timers, or event listeners.',
+            name: "useEffect with Cleanup",
+            description: "Effect hook with proper cleanup function.",
+            whenToUse: "Effects that create subscriptions, timers, or event listeners.",
             example: `\`\`\`typescript
 import { useEffect, useState } from 'react';
 
@@ -883,20 +921,20 @@ export function useWindowSize() {
 }
 \`\`\``,
             filesUsing: [relativePath],
-            confidence: 0.90,
+            confidence: 0.9,
           });
         }
       }
 
       // useCallback pattern
-      if (content.includes('useCallback') && content.includes('useMemo')) {
-        if (!seenPatterns.has('callback-memo')) {
-          seenPatterns.add('callback-memo');
+      if (content.includes("useCallback") && content.includes("useMemo")) {
+        if (!seenPatterns.has("callback-memo")) {
+          seenPatterns.add("callback-memo");
           patterns.push({
             category: PATTERN_CATEGORIES.HOOKS,
-            name: 'useCallback + useMemo',
-            description: 'Memoization patterns for performance optimization.',
-            whenToUse: 'Prevent unnecessary re-renders in child components.',
+            name: "useCallback + useMemo",
+            description: "Memoization patterns for performance optimization.",
+            whenToUse: "Prevent unnecessary re-renders in child components.",
             example: `\`\`\`typescript
 import { useCallback, useMemo } from 'react';
 
@@ -948,19 +986,21 @@ export function useFilters(items: Item[]) {
 
     for (const file of files) {
       const content = await this.readFile(file);
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       const relativePath = path.relative(this.rootPath, file);
 
       // Prisma ORM pattern
-      if (content.includes('prisma') && content.includes('findMany')) {
-        if (!seenPatterns.has('prisma')) {
-          seenPatterns.add('prisma');
+      if (content.includes("prisma") && content.includes("findMany")) {
+        if (!seenPatterns.has("prisma")) {
+          seenPatterns.add("prisma");
           patterns.push({
             category: PATTERN_CATEGORIES.DATA_ACCESS,
-            name: 'Prisma ORM Queries',
-            description: 'Type-safe database queries using Prisma ORM.',
-            whenToUse: 'Database access in Node.js/Next.js applications.',
+            name: "Prisma ORM Queries",
+            description: "Type-safe database queries using Prisma ORM.",
+            whenToUse: "Database access in Node.js/Next.js applications.",
             example: `\`\`\`typescript
 import { prisma } from '@/lib/prisma';
 
@@ -992,20 +1032,20 @@ export async function getUsers(options?: {
 }
 \`\`\``,
             filesUsing: [relativePath],
-            confidence: 0.90,
+            confidence: 0.9,
           });
         }
       }
 
       // File system operations
       if (content.includes("fs.promises") || content.includes("require('fs').promises")) {
-        if (!seenPatterns.has('fs-async')) {
-          seenPatterns.add('fs-async');
+        if (!seenPatterns.has("fs-async")) {
+          seenPatterns.add("fs-async");
           patterns.push({
             category: PATTERN_CATEGORIES.DATA_ACCESS,
-            name: 'Async File Operations',
-            description: 'File system operations using fs.promises.',
-            whenToUse: 'Reading/writing files in Node.js scripts.',
+            name: "Async File Operations",
+            description: "File system operations using fs.promises.",
+            whenToUse: "Reading/writing files in Node.js scripts.",
             example: `\`\`\`typescript
 const fs = require('fs').promises;
 const path = require('path');
@@ -1043,23 +1083,25 @@ async function writeJsonFile<T>(filePath: string, data: T): Promise<void> {
     const patterns = [];
     const seenPatterns = new Set();
 
-    const testFiles = files.filter((f) => f.includes('.test.') || f.includes('.spec.'));
+    const testFiles = files.filter((f) => f.includes(".test.") || f.includes(".spec."));
 
     for (const file of testFiles) {
       const content = await this.readFile(file);
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       const relativePath = path.relative(this.rootPath, file);
 
       // Jest describe/it pattern
-      if (content.includes('describe(') && content.includes('it(')) {
-        if (!seenPatterns.has('jest-basic')) {
-          seenPatterns.add('jest-basic');
+      if (content.includes("describe(") && content.includes("it(")) {
+        if (!seenPatterns.has("jest-basic")) {
+          seenPatterns.add("jest-basic");
           patterns.push({
             category: PATTERN_CATEGORIES.TESTING,
-            name: 'Jest Test Structure',
-            description: 'Standard Jest test file structure with describe/it blocks.',
-            whenToUse: 'Unit and integration tests for JavaScript/TypeScript code.',
+            name: "Jest Test Structure",
+            description: "Standard Jest test file structure with describe/it blocks.",
+            whenToUse: "Unit and integration tests for JavaScript/TypeScript code.",
             example: `\`\`\`typescript
 describe('ComponentName', () => {
   beforeEach(() => {
@@ -1095,14 +1137,14 @@ describe('ComponentName', () => {
       }
 
       // Mock pattern
-      if (content.includes('jest.mock') || content.includes('vi.mock')) {
-        if (!seenPatterns.has('jest-mock')) {
-          seenPatterns.add('jest-mock');
+      if (content.includes("jest.mock") || content.includes("vi.mock")) {
+        if (!seenPatterns.has("jest-mock")) {
+          seenPatterns.add("jest-mock");
           patterns.push({
             category: PATTERN_CATEGORIES.TESTING,
-            name: 'Module Mocking',
-            description: 'Mocking modules and dependencies in tests.',
-            whenToUse: 'Isolate units under test from external dependencies.',
+            name: "Module Mocking",
+            description: "Mocking modules and dependencies in tests.",
+            whenToUse: "Isolate units under test from external dependencies.",
             example: `\`\`\`typescript
 // Mock an entire module
 jest.mock('@/lib/api', () => ({
@@ -1136,7 +1178,7 @@ describe('MyComponent', () => {
 });
 \`\`\``,
             filesUsing: [relativePath],
-            confidence: 0.90,
+            confidence: 0.9,
           });
         }
       }
@@ -1152,23 +1194,27 @@ describe('MyComponent', () => {
     const patterns = [];
     const seenPatterns = new Set();
 
-    const utilFiles = files.filter((f) => f.includes('/utils/') || f.includes('/lib/') || f.includes('/helpers/'));
+    const utilFiles = files.filter(
+      (f) => f.includes("/utils/") || f.includes("/lib/") || f.includes("/helpers/"),
+    );
 
     for (const file of utilFiles) {
       const content = await this.readFile(file);
-      if (!content) continue;
+      if (!content) {
+        continue;
+      }
 
       const relativePath = path.relative(this.rootPath, file);
 
       // Class-based utility
-      if (content.match(/class\s+\w+\s*\{/) && content.includes('constructor')) {
-        if (!seenPatterns.has('class-utility')) {
-          seenPatterns.add('class-utility');
+      if (content.match(/class\s+\w+\s*\{/) && content.includes("constructor")) {
+        if (!seenPatterns.has("class-utility")) {
+          seenPatterns.add("class-utility");
           patterns.push({
             category: PATTERN_CATEGORIES.UTILITIES,
-            name: 'Class-Based Utility',
-            description: 'Utility class with encapsulated functionality.',
-            whenToUse: 'Complex utilities with state or multiple related methods.',
+            name: "Class-Based Utility",
+            description: "Utility class with encapsulated functionality.",
+            whenToUse: "Complex utilities with state or multiple related methods.",
             example: `\`\`\`typescript
 class TemplateEngine {
   constructor(options = {}) {
@@ -1204,14 +1250,14 @@ module.exports = TemplateEngine;
       }
 
       // Functional utilities with exports
-      if (content.includes('module.exports') && content.match(/function\s+\w+\s*\(/)) {
-        if (!seenPatterns.has('functional-utilities')) {
-          seenPatterns.add('functional-utilities');
+      if (content.includes("module.exports") && content.match(/function\s+\w+\s*\(/)) {
+        if (!seenPatterns.has("functional-utilities")) {
+          seenPatterns.add("functional-utilities");
           patterns.push({
             category: PATTERN_CATEGORIES.UTILITIES,
-            name: 'Functional Utilities',
-            description: 'Collection of pure utility functions.',
-            whenToUse: 'Simple, reusable utility functions.',
+            name: "Functional Utilities",
+            description: "Collection of pure utility functions.",
+            whenToUse: "Simple, reusable utility functions.",
             example: `\`\`\`typescript
 /**
  * Format bytes to human readable string
@@ -1245,7 +1291,7 @@ function deepClone(obj) {
 module.exports = { formatBytes, debounce, deepClone };
 \`\`\``,
             filesUsing: [relativePath],
-            confidence: 0.80,
+            confidence: 0.8,
           });
         }
       }
@@ -1266,47 +1312,49 @@ module.exports = { formatBytes, debounce, deepClone };
     const lines = [];
     const timestamp = new Date().toISOString();
 
-    lines.push('# Project Patterns');
-    lines.push('');
-    lines.push('> Auto-generated from codebase analysis');
+    lines.push("# Project Patterns");
+    lines.push("");
+    lines.push("> Auto-generated from codebase analysis");
     lines.push(`> Last updated: ${timestamp}`);
-    lines.push('');
+    lines.push("");
 
     // Generate table of contents
-    lines.push('## Table of Contents');
-    lines.push('');
+    lines.push("## Table of Contents");
+    lines.push("");
     for (const [category, patterns] of Object.entries(this.detectedPatterns)) {
       if (patterns.length > 0) {
-        const anchor = category.toLowerCase().replace(/\s+/g, '-');
+        const anchor = category.toLowerCase().replace(/\s+/g, "-");
         lines.push(`- [${category}](#${anchor})`);
       }
     }
-    lines.push('');
+    lines.push("");
 
     // Generate each category section
     for (const [category, patterns] of Object.entries(this.detectedPatterns)) {
-      if (patterns.length === 0) continue;
+      if (patterns.length === 0) {
+        continue;
+      }
 
       lines.push(`## ${category}`);
-      lines.push('');
+      lines.push("");
 
       for (const pattern of patterns) {
         lines.push(`### ${pattern.name}`);
-        lines.push('');
+        lines.push("");
         lines.push(pattern.example);
-        lines.push('');
+        lines.push("");
         lines.push(`**When to use:** ${pattern.whenToUse}`);
-        lines.push('');
+        lines.push("");
         if (pattern.filesUsing && pattern.filesUsing.length > 0) {
-          lines.push(`**Files using this pattern:** ${pattern.filesUsing.join(', ')}`);
-          lines.push('');
+          lines.push(`**Files using this pattern:** ${pattern.filesUsing.join(", ")}`);
+          lines.push("");
         }
-        lines.push('---');
-        lines.push('');
+        lines.push("---");
+        lines.push("");
       }
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -1314,7 +1362,7 @@ module.exports = { formatBytes, debounce, deepClone };
    * @param {string} outputPath - Output file path
    */
   async savePatterns(outputPath) {
-    const defaultPath = path.join(this.rootPath, '.aiox', 'patterns.md');
+    const defaultPath = path.join(this.rootPath, ".aiox", "patterns.md");
     const targetPath = outputPath || defaultPath;
 
     // Ensure directory exists
@@ -1322,7 +1370,7 @@ module.exports = { formatBytes, debounce, deepClone };
     await fs.mkdir(dir, { recursive: true });
 
     const content = this.generateMarkdown();
-    await fs.writeFile(targetPath, content, 'utf-8');
+    await fs.writeFile(targetPath, content, "utf-8");
 
     return targetPath;
   }
@@ -1332,11 +1380,11 @@ module.exports = { formatBytes, debounce, deepClone };
    * @param {string} existingPath - Path to existing patterns file
    */
   async mergeWithExisting(existingPath) {
-    const defaultPath = path.join(this.rootPath, '.aiox', 'patterns.md');
+    const defaultPath = path.join(this.rootPath, ".aiox", "patterns.md");
     const targetPath = existingPath || defaultPath;
 
     try {
-      const existingContent = await fs.readFile(targetPath, 'utf-8');
+      const existingContent = await fs.readFile(targetPath, "utf-8");
 
       // Extract existing patterns
       const existingPatterns = this._parseExistingPatterns(existingContent);
@@ -1349,7 +1397,7 @@ module.exports = { formatBytes, debounce, deepClone };
 
         for (const pattern of patterns) {
           const existingIndex = existingPatterns[category].findIndex(
-            (p) => p.name === pattern.name
+            (p) => p.name === pattern.name,
           );
 
           if (existingIndex >= 0) {
@@ -1417,7 +1465,7 @@ module.exports = { formatBytes, debounce, deepClone };
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.includes('--help') || args.includes('-h')) {
+  if (args.includes("--help") || args.includes("-h")) {
     console.log(`
 AIOX Pattern Extractor
 Extracts and documents code patterns from the codebase.
@@ -1448,31 +1496,31 @@ Examples:
   }
 
   // Parse arguments
-  const command = args.find((a) => !a.startsWith('--')) || 'extract';
-  const quiet = args.includes('--quiet');
+  const command = args.find((a) => !a.startsWith("--")) || "extract";
+  const quiet = args.includes("--quiet");
 
-  const rootIndex = args.indexOf('--root');
+  const rootIndex = args.indexOf("--root");
   const rootPath = rootIndex !== -1 ? args[rootIndex + 1] : process.cwd();
 
-  const outputIndex = args.indexOf('--output');
+  const outputIndex = args.indexOf("--output");
   const outputPath = outputIndex !== -1 ? args[outputIndex + 1] : null;
 
-  const categoryIndex = args.indexOf('--category');
+  const categoryIndex = args.indexOf("--category");
   const categoryFilter = categoryIndex !== -1 ? args[categoryIndex + 1] : null;
 
   // Find project root (look for package.json or .aiox-core)
   let projectRoot = rootPath;
-  while (projectRoot !== '/') {
+  while (projectRoot !== "/") {
     try {
-      await fs.access(path.join(projectRoot, 'package.json'));
+      await fs.access(path.join(projectRoot, "package.json"));
       break;
     } catch {
       projectRoot = path.dirname(projectRoot);
     }
   }
 
-  if (projectRoot === '/') {
-    console.error('Error: Could not find project root. Run from within a project directory.');
+  if (projectRoot === "/") {
+    console.error("Error: Could not find project root. Run from within a project directory.");
     process.exit(1);
   }
 
@@ -1498,35 +1546,43 @@ Examples:
 
   // Execute command
   switch (command) {
-    case 'json': {
+    case "json": {
       const json = extractor.toJSON();
       if (outputPath) {
         await fs.writeFile(outputPath, JSON.stringify(json, null, 2));
-        if (!quiet) console.log(`JSON saved to: ${outputPath}`);
+        if (!quiet) {
+          console.log(`JSON saved to: ${outputPath}`);
+        }
       } else {
         console.log(JSON.stringify(json, null, 2));
       }
       break;
     }
 
-    case 'save': {
+    case "save": {
       const savedPath = await extractor.savePatterns(outputPath);
-      if (!quiet) console.log(`Patterns saved to: ${savedPath}`);
+      if (!quiet) {
+        console.log(`Patterns saved to: ${savedPath}`);
+      }
       break;
     }
 
-    case 'merge': {
+    case "merge": {
       const mergedPath = await extractor.mergeWithExisting(outputPath);
-      if (!quiet) console.log(`Patterns merged and saved to: ${mergedPath}`);
+      if (!quiet) {
+        console.log(`Patterns merged and saved to: ${mergedPath}`);
+      }
       break;
     }
 
-    case 'extract':
+    case "extract":
     default: {
       const markdown = extractor.generateMarkdown();
       if (outputPath) {
         await fs.writeFile(outputPath, markdown);
-        if (!quiet) console.log(`Patterns saved to: ${outputPath}`);
+        if (!quiet) {
+          console.log(`Patterns saved to: ${outputPath}`);
+        }
       } else {
         console.log(markdown);
       }
@@ -1538,7 +1594,7 @@ Examples:
   if (!quiet) {
     const totalPatterns = Object.values(extractor.detectedPatterns).reduce(
       (sum, p) => sum + p.length,
-      0
+      0,
     );
     console.log(`\nTotal patterns detected: ${totalPatterns}`);
     for (const [category, patterns] of Object.entries(extractor.detectedPatterns)) {
@@ -1555,7 +1611,7 @@ module.exports = PatternExtractor;
 // Run CLI if called directly
 if (require.main === module) {
   main().catch((error) => {
-    console.error('Error:', error.message);
+    console.error("Error:", error.message);
     process.exit(1);
   });
 }

@@ -22,14 +22,14 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const fsPromises = require('fs').promises;
-const path = require('path');
+const fs = require("fs");
+const fsPromises = require("fs").promises;
+const path = require("path");
 
 // Optional dependencies with graceful fallback
 let chalk;
 try {
-  chalk = require('chalk');
+  chalk = require("chalk");
 } catch {
   chalk = {
     blue: (s) => s,
@@ -49,13 +49,13 @@ try {
 
 const CONFIG = {
   // AC3: Default recovery directory within story
-  recoveryDir: 'recovery',
+  recoveryDir: "recovery",
   // AC3: Attempts file name
-  attemptsFile: 'attempts.json',
+  attemptsFile: "attempts.json",
   // Stories base directory
-  storiesBasePath: 'docs/stories',
+  storiesBasePath: "docs/stories",
   // Schema version
-  schemaVersion: '1.0',
+  schemaVersion: "1.0",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -63,17 +63,17 @@ const CONFIG = {
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 const AttemptStatus = {
-  IN_PROGRESS: 'in_progress',
-  SUCCESS: 'success',
-  FAILED: 'failed',
-  ABANDONED: 'abandoned',
+  IN_PROGRESS: "in_progress",
+  SUCCESS: "success",
+  FAILED: "failed",
+  ABANDONED: "abandoned",
 };
 
 const SubtaskStatus = {
-  PENDING: 'pending',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  FAILED: 'failed',
+  PENDING: "pending",
+  IN_PROGRESS: "in_progress",
+  COMPLETED: "completed",
+  FAILED: "failed",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -85,33 +85,33 @@ const SubtaskStatus = {
  * AC5: Schema de validacao para attempts.json
  */
 const ATTEMPTS_SCHEMA = {
-  type: 'object',
-  required: ['subtaskId', 'storyId', 'attempts', 'currentAttempt', 'status'],
+  type: "object",
+  required: ["subtaskId", "storyId", "attempts", "currentAttempt", "status"],
   properties: {
-    subtaskId: { type: 'string', pattern: '^\\d+\\.\\d+$' },
-    storyId: { type: 'string' },
+    subtaskId: { type: "string", pattern: "^\\d+\\.\\d+$" },
+    storyId: { type: "string" },
     attempts: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'object',
-        required: ['number', 'timestamp', 'approach'],
+        type: "object",
+        required: ["number", "timestamp", "approach"],
         properties: {
-          number: { type: 'integer', minimum: 1 },
-          timestamp: { type: 'string', format: 'date-time' },
-          approach: { type: 'string' },
-          changes: { type: 'array', items: { type: 'string' } },
-          success: { type: 'boolean' },
-          error: { type: 'string' },
-          duration: { type: 'string' },
-          completedAt: { type: 'string', format: 'date-time' },
-          notes: { type: 'string' },
+          number: { type: "integer", minimum: 1 },
+          timestamp: { type: "string", format: "date-time" },
+          approach: { type: "string" },
+          changes: { type: "array", items: { type: "string" } },
+          success: { type: "boolean" },
+          error: { type: "string" },
+          duration: { type: "string" },
+          completedAt: { type: "string", format: "date-time" },
+          notes: { type: "string" },
         },
       },
     },
-    currentAttempt: { type: 'integer', minimum: 0 },
-    status: { enum: ['pending', 'in_progress', 'completed', 'failed'] },
-    createdAt: { type: 'string', format: 'date-time' },
-    updatedAt: { type: 'string', format: 'date-time' },
+    currentAttempt: { type: "integer", minimum: 0 },
+    status: { enum: ["pending", "in_progress", "completed", "failed"] },
+    createdAt: { type: "string", format: "date-time" },
+    updatedAt: { type: "string", format: "date-time" },
   },
 };
 
@@ -131,28 +131,28 @@ function validateAttemptsSchema(data) {
   }
 
   // Type checks
-  if (typeof data.subtaskId !== 'string') {
-    errors.push('subtaskId must be a string');
+  if (typeof data.subtaskId !== "string") {
+    errors.push("subtaskId must be a string");
   } else if (!/^\d+\.\d+$/.test(data.subtaskId)) {
     errors.push('subtaskId must match pattern X.Y (e.g., "2.1")');
   }
 
-  if (typeof data.storyId !== 'string') {
-    errors.push('storyId must be a string');
+  if (typeof data.storyId !== "string") {
+    errors.push("storyId must be a string");
   }
 
   if (!Array.isArray(data.attempts)) {
-    errors.push('attempts must be an array');
+    errors.push("attempts must be an array");
   } else {
     for (let i = 0; i < data.attempts.length; i++) {
       const attempt = data.attempts[i];
-      if (typeof attempt.number !== 'number' || attempt.number < 1) {
+      if (typeof attempt.number !== "number" || attempt.number < 1) {
         errors.push(`attempts[${i}].number must be a positive integer`);
       }
-      if (typeof attempt.timestamp !== 'string') {
+      if (typeof attempt.timestamp !== "string") {
         errors.push(`attempts[${i}].timestamp must be a string`);
       }
-      if (typeof attempt.approach !== 'string') {
+      if (typeof attempt.approach !== "string") {
         errors.push(`attempts[${i}].approach must be a string`);
       }
       if (attempt.changes !== undefined && !Array.isArray(attempt.changes)) {
@@ -161,13 +161,13 @@ function validateAttemptsSchema(data) {
     }
   }
 
-  if (typeof data.currentAttempt !== 'number' || data.currentAttempt < 0) {
-    errors.push('currentAttempt must be a non-negative integer');
+  if (typeof data.currentAttempt !== "number" || data.currentAttempt < 0) {
+    errors.push("currentAttempt must be a non-negative integer");
   }
 
-  const validStatuses = ['pending', 'in_progress', 'completed', 'failed'];
+  const validStatuses = ["pending", "in_progress", "completed", "failed"];
   if (!validStatuses.includes(data.status)) {
-    errors.push(`status must be one of: ${validStatuses.join(', ')}`);
+    errors.push(`status must be one of: ${validStatuses.join(", ")}`);
   }
 
   return { valid: errors.length === 0, errors };
@@ -194,7 +194,7 @@ class RecoveryTracker {
    */
   constructor(options = {}) {
     if (!options.storyId) {
-      throw new Error('storyId is required');
+      throw new Error("storyId is required");
     }
 
     this.storyId = options.storyId;
@@ -223,7 +223,7 @@ class RecoveryTracker {
    */
   _getAttemptsFilePath(subtaskId) {
     // Sanitize subtask ID for filename (2.1 -> subtask-2.1.json)
-    const safeId = subtaskId.replace(/[^0-9.]/g, '');
+    const safeId = subtaskId.replace(/[^0-9.]/g, "");
     return path.join(this.recoveryPath, `subtask-${safeId}.json`);
   }
 
@@ -252,11 +252,13 @@ class RecoveryTracker {
 
     if (fs.existsSync(filePath)) {
       try {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
         this._cache.set(subtaskId, data);
         return data;
       } catch (error) {
-        throw new Error(`Failed to load attempts for ${subtaskId}: ${error.message}`);
+        throw new Error(`Failed to load attempts for ${subtaskId}: ${error.message}`, {
+          cause: error,
+        });
       }
     }
 
@@ -290,11 +292,11 @@ class RecoveryTracker {
     // Validate before saving (AC5)
     const validation = validateAttemptsSchema(data);
     if (!validation.valid) {
-      throw new Error(`Invalid attempts data: ${validation.errors.join(', ')}`);
+      throw new Error(`Invalid attempts data: ${validation.errors.join(", ")}`);
     }
 
     const filePath = this._getAttemptsFilePath(subtaskId);
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
 
     // Update cache
     this._cache.set(subtaskId, data);
@@ -313,7 +315,7 @@ class RecoveryTracker {
    */
   startAttempt(subtaskId, options = {}) {
     if (!options.approach) {
-      throw new Error('approach is required for startAttempt');
+      throw new Error("approach is required for startAttempt");
     }
 
     const data = this.loadAttempts(subtaskId);
@@ -353,7 +355,7 @@ class RecoveryTracker {
    */
   completeAttempt(subtaskId, options = {}) {
     if (options.success === undefined) {
-      throw new Error('success is required for completeAttempt');
+      throw new Error("success is required for completeAttempt");
     }
 
     const data = this.loadAttempts(subtaskId);
@@ -415,7 +417,7 @@ class RecoveryTracker {
     const durationMs = endTime - startTime;
 
     currentAttempt.success = false;
-    currentAttempt.error = reason || 'Attempt abandoned';
+    currentAttempt.error = reason || "Attempt abandoned";
     currentAttempt.duration = this._formatDuration(durationMs);
     currentAttempt.completedAt = endTime.toISOString();
     currentAttempt.abandoned = true;
@@ -493,7 +495,7 @@ class RecoveryTracker {
 
     const files = fs
       .readdirSync(this.recoveryPath)
-      .filter((f) => f.startsWith('subtask-') && f.endsWith('.json'));
+      .filter((f) => f.startsWith("subtask-") && f.endsWith(".json"));
 
     const summary = {
       storyId: this.storyId,
@@ -509,7 +511,7 @@ class RecoveryTracker {
     for (const file of files) {
       const filePath = path.join(this.recoveryPath, file);
       try {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
         summary.totalAttempts += data.attempts.length;
 
         switch (data.status) {
@@ -540,8 +542,8 @@ class RecoveryTracker {
 
     // Sort subtasks by ID
     summary.subtasks.sort((a, b) => {
-      const [aMajor, aMinor] = a.subtaskId.split('.').map(Number);
-      const [bMajor, bMinor] = b.subtaskId.split('.').map(Number);
+      const [aMajor, aMinor] = a.subtaskId.split(".").map(Number);
+      const [bMajor, bMinor] = b.subtaskId.split(".").map(Number);
       return aMajor - bMajor || aMinor - bMinor;
     });
 
@@ -579,23 +581,23 @@ class RecoveryTracker {
     const data = this.loadAttempts(subtaskId);
     const lines = [];
 
-    lines.push('');
+    lines.push("");
     lines.push(chalk.bold(`Recovery History: ${this.storyId} / Subtask ${subtaskId}`));
-    lines.push('━'.repeat(60));
-    lines.push('');
+    lines.push("━".repeat(60));
+    lines.push("");
 
     if (data.attempts.length === 0) {
-      lines.push(chalk.dim('  No attempts recorded yet.'));
+      lines.push(chalk.dim("  No attempts recorded yet."));
     } else {
       for (const attempt of data.attempts) {
         const statusIcon =
           attempt.success === true
-            ? chalk.green('✓')
+            ? chalk.green("✓")
             : attempt.success === false
-              ? chalk.red('✗')
-              : chalk.yellow('◌');
+              ? chalk.red("✗")
+              : chalk.yellow("◌");
 
-        const duration = attempt.duration ? chalk.dim(` (${attempt.duration})`) : '';
+        const duration = attempt.duration ? chalk.dim(` (${attempt.duration})`) : "";
         const timestamp = new Date(attempt.timestamp).toLocaleString();
 
         lines.push(`${statusIcon} Attempt #${attempt.number}${duration}`);
@@ -603,7 +605,7 @@ class RecoveryTracker {
         lines.push(`  Approach: ${attempt.approach}`);
 
         if (attempt.changes && attempt.changes.length > 0) {
-          lines.push(`  Changes: ${attempt.changes.join(', ')}`);
+          lines.push(`  Changes: ${attempt.changes.join(", ")}`);
         }
 
         if (attempt.error) {
@@ -614,12 +616,12 @@ class RecoveryTracker {
           lines.push(chalk.cyan(`  Notes: ${attempt.notes}`));
         }
 
-        lines.push('');
+        lines.push("");
       }
     }
 
     // Status summary
-    lines.push('─'.repeat(60));
+    lines.push("─".repeat(60));
     const statusColors = {
       [SubtaskStatus.COMPLETED]: chalk.green,
       [SubtaskStatus.IN_PROGRESS]: chalk.yellow,
@@ -629,9 +631,9 @@ class RecoveryTracker {
     const statusColor = statusColors[data.status] || chalk.dim;
     lines.push(`Status: ${statusColor(data.status.toUpperCase())}`);
     lines.push(`Total Attempts: ${data.attempts.length}`);
-    lines.push('');
+    lines.push("");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -643,42 +645,42 @@ class RecoveryTracker {
     const summary = this.getSummary();
     const lines = [];
 
-    lines.push('');
+    lines.push("");
     lines.push(chalk.bold(`Recovery Summary: ${this.storyId}`));
-    lines.push('━'.repeat(60));
-    lines.push('');
+    lines.push("━".repeat(60));
+    lines.push("");
 
     lines.push(`Total Subtasks: ${summary.totalSubtasks}`);
     lines.push(`Total Attempts: ${summary.totalAttempts}`);
-    lines.push('');
+    lines.push("");
 
-    lines.push(`  ${chalk.green('✓')} Completed: ${summary.completed}`);
-    lines.push(`  ${chalk.yellow('◌')} In Progress: ${summary.inProgress}`);
-    lines.push(`  ${chalk.red('✗')} Failed: ${summary.failed}`);
-    lines.push(`  ${chalk.dim('○')} Pending: ${summary.pending}`);
-    lines.push('');
+    lines.push(`  ${chalk.green("✓")} Completed: ${summary.completed}`);
+    lines.push(`  ${chalk.yellow("◌")} In Progress: ${summary.inProgress}`);
+    lines.push(`  ${chalk.red("✗")} Failed: ${summary.failed}`);
+    lines.push(`  ${chalk.dim("○")} Pending: ${summary.pending}`);
+    lines.push("");
 
     if (summary.subtasks.length > 0) {
-      lines.push('─'.repeat(60));
-      lines.push('Subtasks:');
-      lines.push('');
+      lines.push("─".repeat(60));
+      lines.push("Subtasks:");
+      lines.push("");
 
       for (const st of summary.subtasks) {
         const statusIcon =
           {
-            [SubtaskStatus.COMPLETED]: chalk.green('✓'),
-            [SubtaskStatus.IN_PROGRESS]: chalk.yellow('◌'),
-            [SubtaskStatus.FAILED]: chalk.red('✗'),
-            [SubtaskStatus.PENDING]: chalk.dim('○'),
-          }[st.status] || chalk.dim('?');
+            [SubtaskStatus.COMPLETED]: chalk.green("✓"),
+            [SubtaskStatus.IN_PROGRESS]: chalk.yellow("◌"),
+            [SubtaskStatus.FAILED]: chalk.red("✗"),
+            [SubtaskStatus.PENDING]: chalk.dim("○"),
+          }[st.status] || chalk.dim("?");
 
         lines.push(`  ${statusIcon} ${st.subtaskId} - ${st.attempts} attempt(s)`);
       }
     }
 
-    lines.push('');
+    lines.push("");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -742,15 +744,15 @@ function getAttemptHistory(storyId, subtaskId) {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
+  if (args.length < 1 || args.includes("--help") || args.includes("-h")) {
     console.log(`
-${chalk.bold('Recovery Tracker')} - AIOX Attempt Tracking System (Story 5.1)
+${chalk.bold("Recovery Tracker")} - AIOX Attempt Tracking System (Story 5.1)
 
-${chalk.cyan('Usage:')}
+${chalk.cyan("Usage:")}
   node recovery-tracker.js <command> <story-id> <subtask-id> [options]
   *track-attempt <subtask-id> --approach "..." [options]
 
-${chalk.cyan('Commands:')}
+${chalk.cyan("Commands:")}
   start <story-id> <subtask-id>     Start a new attempt
   complete <story-id> <subtask-id>  Complete current attempt
   abandon <story-id> <subtask-id>   Abandon current attempt
@@ -759,7 +761,7 @@ ${chalk.cyan('Commands:')}
   json <story-id> <subtask-id>      Output attempts as JSON
   schema                            Output JSON schema for validation
 
-${chalk.cyan('Options:')}
+${chalk.cyan("Options:")}
   --approach, -a <text>   Approach description (required for start)
   --changes, -c <files>   Comma-separated list of changed files
   --success               Mark attempt as successful (for complete)
@@ -769,23 +771,23 @@ ${chalk.cyan('Options:')}
   --quiet, -q             Suppress visual output
   --help, -h              Show this help message
 
-${chalk.cyan('Examples:')}
-  ${chalk.dim('# Start a new attempt')}
+${chalk.cyan("Examples:")}
+  ${chalk.dim("# Start a new attempt")}
   node recovery-tracker.js start STORY-42 2.1 --approach "Using zustand with middleware"
 
-  ${chalk.dim('# Complete with success')}
+  ${chalk.dim("# Complete with success")}
   node recovery-tracker.js complete STORY-42 2.1 --success
 
-  ${chalk.dim('# Complete with failure')}
+  ${chalk.dim("# Complete with failure")}
   node recovery-tracker.js complete STORY-42 2.1 --fail --error "Type error: Property persist does not exist"
 
-  ${chalk.dim('# View attempt history')}
+  ${chalk.dim("# View attempt history")}
   node recovery-tracker.js history STORY-42 2.1
 
-  ${chalk.dim('# View summary for story')}
+  ${chalk.dim("# View summary for story")}
   node recovery-tracker.js summary STORY-42
 
-${chalk.cyan('Acceptance Criteria Coverage:')}
+${chalk.cyan("Acceptance Criteria Coverage:")}
   AC1: Located in .aiox-core/infrastructure/scripts/
   AC2: Registra: attempt_number, timestamp, approach, success/fail, error
   AC3: Output: docs/stories/{story-id}/recovery/attempts.json
@@ -794,7 +796,7 @@ ${chalk.cyan('Acceptance Criteria Coverage:')}
   AC6: Historico mantido por subtask (nao por story)
   AC7: Auto-increment de attempt_number
 `);
-    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
+    process.exit(args.includes("--help") || args.includes("-h") ? 0 : 1);
   }
 
   // Parse arguments
@@ -811,21 +813,21 @@ ${chalk.cyan('Acceptance Criteria Coverage:')}
   for (let i = 1; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--approach' || arg === '-a') {
+    if (arg === "--approach" || arg === "-a") {
       approach = args[++i];
-    } else if (arg === '--changes' || arg === '-c') {
-      changes = args[++i].split(',').map((s) => s.trim());
-    } else if (arg === '--success') {
+    } else if (arg === "--changes" || arg === "-c") {
+      changes = args[++i].split(",").map((s) => s.trim());
+    } else if (arg === "--success") {
       success = true;
-    } else if (arg === '--fail') {
+    } else if (arg === "--fail") {
       success = false;
-    } else if (arg === '--error' || arg === '-e') {
+    } else if (arg === "--error" || arg === "-e") {
       error = args[++i];
-    } else if (arg === '--notes' || arg === '-n') {
+    } else if (arg === "--notes" || arg === "-n") {
       notes = args[++i];
-    } else if (arg === '--quiet' || arg === '-q') {
+    } else if (arg === "--quiet" || arg === "-q") {
       quiet = true;
-    } else if (!arg.startsWith('-')) {
+    } else if (!arg.startsWith("-")) {
       if (!storyId) {
         storyId = arg;
       } else if (!subtaskId) {
@@ -836,28 +838,28 @@ ${chalk.cyan('Acceptance Criteria Coverage:')}
 
   try {
     // Handle schema command (no story needed)
-    if (command === 'schema') {
+    if (command === "schema") {
       console.log(JSON.stringify(ATTEMPTS_SCHEMA, null, 2));
       process.exit(0);
     }
 
     // Validate required arguments
-    if (!storyId && command !== 'schema') {
-      console.error(chalk.red('Error: story-id is required'));
+    if (!storyId && command !== "schema") {
+      console.error(chalk.red("Error: story-id is required"));
       process.exit(1);
     }
 
-    if (!subtaskId && !['summary', 'schema'].includes(command)) {
-      console.error(chalk.red('Error: subtask-id is required'));
+    if (!subtaskId && !["summary", "schema"].includes(command)) {
+      console.error(chalk.red("Error: subtask-id is required"));
       process.exit(1);
     }
 
     const tracker = new RecoveryTracker({ storyId });
 
     switch (command) {
-      case 'start': {
+      case "start": {
         if (!approach) {
-          console.error(chalk.red('Error: --approach is required for start command'));
+          console.error(chalk.red("Error: --approach is required for start command"));
           process.exit(1);
         }
 
@@ -865,20 +867,20 @@ ${chalk.cyan('Acceptance Criteria Coverage:')}
 
         if (!quiet) {
           console.log(
-            chalk.green(`\n✓ Started attempt #${attempt.number} for ${storyId}/${subtaskId}`)
+            chalk.green(`\n✓ Started attempt #${attempt.number} for ${storyId}/${subtaskId}`),
           );
           console.log(chalk.dim(`  Approach: ${approach}`));
           if (changes.length > 0) {
-            console.log(chalk.dim(`  Changes: ${changes.join(', ')}`));
+            console.log(chalk.dim(`  Changes: ${changes.join(", ")}`));
           }
-          console.log('');
+          console.log("");
         }
         break;
       }
 
-      case 'complete': {
+      case "complete": {
         if (success === null) {
-          console.error(chalk.red('Error: --success or --fail is required for complete command'));
+          console.error(chalk.red("Error: --success or --fail is required for complete command"));
           process.exit(1);
         }
 
@@ -894,12 +896,12 @@ ${chalk.cyan('Acceptance Criteria Coverage:')}
             }
           }
           console.log(chalk.dim(`  Duration: ${attempt.duration}`));
-          console.log('');
+          console.log("");
         }
         break;
       }
 
-      case 'abandon': {
+      case "abandon": {
         const attempt = tracker.abandonAttempt(subtaskId, error || notes);
 
         if (!quiet) {
@@ -907,22 +909,22 @@ ${chalk.cyan('Acceptance Criteria Coverage:')}
           if (attempt.error) {
             console.log(chalk.dim(`  Reason: ${attempt.error}`));
           }
-          console.log('');
+          console.log("");
         }
         break;
       }
 
-      case 'history': {
+      case "history": {
         console.log(tracker.generateReport(subtaskId));
         break;
       }
 
-      case 'summary': {
+      case "summary": {
         console.log(tracker.generateSummaryReport());
         break;
       }
 
-      case 'json': {
+      case "json": {
         const data = tracker.getSubtaskStatus(subtaskId);
         console.log(JSON.stringify(data, null, 2));
         break;

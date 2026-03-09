@@ -1,29 +1,29 @@
-'use strict';
+"use strict";
 
-const fs = require('fs-extra');
-const path = require('path');
+const fs = require("fs-extra");
+const path = require("path");
 
-const FALLBACK_DESCRIPTION = 'Agente especializado AIOX';
+const FALLBACK_DESCRIPTION = "Agente especializado AIOX";
 const MAX_DESCRIPTION_CONTEXT = 120;
 
 const MENU_ORDER = [
-  'aiox-master',
-  'analyst',
-  'architect',
-  'data-engineer',
-  'dev',
-  'devops',
-  'pm',
-  'po',
-  'qa',
-  'sm',
-  'squad-creator',
-  'ux-design-expert',
+  "aiox-master",
+  "analyst",
+  "architect",
+  "data-engineer",
+  "dev",
+  "devops",
+  "pm",
+  "po",
+  "qa",
+  "sm",
+  "squad-creator",
+  "ux-design-expert",
 ];
 
 function commandSlugForAgent(agentId) {
-  if (agentId.startsWith('aiox-')) {
-    return agentId.replace(/^aiox-/, '');
+  if (agentId.startsWith("aiox-")) {
+    return agentId.replace(/^aiox-/, "");
   }
   return agentId;
 }
@@ -33,18 +33,24 @@ function menuCommandName(agentId) {
 }
 
 function normalizeText(text) {
-  if (!text || typeof text !== 'string') return '';
-  return text.replace(/\s+/g, ' ').trim();
+  if (!text || typeof text !== "string") {
+    return "";
+  }
+  return text.replace(/\s+/g, " ").trim();
 }
 
 function truncateText(text, maxLen = MAX_DESCRIPTION_CONTEXT) {
-  if (!text || text.length <= maxLen) return text;
+  if (!text || text.length <= maxLen) {
+    return text;
+  }
   return `${text.slice(0, maxLen - 1).trimEnd()}…`;
 }
 
 function summarizeWhenToUse(whenToUse) {
   const normalized = normalizeText(whenToUse);
-  if (!normalized) return '';
+  if (!normalized) {
+    return "";
+  }
 
   // Drop redirect/negative guidance sections that are useful for routing, not for menu labels.
   const withoutNegativeSection = normalized.split(/\b(?:NOT\s+for|NÃO\s+para)\b/i)[0].trim();
@@ -56,7 +62,9 @@ function summarizeWhenToUse(whenToUse) {
 }
 
 function escapeTomlString(text) {
-  return String(text || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  return String(text || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"');
 }
 
 function buildAgentDescription(agent) {
@@ -80,12 +88,12 @@ function buildAgentCommandPrompt(agentId) {
   return [
     `Ative o agente ${agentId}:`,
     `1. Leia a definição completa em .gemini/rules/AIOX/agents/${agentId}.md`,
-    '2. Siga as activation-instructions do bloco YAML',
+    "2. Siga as activation-instructions do bloco YAML",
     `3. Renderize o greeting via: node .aiox-core/development/scripts/generate-greeting.js ${agentId}`,
-    '   Se shell nao disponivel, exiba o greeting de persona_profile.communication.greeting_levels.named',
-    '4. Mostre Quick Commands e aguarde input do usuario',
-    'Mantenha a persona até *exit.',
-  ].join('\n');
+    "   Se shell nao disponivel, exiba o greeting de persona_profile.communication.greeting_levels.named",
+    "4. Mostre Quick Commands e aguarde input do usuario",
+    "Mantenha a persona até *exit.",
+  ].join("\n");
 }
 
 function buildAgentCommandFile(agentId, description = FALLBACK_DESCRIPTION) {
@@ -97,8 +105,8 @@ function buildAgentCommandFile(agentId, description = FALLBACK_DESCRIPTION) {
     'prompt = """',
     prompt,
     '"""',
-    '',
-  ].join('\n');
+    "",
+  ].join("\n");
 
   return {
     filename: `aiox-${slug}.toml`,
@@ -110,9 +118,9 @@ function buildAgentCommandFile(agentId, description = FALLBACK_DESCRIPTION) {
 
 function buildMenuPrompt(commandFiles) {
   const lines = [
-    'Você está no launcher AIOX para Gemini.',
-    '',
-    'Mostre a lista de agentes abaixo em formato numerado, explicando em 1 linha quando usar cada um:',
+    "Você está no launcher AIOX para Gemini.",
+    "",
+    "Mostre a lista de agentes abaixo em formato numerado, explicando em 1 linha quando usar cada um:",
   ];
 
   let index = 1;
@@ -121,9 +129,9 @@ function buildMenuPrompt(commandFiles) {
     index += 1;
   }
 
-  lines.push('');
-  lines.push('No final, peça para o usuário escolher um número ou digitar o comando direto.');
-  return lines.join('\n');
+  lines.push("");
+  lines.push("No final, peça para o usuário escolher um número ou digitar o comando direto.");
+  return lines.join("\n");
 }
 
 function buildMenuCommandFile(commandFiles) {
@@ -132,11 +140,11 @@ function buildMenuCommandFile(commandFiles) {
     'prompt = """',
     buildMenuPrompt(commandFiles),
     '"""',
-    '',
-  ].join('\n');
+    "",
+  ].join("\n");
 
   return {
-    filename: 'aiox-menu.toml',
+    filename: "aiox-menu.toml",
     content,
   };
 }
@@ -144,7 +152,7 @@ function buildMenuCommandFile(commandFiles) {
 function resolveAgentOrder(agentIds) {
   const unique = [...new Set(agentIds)];
   const known = MENU_ORDER.filter((id) => unique.includes(id));
-  const extra = unique.filter((id) => !MENU_ORDER.includes(id)).sort();
+  const extra = unique.filter((id) => !MENU_ORDER.includes(id)).toSorted();
   return [...known, ...extra];
 }
 
@@ -168,7 +176,7 @@ function buildGeminiCommandFiles(agents) {
 }
 
 function syncGeminiCommands(agents, projectRoot, options = {}) {
-  const commandsDir = path.join(projectRoot, '.gemini', 'commands');
+  const commandsDir = path.join(projectRoot, ".gemini", "commands");
   const files = buildGeminiCommandFiles(agents);
   const written = [];
 
@@ -179,10 +187,10 @@ function syncGeminiCommands(agents, projectRoot, options = {}) {
   for (const file of files) {
     const targetPath = path.join(commandsDir, file.filename);
     if (!options.dryRun) {
-      fs.writeFileSync(targetPath, file.content, 'utf8');
+      fs.writeFileSync(targetPath, file.content, "utf8");
     }
     written.push({
-      filename: path.join('commands', file.filename),
+      filename: path.join("commands", file.filename),
       path: targetPath,
       content: file.content,
     });

@@ -75,9 +75,21 @@ export class LLMError extends Error {
  */
 export function detectProvider(model: string): LLMProvider {
   const m = model.toLowerCase();
-  if (m.startsWith("claude") || m.startsWith("anthropic/")) return "anthropic";
-  if (m.startsWith("gemini") || m.startsWith("google/")) return "google";
-  if (m.startsWith("gpt") || m.startsWith("openai/") || m.startsWith("o1") || m.startsWith("o3") || m.startsWith("o4")) return "openai";
+  if (m.startsWith("claude") || m.startsWith("anthropic/")) {
+    return "anthropic";
+  }
+  if (m.startsWith("gemini") || m.startsWith("google/")) {
+    return "google";
+  }
+  if (
+    m.startsWith("gpt") ||
+    m.startsWith("openai/") ||
+    m.startsWith("o1") ||
+    m.startsWith("o3") ||
+    m.startsWith("o4")
+  ) {
+    return "openai";
+  }
   return "openrouter";
 }
 
@@ -90,10 +102,7 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // ─── Provider Callers ─────────────────────────────────────────────────────────
 
-async function callAnthropic(
-  apiKey: string,
-  options: LLMCallOptions,
-): Promise<LLMResponse> {
+async function callAnthropic(apiKey: string, options: LLMCallOptions): Promise<LLMResponse> {
   const res = await fetch(ANTHROPIC_URL, {
     method: "POST",
     headers: {
@@ -136,10 +145,7 @@ async function callAnthropic(
   };
 }
 
-async function callGoogle(
-  apiKey: string,
-  options: LLMCallOptions,
-): Promise<LLMResponse> {
+async function callGoogle(apiKey: string, options: LLMCallOptions): Promise<LLMResponse> {
   const url = `${GOOGLE_URL}/${options.model}:generateContent?key=${apiKey}`;
 
   // Gemini uses contents array; system prompt goes as first user message
@@ -191,7 +197,10 @@ async function callGoogle(
     model: options.model,
     provider: "google",
     usage: data.usageMetadata
-      ? { inputTokens: data.usageMetadata.promptTokenCount, outputTokens: data.usageMetadata.candidatesTokenCount }
+      ? {
+          inputTokens: data.usageMetadata.promptTokenCount,
+          outputTokens: data.usageMetadata.candidatesTokenCount,
+        }
       : undefined,
   };
 }
@@ -273,15 +282,24 @@ export class LLMClient {
   availableProviders(): LLMProvider[] {
     const keys = this.resolveKeys();
     const providers: LLMProvider[] = [];
-    if (keys.anthropic) providers.push("anthropic");
-    if (keys.google) providers.push("google");
-    if (keys.openai) providers.push("openai");
-    if (keys.openrouter) providers.push("openrouter");
+    if (keys.anthropic) {
+      providers.push("anthropic");
+    }
+    if (keys.google) {
+      providers.push("google");
+    }
+    if (keys.openai) {
+      providers.push("openai");
+    }
+    if (keys.openrouter) {
+      providers.push("openrouter");
+    }
     return providers;
   }
 
   async call(options: LLMCallOptions): Promise<LLMResponse> {
-    const provider = options.provider ?? this.config.defaultProvider ?? detectProvider(options.model);
+    const provider =
+      options.provider ?? this.config.defaultProvider ?? detectProvider(options.model);
     const keys = this.resolveKeys();
     const apiKey = keys[provider];
 

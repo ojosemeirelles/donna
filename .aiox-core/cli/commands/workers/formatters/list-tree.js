@@ -12,10 +12,10 @@
  * Tree drawing characters
  */
 const TREE = {
-  branch: '├──',
-  lastBranch: '└──',
-  vertical: '│',
-  empty: '   ',
+  branch: "├──",
+  lastBranch: "└──",
+  vertical: "│",
+  empty: "   ",
 };
 
 /**
@@ -27,8 +27,8 @@ function groupWorkers(workers) {
   const groups = {};
 
   for (const worker of workers) {
-    const category = worker.category || 'uncategorized';
-    const subcategory = worker.subcategory || 'general';
+    const category = worker.category || "uncategorized";
+    const subcategory = worker.subcategory || "general";
 
     if (!groups[category]) {
       groups[category] = {
@@ -61,13 +61,13 @@ function formatTree(workers, options = {}) {
   const { collapsed = false, maxPerSubcategory = 4, verbose = false } = options;
 
   if (workers.length === 0) {
-    return 'No workers found.\n';
+    return "No workers found.\n";
   }
 
   const groups = groupWorkers(workers);
-  const categories = Object.keys(groups).sort();
+  const categories = Object.keys(groups).toSorted();
 
-  let output = '';
+  let output = "";
   output += `${workers.length} workers available in ${categories.length} categories:\n\n`;
 
   for (let catIdx = 0; catIdx < categories.length; catIdx++) {
@@ -79,7 +79,7 @@ function formatTree(workers, options = {}) {
     output += `${category.toUpperCase()} (${group.count} workers)\n`;
 
     // Subcategories
-    const subcategories = Object.keys(group.subcategories).sort();
+    const subcategories = Object.keys(group.subcategories).toSorted();
 
     for (let subIdx = 0; subIdx < subcategories.length; subIdx++) {
       const subcategory = subcategories[subIdx];
@@ -114,19 +114,19 @@ function formatTree(workers, options = {}) {
 
     // Add blank line between categories (except last)
     if (!isLastCategory) {
-      output += '\n';
+      output += "\n";
     }
   }
 
   // Footer hints
-  output += '\nUse \'aiox workers info <id>\' for details.\n';
-  output += 'Use \'aiox workers search <query>\' to search.\n';
+  output += "\nUse 'aiox workers info <id>' for details.\n";
+  output += "Use 'aiox workers search <query>' to search.\n";
 
   // Verbose debug info
   if (verbose) {
-    output += '\n[Debug Info]\n';
+    output += "\n[Debug Info]\n";
     output += `  Total workers: ${workers.length}\n`;
-    output += `  Categories: ${categories.join(', ')}\n`;
+    output += `  Categories: ${categories.join(", ")}\n`;
   }
 
   return output;
@@ -148,7 +148,9 @@ function formatTreeCollapsed(workers, options = {}) {
  * @returns {string} Capitalized string
  */
 function capitalize(str) {
-  if (!str) return '';
+  if (!str) {
+    return "";
+  }
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 

@@ -57,7 +57,7 @@ export class SearchMetricsCollector {
       avgLatencyMs: round2(avg),
       p50LatencyMs: round2(percentile(sorted, 50)),
       p95LatencyMs: round2(percentile(sorted, 95)),
-      lastSearchMs: round2(this.latencies[this.latencies.length - 1]!),
+      lastSearchMs: round2(this.latencies[this.latencies.length - 1]),
     };
   }
 
@@ -82,10 +82,10 @@ export class SearchMetricsCollector {
  */
 function percentile(sorted: number[], p: number): number {
   if (sorted.length === 1) {
-    return sorted[0]!;
+    return sorted[0];
   }
   const index = Math.ceil((p / 100) * sorted.length) - 1;
-  return sorted[Math.max(0, Math.min(index, sorted.length - 1))]!;
+  return sorted[Math.max(0, Math.min(index, sorted.length - 1))];
 }
 
 /** Round to 2 decimal places. */

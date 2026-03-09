@@ -36,28 +36,28 @@
  * Fallback: Simple greeting on any error
  */
 
-const ContextDetector = require('../../core/session/context-detector');
-const GitConfigDetector = require('../../infrastructure/scripts/git-config-detector');
-const WorkflowNavigator = require('./workflow-navigator');
-const GreetingPreferenceManager = require('./greeting-preference-manager');
-const { loadProjectStatus } = require('../../infrastructure/scripts/project-status-loader');
-const { PermissionMode } = require('../../core/permissions');
-const { resolveConfig } = require('../../core/config/config-resolver');
-const { validateUserProfile } = require('../../infrastructure/scripts/validate-user-profile');
+const ContextDetector = require("../../core/session/context-detector");
+const GitConfigDetector = require("../../infrastructure/scripts/git-config-detector");
+const WorkflowNavigator = require("./workflow-navigator");
+const GreetingPreferenceManager = require("./greeting-preference-manager");
+const { loadProjectStatus } = require("../../infrastructure/scripts/project-status-loader");
+const { PermissionMode } = require("../../core/permissions");
+const { resolveConfig } = require("../../core/config/config-resolver");
+const { validateUserProfile } = require("../../infrastructure/scripts/validate-user-profile");
 // Story ACT-5: SessionState integration for cross-terminal workflow continuity
-const { SessionState } = require('../../core/orchestration/session-state');
+const { SessionState } = require("../../core/orchestration/session-state");
 // Story ACT-5: SurfaceChecker integration for proactive suggestions
-const { SurfaceChecker } = require('../../core/orchestration/surface-checker');
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
+const { SurfaceChecker } = require("../../core/orchestration/surface-checker");
+const fs = require("fs");
+const path = require("path");
+const yaml = require("js-yaml");
 
 const GREETING_TIMEOUT = 150; // 150ms hard limit per-section
 const _TOTAL_GREETING_TIMEOUT = 200; // 200ms total pipeline budget (Story ACT-7, documented constant)
 const SECTION_TIMEOUT = 150; // 150ms per section builder (Story ACT-7 AC8)
 
 // Story ACT-2: Validation now delegated to validate-user-profile.js
-const DEFAULT_USER_PROFILE = 'advanced';
+const DEFAULT_USER_PROFILE = "advanced";
 
 const GIT_WARNING_TEMPLATE = `
 ⚠️  **Git Configuration Needed**
@@ -84,7 +84,7 @@ class GreetingBuilder {
       const result = resolveConfig(process.cwd(), { skipCache: true });
       return result?.config || null;
     } catch (error) {
-      console.warn('[GreetingBuilder] Failed to load config:', error.message);
+      console.warn("[GreetingBuilder] Failed to load config:", error.message);
       return null;
     }
   }
@@ -118,7 +118,7 @@ class GreetingBuilder {
 
       return validation.value;
     } catch (error) {
-      console.warn('[GreetingBuilder] Failed to load user_profile:', error.message);
+      console.warn("[GreetingBuilder] Failed to load user_profile:", error.message);
       return DEFAULT_USER_PROFILE;
     }
   }
@@ -141,11 +141,12 @@ class GreetingBuilder {
       // Check user preference (Story 6.1.4), now profile-aware (Story ACT-2)
       // Story ACT-2: PM agent bypasses bob mode preference restriction because
       // PM is the primary interface in bob mode and needs the full contextual greeting.
-      const preference = (userProfile === 'bob' && agent.id === 'pm')
-        ? this.preferenceManager.getPreference('advanced')
-        : this.preferenceManager.getPreference(userProfile);
+      const preference =
+        userProfile === "bob" && agent.id === "pm"
+          ? this.preferenceManager.getPreference("advanced")
+          : this.preferenceManager.getPreference(userProfile);
 
-      if (preference !== 'auto') {
+      if (preference !== "auto") {
         // Override with fixed level
         return this.buildFixedLevelGreeting(agent, preference);
       }
@@ -154,12 +155,12 @@ class GreetingBuilder {
       // Story ACT-2: Pass pre-loaded userProfile to avoid double loadUserProfile() call
       const greetingPromise = this._buildContextualGreeting(agent, context, userProfile);
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Greeting timeout')), GREETING_TIMEOUT),
+        setTimeout(() => reject(new Error("Greeting timeout")), GREETING_TIMEOUT),
       );
 
       return await Promise.race([greetingPromise, timeoutPromise]);
     } catch (error) {
-      console.warn('[GreetingBuilder] Fallback to simple greeting:', error.message);
+      console.warn("[GreetingBuilder] Fallback to simple greeting:", error.message);
       return fallbackGreeting;
     }
   }
@@ -216,21 +217,21 @@ class GreetingBuilder {
 
     // 2. Role description (new session only, but skip in bob mode for non-PM)
     // Story ACT-7 AC3: References current story and branch when available
-    if (sessionType === 'new' && !(userProfile === 'bob' && agent.id !== 'pm')) {
+    if (sessionType === "new" && !(userProfile === "bob" && agent.id !== "pm")) {
       sections.push(this.buildRoleDescription(agent, sectionContext));
     }
 
     // 3. Project status (if git configured, but skip in bob mode for non-PM)
     // Story ACT-7 AC4: Natural language narrative format
-    if (gitConfig.configured && projectStatus && !(userProfile === 'bob' && agent.id !== 'pm')) {
+    if (gitConfig.configured && projectStatus && !(userProfile === "bob" && agent.id !== "pm")) {
       sections.push(this.buildProjectStatus(projectStatus, sessionType, sectionContext));
     }
 
     // Story 10.3 - AC1, AC4: Bob mode redirect for non-PM agents
-    if (userProfile === 'bob' && agent.id !== 'pm') {
+    if (userProfile === "bob" && agent.id !== "pm") {
       // Show redirect message instead of normal content
       sections.push(this.buildBobModeRedirect(agent));
-      return sections.filter(Boolean).join('\n\n');
+      return sections.filter(Boolean).join("\n\n");
     }
 
     // Story ACT-7 AC7: Parallel execution of independent sections
@@ -243,7 +244,7 @@ class GreetingBuilder {
       ),
       // 5. Workflow suggestions (Story ACT-5: relaxed trigger + fixed method call)
       this._safeBuildSection(() => {
-        if (sessionType !== 'new') {
+        if (sessionType !== "new") {
           return this.buildWorkflowSuggestions(context);
         }
         return null;
@@ -266,7 +267,7 @@ class GreetingBuilder {
     // Story ACT-7 AC6: Footer varies by session context
     sections.push(this.buildFooter(agent, sectionContext));
 
-    return sections.filter(Boolean).join('\n\n');
+    return sections.filter(Boolean).join("\n\n");
   }
 
   /**
@@ -280,7 +281,7 @@ class GreetingBuilder {
     try {
       const result = builderFn();
       // If the builder returns a promise, race it against the timeout
-      if (result && typeof result.then === 'function') {
+      if (result && typeof result.then === "function") {
         return await Promise.race([
           result,
           new Promise((resolve) => setTimeout(() => resolve(null), SECTION_TIMEOUT)),
@@ -288,7 +289,7 @@ class GreetingBuilder {
       }
       return result;
     } catch (error) {
-      console.warn('[GreetingBuilder] Section builder failed:', error.message);
+      console.warn("[GreetingBuilder] Section builder failed:", error.message);
       return null;
     }
   }
@@ -310,13 +311,13 @@ class GreetingBuilder {
     // Select greeting based on preference
     let greetingText;
     switch (level) {
-      case 'minimal':
+      case "minimal":
         greetingText = profile.greeting_levels.minimal || `${agent.icon} ${agent.id} Agent ready`;
         break;
-      case 'named':
+      case "named":
         greetingText = profile.greeting_levels.named || `${agent.icon} ${agent.name} ready`;
         break;
-      case 'archetypal':
+      case "archetypal":
         greetingText =
           profile.greeting_levels.archetypal ||
           `${agent.icon} ${agent.name} the ${profile.archetype} ready`;
@@ -354,7 +355,7 @@ class GreetingBuilder {
    * @param {Object} [sectionContext] - Enriched section context (Story ACT-7)
    * @returns {string} Presentation text
    */
-  buildPresentation(agent, sessionType, permissionBadge = '', sectionContext = null) {
+  buildPresentation(agent, sessionType, permissionBadge = "", sectionContext = null) {
     const profile = agent.persona_profile;
 
     // Try greeting_levels from communication first, then fall back to top level
@@ -369,7 +370,7 @@ class GreetingBuilder {
     // ACT-12: Language delegated to Claude Code settings.json — hardcoded English phrases
     let greeting;
 
-    if (sessionType === 'existing' && sectionContext) {
+    if (sessionType === "existing" && sectionContext) {
       // Existing session: brief welcome back
       const namedGreeting = greetingLevels.named || `${agent.icon} ${agent.name} ready`;
       const storyRef = sectionContext.sessionStory || sectionContext.projectStatus?.currentStory;
@@ -378,10 +379,11 @@ class GreetingBuilder {
       } else {
         greeting = `${namedGreeting} -- welcome back`;
       }
-    } else if (sessionType === 'workflow' && sectionContext) {
+    } else if (sessionType === "workflow" && sectionContext) {
       // Workflow session: focused on current workflow
       const namedGreeting = greetingLevels.named || `${agent.icon} ${agent.name} ready`;
-      const workflowPhase = sectionContext.workflowState?.currentPhase || sectionContext.workflowActive;
+      const workflowPhase =
+        sectionContext.workflowState?.currentPhase || sectionContext.workflowActive;
       if (workflowPhase) {
         greeting = `${namedGreeting} -- workflow active`;
       } else {
@@ -407,7 +409,7 @@ class GreetingBuilder {
    */
   buildRoleDescription(agent, sectionContext = null) {
     if (!agent.persona || !agent.persona.role) {
-      return '';
+      return "";
     }
 
     let roleText = `**Role:** ${agent.persona.role}`;
@@ -421,12 +423,12 @@ class GreetingBuilder {
       if (storyRef) {
         refs.push(`Story: ${storyRef}`);
       }
-      if (branchRef && branchRef !== 'main' && branchRef !== 'master') {
+      if (branchRef && branchRef !== "main" && branchRef !== "master") {
         refs.push(`Branch: \`${branchRef}\``);
       }
 
       if (refs.length > 0) {
-        roleText += `\n   ${refs.join(' | ')}`;
+        roleText += `\n   ${refs.join(" | ")}`;
       }
     }
 
@@ -441,9 +443,9 @@ class GreetingBuilder {
    * @param {Object} [sectionContext] - Enriched section context (Story ACT-7)
    * @returns {string} Formatted project status
    */
-  buildProjectStatus(projectStatus, sessionType = 'full', sectionContext = null) {
+  buildProjectStatus(projectStatus, sessionType = "full", sectionContext = null) {
     if (!projectStatus) {
-      return '';
+      return "";
     }
 
     // Story ACT-7 AC4: Use narrative format when enriched context is available
@@ -452,7 +454,7 @@ class GreetingBuilder {
     }
 
     // Legacy: bullet-point format (backward compatible)
-    const format = sessionType === 'workflow' ? 'condensed' : 'full';
+    const format = sessionType === "workflow" ? "condensed" : "full";
     return this._formatProjectStatus(projectStatus, format);
   }
 
@@ -467,8 +469,8 @@ class GreetingBuilder {
    */
   _formatProjectStatusNarrative(status, sessionType) {
     // Workflow sessions get condensed inline format
-    if (sessionType === 'workflow') {
-      return this._formatProjectStatus(status, 'condensed');
+    if (sessionType === "workflow") {
+      return this._formatProjectStatus(status, "condensed");
     }
 
     const sentences = [];
@@ -478,9 +480,9 @@ class GreetingBuilder {
       let branchSentence = `You're on branch \`${status.branch}\``;
       const fileCount = status.modifiedFilesTotalCount || 0;
       if (fileCount > 0) {
-        branchSentence += ` with ${fileCount} modified file${fileCount !== 1 ? 's' : ''}`;
+        branchSentence += ` with ${fileCount} modified file${fileCount !== 1 ? "s" : ""}`;
       }
-      branchSentence += '.';
+      branchSentence += ".";
       sentences.push(branchSentence);
     }
 
@@ -492,18 +494,20 @@ class GreetingBuilder {
     // Recent commits as brief reference
     if (status.recentCommits && status.recentCommits.length > 0) {
       const lastCommit = status.recentCommits[0];
-      const commitMsg = typeof lastCommit === 'string' ? lastCommit : lastCommit.message || lastCommit;
-      const shortMsg = String(commitMsg).length > 60
-        ? String(commitMsg).substring(0, 57) + '...'
-        : String(commitMsg);
+      const commitMsg =
+        typeof lastCommit === "string" ? lastCommit : lastCommit.message || lastCommit;
+      const shortMsg =
+        String(commitMsg).length > 60
+          ? String(commitMsg).substring(0, 57) + "..."
+          : String(commitMsg);
       sentences.push(`Last commit: "${shortMsg}"`);
     }
 
     if (sentences.length === 0) {
-      return '';
+      return "";
     }
 
-    return `📊 **Project Status:** ${sentences.join(' ')}`;
+    return `📊 **Project Status:** ${sentences.join(" ")}`;
   }
 
   /**
@@ -514,7 +518,7 @@ class GreetingBuilder {
    * @returns {string} Formatted status
    */
   _formatProjectStatus(status, format) {
-    if (format === 'condensed') {
+    if (format === "condensed") {
       const parts = [];
 
       if (status.branch) {
@@ -529,7 +533,7 @@ class GreetingBuilder {
         parts.push(`📖 ${status.currentStory}`);
       }
 
-      return parts.length > 0 ? `📊 ${parts.join(' | ')}` : '';
+      return parts.length > 0 ? `📊 ${parts.join(" | ")}` : "";
     }
 
     // Full format with emojis
@@ -540,7 +544,7 @@ class GreetingBuilder {
     }
 
     if (status.modifiedFiles && status.modifiedFiles.length > 0) {
-      let filesDisplay = status.modifiedFiles.join(', ');
+      let filesDisplay = status.modifiedFiles.join(", ");
       const totalCount = status.modifiedFilesTotalCount || status.modifiedFiles.length;
       if (totalCount > status.modifiedFiles.length) {
         const remaining = totalCount - status.modifiedFiles.length;
@@ -550,7 +554,7 @@ class GreetingBuilder {
     }
 
     if (status.recentCommits && status.recentCommits.length > 0) {
-      lines.push(`📖 **Recent:** ${status.recentCommits.join(', ')}`);
+      lines.push(`📖 **Recent:** ${status.recentCommits.join(", ")}`);
     }
 
     if (status.currentStory) {
@@ -558,10 +562,10 @@ class GreetingBuilder {
     }
 
     if (lines.length === 0) {
-      return '';
+      return "";
     }
 
-    return `📊 **Project Status:**\n  - ${lines.join('\n  - ')}`;
+    return `📊 **Project Status:**\n  - ${lines.join("\n  - ")}`;
   }
 
   /**
@@ -576,7 +580,7 @@ class GreetingBuilder {
    */
   buildContextSection(agent, context, sessionType, projectStatus, sectionContext = null) {
     // Skip for new sessions
-    if (sessionType === 'new') {
+    if (sessionType === "new") {
       return null;
     }
 
@@ -601,7 +605,7 @@ class GreetingBuilder {
       parts.push(`   **Recommended:** Use \`${contextNarrative.recommendedCommand}\` to continue`);
     }
 
-    return parts.length > 0 ? parts.join('\n') : null;
+    return parts.length > 0 ? parts.join("\n") : null;
   }
 
   /**
@@ -644,7 +648,7 @@ class GreetingBuilder {
     if (
       prevAgentId &&
       projectStatus?.currentStory &&
-      projectStatus.currentStory !== 'EPIC-SPLIT-IMPLEMENTATION-COMPLETE'
+      projectStatus.currentStory !== "EPIC-SPLIT-IMPLEMENTATION-COMPLETE"
     ) {
       const storyContext = this._analyzeStoryContext(projectStatus);
       const description = `Continuando do trabalho de @${prevAgentName} em ${projectStatus.currentStory}. ${this._getAgentAction(agent.id, storyContext)}`;
@@ -664,7 +668,7 @@ class GreetingBuilder {
     // Priority 4: Story-based context
     if (
       projectStatus?.currentStory &&
-      projectStatus.currentStory !== 'EPIC-SPLIT-IMPLEMENTATION-COMPLETE'
+      projectStatus.currentStory !== "EPIC-SPLIT-IMPLEMENTATION-COMPLETE"
     ) {
       const storyContext = this._analyzeStoryContext(projectStatus);
       const description = `Working on ${projectStatus.currentStory}`;
@@ -676,7 +680,7 @@ class GreetingBuilder {
     // Priority 5: Last command context
     if (context.lastCommands && context.lastCommands.length > 0) {
       const lastCmd = context.lastCommands[context.lastCommands.length - 1];
-      const cmdName = typeof lastCmd === 'object' ? lastCmd.command : lastCmd;
+      const cmdName = typeof lastCmd === "object" ? lastCmd.command : lastCmd;
       const description = `Last action: *${cmdName}`;
 
       return { description, recommendedCommand: null };
@@ -691,33 +695,37 @@ class GreetingBuilder {
   }
 
   _getPreviousAgentId(context) {
-    if (!context.previousAgent) return null;
-    return typeof context.previousAgent === 'string'
+    if (!context.previousAgent) {
+      return null;
+    }
+    return typeof context.previousAgent === "string"
       ? context.previousAgent
       : context.previousAgent.agentId;
   }
 
   _getPreviousAgentName(context) {
-    if (!context.previousAgent) return null;
-    return typeof context.previousAgent === 'string'
+    if (!context.previousAgent) {
+      return null;
+    }
+    return typeof context.previousAgent === "string"
       ? context.previousAgent
       : context.previousAgent.agentName || context.previousAgent.agentId;
   }
 
   _analyzeStoryContext(projectStatus) {
-    const currentStory = projectStatus.currentStory || '';
+    const currentStory = projectStatus.currentStory || "";
     const storyFile = currentStory ? `${currentStory}.md` : null;
 
     return {
       storyId: currentStory,
       storyFile: storyFile,
-      hasStory: !!currentStory && currentStory !== 'EPIC-SPLIT-IMPLEMENTATION-COMPLETE',
+      hasStory: !!currentStory && currentStory !== "EPIC-SPLIT-IMPLEMENTATION-COMPLETE",
     };
   }
 
   _analyzeModifiedFiles(modifiedFiles, _currentStory) {
     if (!modifiedFiles || modifiedFiles.length === 0) {
-      return { keyFiles: [], summary: '' };
+      return { keyFiles: [], summary: "" };
     }
 
     const keyFiles = [];
@@ -725,34 +733,34 @@ class GreetingBuilder {
       {
         regex: /greeting-builder\.js/,
         priority: 1,
-        desc: 'do **`.aiox-core/scripts/greeting-builder.js`**',
-        category: 'script',
+        desc: "do **`.aiox-core/scripts/greeting-builder.js`**",
+        category: "script",
       },
       {
         regex: /agent-config-loader\.js/,
         priority: 1,
-        desc: 'do **`agent-config-loader.js`**',
-        category: 'script',
+        desc: "do **`agent-config-loader.js`**",
+        category: "script",
       },
       {
         regex: /generate-greeting\.js/,
         priority: 1,
-        desc: 'do **`generate-greeting.js`**',
-        category: 'script',
+        desc: "do **`generate-greeting.js`**",
+        category: "script",
       },
       {
         regex: /session-context-loader\.js/,
         priority: 1,
-        desc: 'do **`session-context-loader.js`**',
-        category: 'script',
+        desc: "do **`session-context-loader.js`**",
+        category: "script",
       },
       {
         regex: /agents\/.*\.md/,
         priority: 1,
-        desc: 'das definições de agentes',
-        category: 'agent',
+        desc: "das definições de agentes",
+        category: "agent",
       },
-      { regex: /\.md$/, priority: 2, desc: 'dos arquivos de documentação', category: 'doc' },
+      { regex: /\.md$/, priority: 2, desc: "dos arquivos de documentação", category: "doc" },
     ];
 
     // Find matching key files (avoid duplicates)
@@ -778,7 +786,7 @@ class GreetingBuilder {
     const topFiles = keyFiles.slice(0, 2);
 
     if (topFiles.length === 0) {
-      return { keyFiles: [], summary: 'dos arquivos do projeto' };
+      return { keyFiles: [], summary: "dos arquivos do projeto" };
     }
 
     if (topFiles.length === 1) {
@@ -793,40 +801,40 @@ class GreetingBuilder {
 
   _getAgentAction(agentId, _storyContext) {
     const actions = {
-      qa: 'revisar a qualidade dessa implementação',
-      dev: 'implementar as funcionalidades',
-      pm: 'sincronizar o progresso',
-      po: 'validar os requisitos',
-      sm: 'coordenar o desenvolvimento',
+      qa: "revisar a qualidade dessa implementação",
+      dev: "implementar as funcionalidades",
+      pm: "sincronizar o progresso",
+      po: "validar os requisitos",
+      sm: "coordenar o desenvolvimento",
     };
 
-    return actions[agentId] || 'continuar o trabalho';
+    return actions[agentId] || "continuar o trabalho";
   }
 
   _suggestCommand(agentId, prevAgentId, storyContext) {
     // Agent transition commands
-    if (prevAgentId === 'dev' && agentId === 'qa') {
-      return storyContext.storyFile ? `*review ${storyContext.storyFile}` : '*review';
+    if (prevAgentId === "dev" && agentId === "qa") {
+      return storyContext.storyFile ? `*review ${storyContext.storyFile}` : "*review";
     }
 
-    if (prevAgentId === 'qa' && agentId === 'dev') {
-      return '*apply-qa-fixes';
+    if (prevAgentId === "qa" && agentId === "dev") {
+      return "*apply-qa-fixes";
     }
 
-    if (prevAgentId === 'po' && agentId === 'dev') {
-      return '*develop-yolo';
+    if (prevAgentId === "po" && agentId === "dev") {
+      return "*develop-yolo";
     }
 
     // Role-based commands when no previous agent
-    if (agentId === 'qa' && storyContext.storyFile) {
+    if (agentId === "qa" && storyContext.storyFile) {
       return `*review ${storyContext.storyFile}`;
     }
 
-    if (agentId === 'dev' && storyContext.hasStory) {
-      return '*develop-yolo docs/stories/[story-path].md';
+    if (agentId === "dev" && storyContext.hasStory) {
+      return "*develop-yolo docs/stories/[story-path].md";
     }
 
-    if (agentId === 'pm' && storyContext.storyId) {
+    if (agentId === "pm" && storyContext.storyId) {
       return `*sync-story ${storyContext.storyId}`;
     }
 
@@ -841,7 +849,7 @@ class GreetingBuilder {
    * @returns {string} Context description
    */
   buildCurrentContext(context, sessionType, projectStatus) {
-    if (sessionType === 'workflow' && projectStatus?.currentStory) {
+    if (sessionType === "workflow" && projectStatus?.currentStory) {
       return `📌 **Context:** Working on ${projectStatus.currentStory}`;
     }
 
@@ -849,7 +857,7 @@ class GreetingBuilder {
       return `📌 **Last Action:** ${context.lastCommand}`;
     }
 
-    return '';
+    return "";
   }
 
   /**
@@ -889,11 +897,11 @@ class GreetingBuilder {
       const enhancedSuggestions = this._enhanceSuggestionsWithSurface(suggestions, context);
 
       const greetingMessage = this.workflowNavigator.getGreetingMessage(workflowState);
-      const header = greetingMessage || 'Next steps:';
+      const header = greetingMessage || "Next steps:";
 
       return this.workflowNavigator.formatSuggestions(enhancedSuggestions, header);
     } catch (error) {
-      console.warn('[GreetingBuilder] Workflow suggestions failed:', error.message);
+      console.warn("[GreetingBuilder] Workflow suggestions failed:", error.message);
       return null;
     }
   }
@@ -917,7 +925,7 @@ class GreetingBuilder {
       }
 
       // Read and parse state file synchronously (fast, local file)
-      const content = fs.readFileSync(stateFilePath, 'utf8');
+      const content = fs.readFileSync(stateFilePath, "utf8");
       const stateData = yaml.load(content);
 
       if (!stateData?.session_state) {
@@ -941,7 +949,7 @@ class GreetingBuilder {
       suggestions.push({
         command: `*develop-yolo ${currentStory}`,
         description: `Continue ${currentStory} (phase: ${currentPhase})`,
-        raw_command: 'develop-yolo',
+        raw_command: "develop-yolo",
         args: currentStory,
       });
 
@@ -949,16 +957,16 @@ class GreetingBuilder {
         suggestions.push({
           command: `*build-status ${currentStory}`,
           description: `Check build status (${storiesDone}/${totalStories} stories done)`,
-          raw_command: 'build-status',
+          raw_command: "build-status",
           args: currentStory,
         });
       }
 
-      const header = `Workflow in progress: ${ss.epic?.title || 'Active Epic'} (${storiesDone}/${totalStories})`;
+      const header = `Workflow in progress: ${ss.epic?.title || "Active Epic"} (${storiesDone}/${totalStories})`;
       return this.workflowNavigator.formatSuggestions(suggestions, header);
     } catch (error) {
       // Graceful degradation: if SessionState is unavailable, return null
-      console.warn('[GreetingBuilder] SessionState workflow detection failed:', error.message);
+      console.warn("[GreetingBuilder] SessionState workflow detection failed:", error.message);
       return null;
     }
   }
@@ -981,7 +989,7 @@ class GreetingBuilder {
 
       // Build surface context from session data
       const surfaceContext = {
-        risk_level: context.riskLevel || 'LOW',
+        risk_level: context.riskLevel || "LOW",
         errors_in_task: context.errorsInTask || 0,
         action_type: context.actionType || null,
       };
@@ -992,10 +1000,10 @@ class GreetingBuilder {
         // Prepend a proactive warning suggestion
         return [
           {
-            command: '*help',
+            command: "*help",
             description: `[${result.severity}] ${result.message}`,
-            raw_command: 'help',
-            args: '',
+            raw_command: "help",
+            args: "",
           },
           ...suggestions,
         ];
@@ -1004,7 +1012,7 @@ class GreetingBuilder {
       return suggestions;
     } catch (error) {
       // Graceful degradation: SurfaceChecker unavailable, return original suggestions
-      console.warn('[GreetingBuilder] SurfaceChecker enhancement failed:', error.message);
+      console.warn("[GreetingBuilder] SurfaceChecker enhancement failed:", error.message);
       return suggestions;
     }
   }
@@ -1029,41 +1037,41 @@ class GreetingBuilder {
 
         // QA agent: suggest validation if story is ready
         if (
-          agentId === 'qa' &&
+          agentId === "qa" &&
           projectStatus.recentCommits &&
           projectStatus.recentCommits.length > 0
         ) {
           const recentCommit = projectStatus.recentCommits[0].message;
-          if (recentCommit.includes('complete') || recentCommit.includes('implement')) {
+          if (recentCommit.includes("complete") || recentCommit.includes("implement")) {
             if (storyId) {
               suggestions.push(`*review ${storyId}`);
             } else {
-              suggestions.push('*code-review committed');
+              suggestions.push("*code-review committed");
             }
           }
         }
 
         // Dev agent: suggest development tasks
-        if (agentId === 'dev' && storyId) {
+        if (agentId === "dev" && storyId) {
           if (projectStatus.modifiedFilesTotalCount > 0) {
-            suggestions.push('*run-tests');
+            suggestions.push("*run-tests");
           }
           suggestions.push(`*develop-story ${storyId}`);
         }
 
         // PM/PO: suggest story/epic management
-        if ((agentId === 'pm' || agentId === 'po') && storyId) {
+        if ((agentId === "pm" || agentId === "po") && storyId) {
           suggestions.push(`*validate-story-draft ${storyId}`);
         }
       }
 
       // Analyze modified files
       if (projectStatus.modifiedFilesTotalCount > 0) {
-        if (agentId === 'qa') {
-          suggestions.push('*code-review uncommitted');
+        if (agentId === "qa") {
+          suggestions.push("*code-review uncommitted");
         }
-        if (agentId === 'dev' && projectStatus.modifiedFilesTotalCount > 5) {
-          suggestions.push('*commit-changes');
+        if (agentId === "dev" && projectStatus.modifiedFilesTotalCount > 5) {
+          suggestions.push("*commit-changes");
         }
       }
 
@@ -1072,13 +1080,13 @@ class GreetingBuilder {
         const lastCommit = projectStatus.recentCommits[0].message;
 
         // If last commit was a test, suggest review
-        if (lastCommit.includes('test') && agentId === 'qa') {
-          suggestions.push('*run-tests');
+        if (lastCommit.includes("test") && agentId === "qa") {
+          suggestions.push("*run-tests");
         }
 
         // If last commit was a feature, suggest QA
-        if ((lastCommit.includes('feat:') || lastCommit.includes('feature')) && agentId === 'qa') {
-          suggestions.push('*code-review committed');
+        if ((lastCommit.includes("feat:") || lastCommit.includes("feature")) && agentId === "qa") {
+          suggestions.push("*code-review committed");
         }
       }
 
@@ -1092,11 +1100,11 @@ class GreetingBuilder {
       const commandsList = suggestions
         .slice(0, 2) // Limit to 2 suggestions
         .map((cmd) => `   - \`${cmd}\``)
-        .join('\n');
+        .join("\n");
 
       return `💡 **Context:** ${contextSummary}\n\n**Suggested Next Steps:**\n${commandsList}`;
     } catch (error) {
-      console.warn('[GreetingBuilder] Contextual suggestions failed:', error.message);
+      console.warn("[GreetingBuilder] Contextual suggestions failed:", error.message);
       return null;
     }
   }
@@ -1120,11 +1128,11 @@ class GreetingBuilder {
 
     if (projectStatus.recentCommits && projectStatus.recentCommits.length > 0) {
       const lastCommit = projectStatus.recentCommits[0].message;
-      const shortMsg = lastCommit.length > 50 ? lastCommit.substring(0, 47) + '...' : lastCommit;
+      const shortMsg = lastCommit.length > 50 ? lastCommit.substring(0, 47) + "..." : lastCommit;
       parts.push(`Last: "${shortMsg}"`);
     }
 
-    return parts.join(', ') || 'Ready to start';
+    return parts.join(", ") || "Ready to start";
   }
 
   /**
@@ -1135,7 +1143,7 @@ class GreetingBuilder {
    */
   buildCommands(commands, sessionType) {
     if (!commands || commands.length === 0) {
-      return '**Commands:** Type `*help` for available commands';
+      return "**Commands:** Type `*help` for available commands";
     }
 
     const header = this._getCommandsHeader(sessionType);
@@ -1143,19 +1151,19 @@ class GreetingBuilder {
       .slice(0, 12) // Max 12 commands
       .map((cmd) => {
         // Handle both object format and string format
-        if (typeof cmd === 'string') {
+        if (typeof cmd === "string") {
           return `   - \`*${cmd}\``;
         }
-        if (typeof cmd === 'object' && cmd !== null) {
+        if (typeof cmd === "object" && cmd !== null) {
           const name = cmd.name || cmd.command || String(cmd);
-          const description = cmd.description || '';
+          const description = cmd.description || "";
           return description ? `   - \`*${name}\`: ${description}` : `   - \`*${name}\``;
         }
         // Fallback for unexpected formats
         return `   - \`*${String(cmd)}\``;
       })
-      .filter((cmd) => !cmd.includes('[object Object]')) // Filter out malformed commands
-      .join('\n');
+      .filter((cmd) => !cmd.includes("[object Object]")) // Filter out malformed commands
+      .join("\n");
 
     return `**${header}:**\n${commandList}`;
   }
@@ -1168,14 +1176,14 @@ class GreetingBuilder {
    */
   _getCommandsHeader(sessionType) {
     switch (sessionType) {
-      case 'new':
-        return 'Available Commands';
-      case 'existing':
-        return 'Quick Commands';
-      case 'workflow':
-        return 'Key Commands';
+      case "new":
+        return "Available Commands";
+      case "existing":
+        return "Quick Commands";
+      case "workflow":
+        return "Key Commands";
       default:
-        return 'Commands';
+        return "Commands";
     }
   }
 
@@ -1186,7 +1194,7 @@ class GreetingBuilder {
    * @returns {string} Redirect message
    */
   buildBobModeRedirect(agent) {
-    const agentName = agent?.name || 'Este agente';
+    const agentName = agent?.name || "Este agente";
     return `💡 **Você está no Modo Assistido.**
 
 ${agentName} não está disponível diretamente no Modo Assistido.
@@ -1212,22 +1220,22 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
 
     // Story ACT-7 AC6: Vary footer content by session context
     // ACT-12: Language delegated to Claude Code settings.json — hardcoded English phrases
-    const sessionType = sectionContext?.sessionType || 'new';
+    const sessionType = sectionContext?.sessionType || "new";
 
-    if (sessionType === 'workflow') {
+    if (sessionType === "workflow") {
       // Workflow: progress note
       const storyRef = sectionContext?.sessionStory || sectionContext?.projectStatus?.currentStory;
       if (storyRef) {
         parts.push(`Focused on **${storyRef}**. Type \`*help\` to see available commands.`);
       } else {
-        parts.push('Workflow active. Type `*help` to see available commands.');
+        parts.push("Workflow active. Type `*help` to see available commands.");
       }
-    } else if (sessionType === 'existing') {
+    } else if (sessionType === "existing") {
       // Existing session: brief tip with session-info reference
-      parts.push('Type `*help` for commands or `*session-info` for session details.');
+      parts.push("Type `*help` for commands or `*session-info` for session details.");
     } else {
       // New session: full guide prompt
-      parts.push('Type `*guide` for comprehensive usage instructions.');
+      parts.push("Type `*guide` for comprehensive usage instructions.");
     }
 
     // Add agent signature if available
@@ -1237,11 +1245,11 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
       agent.persona_profile.communication &&
       agent.persona_profile.communication.signature_closing
     ) {
-      parts.push('');
+      parts.push("");
       parts.push(agent.persona_profile.communication.signature_closing);
     }
 
-    return parts.join('\n');
+    return parts.join("\n");
   }
 
   /**
@@ -1267,7 +1275,7 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
 
     // Story 10.3 - AC1, AC2: Profile-based filtering
     // If bob mode AND not PM agent: return empty (will show redirect message instead)
-    if (userProfile === 'bob' && agent.id !== 'pm') {
+    if (userProfile === "bob" && agent.id !== "pm") {
       return [];
     }
 
@@ -1301,14 +1309,14 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
    */
   _getVisibilityFilter(sessionType) {
     switch (sessionType) {
-      case 'new':
-        return 'full';
-      case 'existing':
-        return 'quick';
-      case 'workflow':
-        return 'key';
+      case "new":
+        return "full";
+      case "existing":
+        return "quick";
+      case "workflow":
+        return "key";
       default:
-        return 'full';
+        return "full";
     }
   }
 
@@ -1323,8 +1331,8 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
       const conversationHistory = context.conversationHistory || [];
       return this.contextDetector.detectSessionType(conversationHistory);
     } catch (error) {
-      console.warn('[GreetingBuilder] Session detection failed:', error.message);
-      return 'new'; // Conservative default
+      console.warn("[GreetingBuilder] Session detection failed:", error.message);
+      return "new"; // Conservative default
     }
   }
 
@@ -1337,7 +1345,7 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
     try {
       return this.gitConfigDetector.get();
     } catch (error) {
-      console.warn('[GreetingBuilder] Git config check failed:', error.message);
+      console.warn("[GreetingBuilder] Git config check failed:", error.message);
       return { configured: false, type: null, branch: null };
     }
   }
@@ -1351,7 +1359,7 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
     try {
       return await loadProjectStatus();
     } catch (error) {
-      console.warn('[GreetingBuilder] Project status load failed:', error.message);
+      console.warn("[GreetingBuilder] Project status load failed:", error.message);
       return null;
     }
   }
@@ -1367,8 +1375,8 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
       await mode.load();
       return mode.getBadge();
     } catch (error) {
-      console.warn('[GreetingBuilder] Permission mode load failed:', error.message);
-      return '';
+      console.warn("[GreetingBuilder] Permission mode load failed:", error.message);
+      return "";
     }
   }
 
@@ -1392,8 +1400,8 @@ Use \`@pm\` (Bob) para todas as interações. Bob vai orquestrar os outros agent
    */
   _loadConfig() {
     try {
-      const configPath = path.join(process.cwd(), '.aiox-core', 'core-config.yaml');
-      const content = fs.readFileSync(configPath, 'utf8');
+      const configPath = path.join(process.cwd(), ".aiox-core", "core-config.yaml");
+      const content = fs.readFileSync(configPath, "utf8");
       return yaml.load(content);
     } catch (_error) {
       return null;

@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const { UnifiedActivationPipeline } = require('./unified-activation-pipeline');
+const { UnifiedActivationPipeline } = require("./unified-activation-pipeline");
 
 /**
  * Canonical activation runtime for AIOX agents.
@@ -15,9 +15,11 @@ class ActivationRuntime {
    * @param {UnifiedActivationPipeline} [options.pipeline]
    */
   constructor(options = {}) {
-    this.pipeline = options.pipeline || new UnifiedActivationPipeline({
-      projectRoot: options.projectRoot,
-    });
+    this.pipeline =
+      options.pipeline ||
+      new UnifiedActivationPipeline({
+        projectRoot: options.projectRoot,
+      });
   }
 
   /**
@@ -39,9 +41,12 @@ class ActivationRuntime {
   async activateGreeting(agentId, options = {}) {
     try {
       const result = await this.activate(agentId, options);
-      return result && typeof result.greeting === 'string' ? result.greeting : '';
+      return result && typeof result.greeting === "string" ? result.greeting : "";
     } catch (error) {
-      throw new Error(`ActivationRuntime.activateGreeting failed for "${agentId}": ${error.message}`);
+      throw new Error(
+        `ActivationRuntime.activateGreeting failed for "${agentId}": ${error.message}`,
+        { cause: error },
+      );
     }
   }
 }

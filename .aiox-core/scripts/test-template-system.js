@@ -1,6 +1,6 @@
-const fs = require('fs').promises;
-const path = require('path');
-const chalk = require('chalk');
+const fs = require("fs").promises;
+const path = require("path");
+const chalk = require("chalk");
 
 /**
  * Test template system for Synkra AIOX automated test generation
@@ -9,7 +9,7 @@ const chalk = require('chalk');
 class TestTemplateSystem {
   constructor(options = {}) {
     this.rootPath = options.rootPath || process.cwd();
-    this.templatesDir = path.join(this.rootPath, 'aiox-core', 'templates', 'tests');
+    this.templatesDir = path.join(this.rootPath, "aiox-core", "templates", "tests");
     this.templateCache = new Map();
     this.frameworks = this.initializeFrameworks();
     this.componentTemplates = this.initializeComponentTemplates();
@@ -31,9 +31,8 @@ class TestTemplateSystem {
       // Load existing templates
       await this.loadTemplates();
 
-      console.log(chalk.green('✅ Test template system initialized'));
+      console.log(chalk.green("✅ Test template system initialized"));
       return true;
-
     } catch (error) {
       console.error(chalk.red(`Failed to initialize test template system: ${error.message}`));
       throw error;
@@ -43,9 +42,9 @@ class TestTemplateSystem {
   /**
    * Get template for specific component type and test type
    */
-  async getTemplate(componentType, testType, framework = 'jest', options = {}) {
+  async getTemplate(componentType, testType, framework = "jest", options = {}) {
     const templateKey = `${_framework}-${componentType}-${testType}`;
-    
+
     // Check cache first
     if (this.templateCache.has(templateKey)) {
       return this.templateCache.get(templateKey);
@@ -53,14 +52,14 @@ class TestTemplateSystem {
 
     // Load template from file or generate from base template
     let template = await this.loadTemplateFromFile(templateKey);
-    
+
     if (!template) {
       template = await this.generateTemplate(componentType, testType, _framework, options);
     }
 
     // Cache the template
     this.templateCache.set(templateKey, template);
-    
+
     return template;
   }
 
@@ -68,16 +67,11 @@ class TestTemplateSystem {
    * Generate test content using template
    */
   async generateTestContent(component, testFile, config) {
-    const template = await this.getTemplate(
-      component.type,
-      testFile.test_type,
-      config.framework,
-      {
-        qualityLevel: config.qualityLevel,
-        mockLevel: config.mockLevel,
-        coverageTarget: config.coverageTarget,
-      },
-    );
+    const template = await this.getTemplate(component.type, testFile.test_type, config.framework, {
+      qualityLevel: config.qualityLevel,
+      mockLevel: config.mockLevel,
+      coverageTarget: config.coverageTarget,
+    });
 
     const templateData = {
       component: component,
@@ -85,8 +79,8 @@ class TestTemplateSystem {
       config: config,
       metadata: {
         generatedAt: new Date().toISOString(),
-        generator: 'AIOX Test Template System',
-        version: '1.0.0',
+        generator: "AIOX Test Template System",
+        version: "1.0.0",
       },
     };
 
@@ -97,30 +91,29 @@ class TestTemplateSystem {
    * Create custom template
    */
   async createCustomTemplate(templateName, templateContent, options = {}) {
-    const templatePath = path.join(this.templatesDir, 'custom', `${templateName}.template.js`);
-    
+    const templatePath = path.join(this.templatesDir, "custom", `${templateName}.template.js`);
+
     const templateWrapper = {
       name: templateName,
-      type: options.type || 'custom',
-      framework: options.framework || 'jest',
+      type: options.type || "custom",
+      framework: options.framework || "jest",
       content: templateContent,
       metadata: {
         created: new Date().toISOString(),
-        author: options.author || 'system',
-        description: options.description || 'Custom test template',
+        author: options.author || "system",
+        description: options.description || "Custom test template",
       },
     };
 
     try {
       await fs.mkdir(path.dirname(templatePath), { recursive: true });
       await fs.writeFile(templatePath, JSON.stringify(templateWrapper, null, 2));
-      
+
       // Add to cache
       this.templateCache.set(templateName, templateWrapper);
-      
+
       console.log(chalk.green(`✅ Custom template created: ${templateName}`));
       return templateWrapper;
-
     } catch (error) {
       console.error(chalk.red(`Failed to create custom template: ${error.message}`));
       throw error;
@@ -132,9 +125,9 @@ class TestTemplateSystem {
    */
   async loadTemplateFromFile(templateKey) {
     const templatePath = path.join(this.templatesDir, `${templateKey}.template.js`);
-    
+
     try {
-      const content = await fs.readFile(templatePath, 'utf-8');
+      const content = await fs.readFile(templatePath, "utf-8");
       return JSON.parse(content);
     } catch {
       // Template file doesn't exist
@@ -198,23 +191,23 @@ class TestTemplateSystem {
   initializeFrameworks() {
     return {
       jest: {
-        name: 'Jest',
+        name: "Jest",
         imports: {
-          testFramework: '',
-          assertions: '',
-          mocks: 'jest',
+          testFramework: "",
+          assertions: "",
+          mocks: "jest",
         },
         syntax: {
-          describe: 'describe',
-          it: 'it',
-          test: 'test',
-          expect: 'expect',
-          beforeEach: 'beforeEach',
-          afterEach: 'afterEach',
-          beforeAll: 'beforeAll',
-          afterAll: 'afterAll',
-          mock: 'jest.mock',
-          spyOn: 'jest.spyOn',
+          describe: "describe",
+          it: "it",
+          test: "test",
+          expect: "expect",
+          beforeEach: "beforeEach",
+          afterEach: "afterEach",
+          beforeAll: "beforeAll",
+          afterAll: "afterAll",
+          mock: "jest.mock",
+          spyOn: "jest.spyOn",
         },
         fileTemplate: `{{imports}}
 
@@ -233,23 +226,23 @@ describe('{{component.name}}', () => {
 {{metadata}}`,
       },
       mocha: {
-        name: 'Mocha',
+        name: "Mocha",
         imports: {
           testFramework: "const { describe, it, beforeEach, afterEach } = require('mocha');",
           assertions: "const { expect } = require('chai');",
           mocks: "const sinon = require('sinon');",
         },
         syntax: {
-          describe: 'describe',
-          it: 'it',
-          test: 'it',
-          expect: 'expect',
-          beforeEach: 'beforeEach',
-          afterEach: 'afterEach',
-          beforeAll: 'before',
-          afterAll: 'after',
-          mock: 'sinon.mock',
-          spyOn: 'sinon.spy',
+          describe: "describe",
+          it: "it",
+          test: "it",
+          expect: "expect",
+          beforeEach: "beforeEach",
+          afterEach: "afterEach",
+          beforeAll: "before",
+          afterAll: "after",
+          mock: "sinon.mock",
+          spyOn: "sinon.spy",
         },
         fileTemplate: `{{imports}}
 
@@ -270,23 +263,24 @@ describe('{{component.name}}', function() {
 {{metadata}}`,
       },
       vitest: {
-        name: 'Vitest',
+        name: "Vitest",
         imports: {
-          testFramework: "import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';",
-          assertions: '',
-          mocks: '',
+          testFramework:
+            "import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';",
+          assertions: "",
+          mocks: "",
         },
         syntax: {
-          describe: 'describe',
-          it: 'it',
-          test: 'test',
-          expect: 'expect',
-          beforeEach: 'beforeEach',
-          afterEach: 'afterEach',
-          beforeAll: 'beforeAll',
-          afterAll: 'afterAll',
-          mock: 'vi.mock',
-          spyOn: 'vi.spyOn',
+          describe: "describe",
+          it: "it",
+          test: "test",
+          expect: "expect",
+          beforeEach: "beforeEach",
+          afterEach: "afterEach",
+          beforeAll: "beforeAll",
+          afterAll: "afterAll",
+          mock: "vi.mock",
+          spyOn: "vi.spyOn",
         },
         fileTemplate: `{{imports}}
 
@@ -319,30 +313,26 @@ describe('{{component.name}}', () => {
           "const yaml = require('js-yaml');",
         ],
         setup: {
-          variables: [
-            'let agentPath;',
-            'let agentContent;',
-            'let agentConfig;',
-          ],
+          variables: ["let agentPath;", "let agentContent;", "let agentConfig;"],
           beforeEach: [
             "agentPath = path.join(__dirname, '../../../aiox-core/agents/{{component.name}}.md');",
             "agentContent = await fs.readFile(agentPath, 'utf-8');",
-            'const yamlMatch = agentContent.match(/^---\\s*\\n([\\s\\S]*?)\\n---/);',
-            'agentConfig = yamlMatch ? yaml.load(yamlMatch[1]) : {};',
+            "const yamlMatch = agentContent.match(/^---\\s*\\n([\\s\\S]*?)\\n---/);",
+            "agentConfig = yamlMatch ? yaml.load(yamlMatch[1]) : {};",
           ],
         },
         testCases: {
           basic: [
             {
-              name: 'should have valid YAML frontmatter',
+              name: "should have valid YAML frontmatter",
               assertions: [
-                'expect(agentConfig).toBeDefined();',
+                "expect(agentConfig).toBeDefined();",
                 "expect(agentConfig.name).toBe('{{component.name}}');",
                 "expect(agentConfig.type).toBe('agent');",
               ],
             },
             {
-              name: 'should have required sections',
+              name: "should have required sections",
               assertions: [
                 "expect(agentContent).toContain('## Purpose');",
                 "expect(agentContent).toContain('## Capabilities');",
@@ -352,27 +342,20 @@ describe('{{component.name}}', () => {
           ],
           validation: [
             {
-              name: 'should validate agent configuration',
+              name: "should validate agent configuration",
               assertions: [
-                'expect(agentConfig.version).toMatch(/^\\d+\\.\\d+\\.\\d+$/);',
-                'expect(agentConfig.capabilities).toBeInstanceOf(Array);',
-                'expect(agentConfig.capabilities.length).toBeGreaterThan(0);',
+                "expect(agentConfig.version).toMatch(/^\\d+\\.\\d+\\.\\d+$/);",
+                "expect(agentConfig.capabilities).toBeInstanceOf(Array);",
+                "expect(agentConfig.capabilities.length).toBeGreaterThan(0);",
               ],
             },
           ],
         },
       },
       task: {
-        imports: [
-          "const fs = require('fs').promises;",
-          "const path = require('path');",
-        ],
+        imports: ["const fs = require('fs').promises;", "const path = require('path');"],
         setup: {
-          variables: [
-            'let taskPath;',
-            'let taskContent;',
-            'let TaskClass;',
-          ],
+          variables: ["let taskPath;", "let taskContent;", "let TaskClass;"],
           beforeEach: [
             "taskPath = path.join(__dirname, '../../../aiox-core/tasks/{{component.name}}.md');",
             "taskContent = await fs.readFile(taskPath, 'utf-8');",
@@ -381,7 +364,7 @@ describe('{{component.name}}', () => {
         testCases: {
           basic: [
             {
-              name: 'should have valid task structure',
+              name: "should have valid task structure",
               assertions: [
                 "expect(taskContent).toContain('# {{component.name}}');",
                 "expect(taskContent).toContain('## Purpose');",
@@ -389,7 +372,7 @@ describe('{{component.name}}', () => {
               ],
             },
             {
-              name: 'should have implementation code',
+              name: "should have implementation code",
               assertions: [
                 "expect(taskContent).toContain('class');",
                 "expect(taskContent).toContain('async execute(');",
@@ -398,12 +381,12 @@ describe('{{component.name}}', () => {
           ],
           execution: [
             {
-              name: 'should execute task successfully',
-              setup: 'const taskInstance = new TaskClass();',
+              name: "should execute task successfully",
+              setup: "const taskInstance = new TaskClass();",
               assertions: [
                 "const result = await taskInstance.execute(['test-param']);",
-                'expect(result).toBeDefined();',
-                'expect(result.success).toBe(true);',
+                "expect(result).toBeDefined();",
+                "expect(result.success).toBe(true);",
               ],
             },
           ],
@@ -416,84 +399,74 @@ describe('{{component.name}}', () => {
           "const yaml = require('js-yaml');",
         ],
         setup: {
-          variables: [
-            'let workflowPath;',
-            'let workflowConfig;',
-          ],
+          variables: ["let workflowPath;", "let workflowConfig;"],
           beforeEach: [
             "workflowPath = path.join(__dirname, '../../../aiox-core/workflows/{{component.name}}.yaml');",
             "const workflowContent = await fs.readFile(workflowPath, 'utf-8');",
-            'workflowConfig = yaml.load(workflowContent);',
+            "workflowConfig = yaml.load(workflowContent);",
           ],
         },
         testCases: {
           basic: [
             {
-              name: 'should have valid workflow structure',
+              name: "should have valid workflow structure",
               assertions: [
-                'expect(workflowConfig).toBeDefined();',
+                "expect(workflowConfig).toBeDefined();",
                 "expect(workflowConfig.name).toBe('{{component.name}}');",
-                'expect(workflowConfig.steps).toBeInstanceOf(Array);',
+                "expect(workflowConfig.steps).toBeInstanceOf(Array);",
               ],
             },
             {
-              name: 'should have required metadata',
+              name: "should have required metadata",
               assertions: [
-                'expect(workflowConfig.version).toBeDefined();',
-                'expect(workflowConfig.description).toBeDefined();',
-                'expect(workflowConfig.steps.length).toBeGreaterThan(0);',
+                "expect(workflowConfig.version).toBeDefined();",
+                "expect(workflowConfig.description).toBeDefined();",
+                "expect(workflowConfig.steps.length).toBeGreaterThan(0);",
               ],
             },
           ],
           validation: [
             {
-              name: 'should validate workflow steps',
+              name: "should validate workflow steps",
               assertions: [
-                'workflowConfig.steps.forEach(step => {',
-                '  expect(step.name).toBeDefined();',
-                '  expect(step.action).toBeDefined();',
-                '});',
+                "workflowConfig.steps.forEach(step => {",
+                "  expect(step.name).toBeDefined();",
+                "  expect(step.action).toBeDefined();",
+                "});",
               ],
             },
           ],
         },
       },
       util: {
-        imports: [
-          "const path = require('path');",
-        ],
+        imports: ["const path = require('path');"],
         setup: {
-          variables: [
-            'let UtilClass;',
-            'let utilInstance;',
-          ],
+          variables: ["let UtilClass;", "let utilInstance;"],
           beforeEach: [
             "UtilClass = require('../../../aiox-core/scripts/{{component.name}}');",
-            'utilInstance = new UtilClass();',
+            "utilInstance = new UtilClass();",
           ],
         },
         testCases: {
           basic: [
             {
-              name: 'should instantiate correctly',
+              name: "should instantiate correctly",
               assertions: [
-                'expect(utilInstance).toBeDefined();',
+                "expect(utilInstance).toBeDefined();",
                 "expect(utilInstance.constructor.name).toBe('{{componentClass}}');",
               ],
             },
             {
-              name: 'should have required methods',
-              assertions: [
-                "expect(typeof utilInstance.initialize).toBe('function');",
-              ],
+              name: "should have required methods",
+              assertions: ["expect(typeof utilInstance.initialize).toBe('function');"],
             },
           ],
           functionality: [
             {
-              name: 'should initialize successfully',
+              name: "should initialize successfully",
               assertions: [
-                'const result = await utilInstance.initialize();',
-                'expect(result).toBeTruthy();',
+                "const result = await utilInstance.initialize();",
+                "expect(result).toBeTruthy();",
               ],
             },
           ],
@@ -508,12 +481,12 @@ describe('{{component.name}}', () => {
   generateImports(componentType, testType, _framework, options) {
     const _frameworkConfig = this.frameworks[framework];
     const componentTemplate = this.componentTemplates[componentType];
-    
+
     const imports = [
       frameworkConfig.imports.testFramework,
       frameworkConfig.imports.assertions,
       frameworkConfig.imports.mocks,
-    ].filter(imp => imp);
+    ].filter((imp) => imp);
 
     // Add component-specific imports
     if (componentTemplate && componentTemplate.imports) {
@@ -521,14 +494,14 @@ describe('{{component.name}}', () => {
     }
 
     // Add integration/e2e specific imports
-    if (testType === 'integration') {
+    if (testType === "integration") {
       imports.push(
         "const request = require('supertest');",
         "const { setupTestDB, teardownTestDB } = require('../../helpers/db-helper');",
       );
     }
 
-    if (testType === 'e2e') {
+    if (testType === "e2e") {
       imports.push(
         "const { setupTestEnvironment, cleanupTestEnvironment } = require('../../helpers/e2e-helper');",
       );
@@ -557,14 +530,14 @@ describe('{{component.name}}', () => {
     }
 
     // Add test type specific setup
-    if (testType === 'integration') {
-      setup.beforeAll.push('await setupTestDB();');
-      setup.afterAll.push('await teardownTestDB();');
+    if (testType === "integration") {
+      setup.beforeAll.push("await setupTestDB();");
+      setup.afterAll.push("await teardownTestDB();");
     }
 
-    if (testType === 'e2e') {
-      setup.beforeAll.push('await setupTestEnvironment();');
-      setup.afterAll.push('await cleanupTestEnvironment();');
+    if (testType === "e2e") {
+      setup.beforeAll.push("await setupTestEnvironment();");
+      setup.afterAll.push("await cleanupTestEnvironment();");
     }
 
     return setup;
@@ -584,7 +557,7 @@ describe('{{component.name}}', () => {
       }
 
       // Add specific test cases based on quality level
-      if (options.qualityLevel === 'comprehensive') {
+      if (options.qualityLevel === "comprehensive") {
         if (componentTemplate.testCases.validation) {
           testCases.push(...componentTemplate.testCases.validation);
         }
@@ -600,8 +573,8 @@ describe('{{component.name}}', () => {
     // Add generic test cases if no specific ones found
     if (testCases.length === 0) {
       testCases.push({
-        name: 'should be defined',
-        assertions: ['expect({{component.name}}).toBeDefined();'],
+        name: "should be defined",
+        assertions: ["expect({{component.name}}).toBeDefined();"],
       });
     }
 
@@ -618,8 +591,10 @@ describe('{{component.name}}', () => {
     };
 
     // Add component-specific teardown
-    if (componentType === 'util') {
-      teardown.afterEach.push('if (utilInstance && utilInstance.cleanup) await utilInstance.cleanup();');
+    if (componentType === "util") {
+      teardown.afterEach.push(
+        "if (utilInstance && utilInstance.cleanup) await utilInstance.cleanup();",
+      );
     }
 
     return teardown;
@@ -631,22 +606,22 @@ describe('{{component.name}}', () => {
   generateMockTemplates(componentType, testType, options) {
     const mocks = [];
 
-    if (options.mockLevel === 'extensive') {
+    if (options.mockLevel === "extensive") {
       // Add comprehensive mocking
       mocks.push({
-        type: 'module',
-        target: 'fs',
-        implementation: '{ promises: { readFile: jest.fn(), writeFile: jest.fn() } }',
+        type: "module",
+        target: "fs",
+        implementation: "{ promises: { readFile: jest.fn(), writeFile: jest.fn() } }",
       });
     }
 
-    if (options.mockLevel !== 'minimal') {
+    if (options.mockLevel !== "minimal") {
       // Add moderate mocking
-      if (componentType === 'agent' || componentType === 'workflow') {
+      if (componentType === "agent" || componentType === "workflow") {
         mocks.push({
-          type: 'module',
-          target: 'js-yaml',
-          implementation: '{ load: jest.fn(), dump: jest.fn() }',
+          type: "module",
+          target: "js-yaml",
+          implementation: "{ load: jest.fn(), dump: jest.fn() }",
         });
       }
     }
@@ -661,9 +636,9 @@ describe('{{component.name}}', () => {
     const utilities = [];
 
     // Add helper functions for specific component types
-    if (componentType === 'agent') {
+    if (componentType === "agent") {
       utilities.push({
-        name: 'createMockAgentConfig',
+        name: "createMockAgentConfig",
         implementation: `function createMockAgentConfig(overrides = {}) {
   return {
     name: '{{component.name}}',
@@ -676,9 +651,9 @@ describe('{{component.name}}', () => {
       });
     }
 
-    if (testType === 'integration') {
+    if (testType === "integration") {
       utilities.push({
-        name: 'createTestContext',
+        name: "createTestContext",
         implementation: `function createTestContext() {
   return {
     testId: 'test-' + Date.now(),
@@ -695,19 +670,19 @@ describe('{{component.name}}', () => {
    * Render template sections
    */
   renderImports(imports, data) {
-    return imports.filter(imp => imp).join('\n');
+    return imports.filter((imp) => imp).join("\n");
   }
 
   renderSetup(setup, data) {
-    let content = '';
-    
+    let content = "";
+
     if (setup.variables.length > 0) {
-      content += setup.variables.join('\n') + '\n\n';
+      content += setup.variables.join("\n") + "\n\n";
     }
 
     if (setup.beforeAll.length > 0) {
       content += `beforeAll(async () => {
-  ${setup.beforeAll.join('\n  ')}
+  ${setup.beforeAll.join("\n  ")}
 });
 
 `;
@@ -715,7 +690,7 @@ describe('{{component.name}}', () => {
 
     if (setup.beforeEach.length > 0) {
       content += `beforeEach(async () => {
-  ${setup.beforeEach.join('\n  ')}
+  ${setup.beforeEach.join("\n  ")}
 });
 
 `;
@@ -725,37 +700,39 @@ describe('{{component.name}}', () => {
   }
 
   renderTestCases(testCases, data) {
-    return testCases.map(testCase => {
-      let caseContent = `  it('${testCase.name}', async () => {\n`;
-      
-      if (testCase.setup) {
-        caseContent += `    ${testCase.setup}\n\n`;
-      }
-      
-      if (testCase.assertions) {
-        caseContent += testCase.assertions.map(assertion => `    ${assertion}`).join('\n');
-      }
-      
-      caseContent += '\n  });';
-      
-      return caseContent;
-    }).join('\n\n');
+    return testCases
+      .map((testCase) => {
+        let caseContent = `  it('${testCase.name}', async () => {\n`;
+
+        if (testCase.setup) {
+          caseContent += `    ${testCase.setup}\n\n`;
+        }
+
+        if (testCase.assertions) {
+          caseContent += testCase.assertions.map((assertion) => `    ${assertion}`).join("\n");
+        }
+
+        caseContent += "\n  });";
+
+        return caseContent;
+      })
+      .join("\n\n");
   }
 
   renderTeardown(teardown, data) {
-    let content = '';
+    let content = "";
 
     if (teardown.afterEach.length > 0) {
       content += `
 afterEach(async () => {
-  ${teardown.afterEach.join('\n  ')}
+  ${teardown.afterEach.join("\n  ")}
 });`;
     }
 
     if (teardown.afterAll.length > 0) {
       content += `
 afterAll(async () => {
-  ${teardown.afterAll.join('\n  ')}
+  ${teardown.afterAll.join("\n  ")}
 });`;
     }
 
@@ -763,21 +740,29 @@ afterAll(async () => {
   }
 
   renderMocks(mocks, data) {
-    if (mocks.length === 0) return '';
+    if (mocks.length === 0) {
+      return "";
+    }
 
-    return mocks.map(mock => {
-      if (mock.type === 'module') {
-        return `jest.mock('${mock.target}', () => (${mock.implementation}));`;
-      }
-      return '';
-    }).filter(mock => mock).join('\n') + '\n';
+    return (
+      mocks
+        .map((mock) => {
+          if (mock.type === "module") {
+            return `jest.mock('${mock.target}', () => (${mock.implementation}));`;
+          }
+          return "";
+        })
+        .filter((mock) => mock)
+        .join("\n") + "\n"
+    );
   }
 
   renderUtilities(utilities, data) {
-    if (utilities.length === 0) return '';
+    if (utilities.length === 0) {
+      return "";
+    }
 
-    return '\n// Test Utilities\n' + 
-           utilities.map(util => util.implementation).join('\n\n');
+    return "\n// Test Utilities\n" + utilities.map((util) => util.implementation).join("\n\n");
   }
 
   renderMetadata(metadata, data) {
@@ -793,16 +778,16 @@ afterAll(async () => {
    */
   replaceTemplateVariables(content, sections) {
     let result = content;
-    
+
     Object.entries(sections).forEach(([key, value]) => {
       const placeholder = `{{${key}}}`;
-      result = result.replace(new RegExp(placeholder, 'g'), value || '');
+      result = result.replace(new RegExp(placeholder, "g"), value || "");
     });
 
     // Replace component-specific variables
-    result = result.replace(/\{\{component\.name\}\}/g, '${data.component.name}');
-    result = result.replace(/\{\{component\.type\}\}/g, '${data.component.type}');
-    result = result.replace(/\{\{componentClass\}\}/g, '${this.toClassName(data.component.name)}');
+    result = result.replace(/\{\{component\.name\}\}/g, "${data.component.name}");
+    result = result.replace(/\{\{component\.type\}\}/g, "${data.component.type}");
+    result = result.replace(/\{\{componentClass\}\}/g, "${this.toClassName(data.component.name)}");
 
     return result;
   }
@@ -812,14 +797,14 @@ afterAll(async () => {
    */
   formatGeneratedCode(content, framework) {
     // Remove excessive blank lines
-    content = content.replace(/\n{3,}/g, '\n\n');
-    
+    content = content.replace(/\n{3,}/g, "\n\n");
+
     // Ensure proper spacing around blocks
-    content = content.replace(/}\n{/g, '}\n\n{');
-    
+    content = content.replace(/}\n{/g, "}\n\n{");
+
     // Clean up any template artifacts
-    content = content.replace(/\{\{[^}]+\}\}/g, '');
-    
+    content = content.replace(/\{\{[^}]+\}\}/g, "");
+
     return content.trim();
   }
 
@@ -829,13 +814,13 @@ afterAll(async () => {
   async loadTemplates() {
     try {
       const templateFiles = await this.findTemplateFiles();
-      
+
       for (const templateFile of templateFiles) {
         try {
-          const content = await fs.readFile(templateFile, 'utf-8');
+          const content = await fs.readFile(templateFile, "utf-8");
           const template = JSON.parse(content);
-          const templateKey = path.basename(templateFile, '.template.js');
-          
+          const templateKey = path.basename(templateFile, ".template.js");
+
           this.templateCache.set(templateKey, template);
         } catch (error) {
           console.warn(chalk.yellow(`Failed to load template ${templateFile}: ${error.message}`));
@@ -843,7 +828,6 @@ afterAll(async () => {
       }
 
       console.log(chalk.gray(`Loaded ${this.templateCache.size} template(s)`));
-
     } catch (error) {
       console.warn(chalk.yellow(`Failed to load templates: ${error.message}`));
     }
@@ -854,21 +838,21 @@ afterAll(async () => {
    */
   async findTemplateFiles() {
     const templateFiles = [];
-    
+
     try {
       const entries = await fs.readdir(this.templatesDir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isDirectory()) {
           const subDir = path.join(this.templatesDir, entry.name);
           const subFiles = await fs.readdir(subDir);
-          
+
           for (const subFile of subFiles) {
-            if (subFile.endsWith('.template.js')) {
+            if (subFile.endsWith(".template.js")) {
               templateFiles.push(path.join(subDir, subFile));
             }
           }
-        } else if (entry.name.endsWith('.template.js')) {
+        } else if (entry.name.endsWith(".template.js")) {
           templateFiles.push(path.join(this.templatesDir, entry.name));
         }
       }
@@ -895,9 +879,10 @@ afterAll(async () => {
    * Convert component name to class name
    */
   toClassName(name) {
-    return name.split('-')
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-      .join('');
+    return name
+      .split("-")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join("");
   }
 
   /**
@@ -905,13 +890,17 @@ afterAll(async () => {
    */
   getAvailableTemplates() {
     const templates = {};
-    
+
     for (const [key, template] of this.templateCache.entries()) {
-      const [framework, componentType, testType] = key.split('-');
-      
-      if (!templates[framework]) templates[framework] = {};
-      if (!templates[framework][componentType]) templates[framework][componentType] = [];
-      
+      const [framework, componentType, testType] = key.split("-");
+
+      if (!templates[framework]) {
+        templates[framework] = {};
+      }
+      if (!templates[framework][componentType]) {
+        templates[framework][componentType] = [];
+      }
+
       templates[framework][componentType].push(_testType);
     }
 
@@ -922,8 +911,8 @@ afterAll(async () => {
    * Validate template
    */
   validateTemplate(_template) {
-    const required = ['name', 'type', 'framework', 'componentType'];
-    
+    const required = ["name", "type", "framework", "componentType"];
+
     for (const field of required) {
       if (!template[field]) {
         throw new Error(`Template missing required field: ${field}`);

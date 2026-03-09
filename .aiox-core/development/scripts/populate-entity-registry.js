@@ -1,31 +1,81 @@
 #!/usr/bin/env node
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
-const fg = require('fast-glob');
-const crypto = require('crypto');
-const { classifyLayer } = require('../../core/ids/layer-classifier');
+const fs = require("fs");
+const path = require("path");
+const yaml = require("js-yaml");
+const fg = require("fast-glob");
+const crypto = require("crypto");
+const { classifyLayer } = require("../../core/ids/layer-classifier");
 
-const REPO_ROOT = path.resolve(__dirname, '../../..');
-const REGISTRY_PATH = path.resolve(__dirname, '../../data/entity-registry.yaml');
+const REPO_ROOT = path.resolve(__dirname, "../../..");
+const REGISTRY_PATH = path.resolve(__dirname, "../../data/entity-registry.yaml");
 
 const SCAN_CONFIG = [
-  { category: 'tasks', basePath: '.aiox-core/development/tasks', glob: '**/*.md', type: 'task' },
-  { category: 'templates', basePath: '.aiox-core/product/templates', glob: '**/*.{yaml,yml,md}', type: 'template' },
-  { category: 'scripts', basePath: '.aiox-core/development/scripts', glob: '**/*.{js,mjs}', type: 'script' },
-  { category: 'modules', basePath: '.aiox-core/core', glob: '**/*.{js,mjs}', type: 'module' },
-  { category: 'agents', basePath: '.aiox-core/development/agents', glob: '**/*.{md,yaml,yml}', type: 'agent' },
-  { category: 'checklists', basePath: '.aiox-core/development/checklists', glob: '**/*.md', type: 'checklist' },
-  { category: 'data', basePath: '.aiox-core/data', glob: '**/*.{yaml,yml,md}', type: 'data' },
-  { category: 'workflows', basePath: '.aiox-core/development/workflows', glob: '**/*.{yaml,yml}', type: 'workflow' },
-  { category: 'utils', basePath: '.aiox-core/core/utils', glob: '**/*.js', type: 'util' },
-  { category: 'tools', basePath: '.aiox-core/development/tools', glob: '**/*.{md,js,sh}', type: 'tool' },
-  { category: 'infra-scripts', basePath: '.aiox-core/infrastructure/scripts', glob: '**/*.js', type: 'script' },
-  { category: 'infra-tools', basePath: '.aiox-core/infrastructure/tools', glob: '**/*.{yaml,yml,md}', type: 'tool' },
-  { category: 'product-checklists', basePath: '.aiox-core/product/checklists', glob: '**/*.md', type: 'checklist' },
-  { category: 'product-data', basePath: '.aiox-core/product/data', glob: '**/*.{yaml,yml,md}', type: 'data' }
+  { category: "tasks", basePath: ".aiox-core/development/tasks", glob: "**/*.md", type: "task" },
+  {
+    category: "templates",
+    basePath: ".aiox-core/product/templates",
+    glob: "**/*.{yaml,yml,md}",
+    type: "template",
+  },
+  {
+    category: "scripts",
+    basePath: ".aiox-core/development/scripts",
+    glob: "**/*.{js,mjs}",
+    type: "script",
+  },
+  { category: "modules", basePath: ".aiox-core/core", glob: "**/*.{js,mjs}", type: "module" },
+  {
+    category: "agents",
+    basePath: ".aiox-core/development/agents",
+    glob: "**/*.{md,yaml,yml}",
+    type: "agent",
+  },
+  {
+    category: "checklists",
+    basePath: ".aiox-core/development/checklists",
+    glob: "**/*.md",
+    type: "checklist",
+  },
+  { category: "data", basePath: ".aiox-core/data", glob: "**/*.{yaml,yml,md}", type: "data" },
+  {
+    category: "workflows",
+    basePath: ".aiox-core/development/workflows",
+    glob: "**/*.{yaml,yml}",
+    type: "workflow",
+  },
+  { category: "utils", basePath: ".aiox-core/core/utils", glob: "**/*.js", type: "util" },
+  {
+    category: "tools",
+    basePath: ".aiox-core/development/tools",
+    glob: "**/*.{md,js,sh}",
+    type: "tool",
+  },
+  {
+    category: "infra-scripts",
+    basePath: ".aiox-core/infrastructure/scripts",
+    glob: "**/*.js",
+    type: "script",
+  },
+  {
+    category: "infra-tools",
+    basePath: ".aiox-core/infrastructure/tools",
+    glob: "**/*.{yaml,yml,md}",
+    type: "tool",
+  },
+  {
+    category: "product-checklists",
+    basePath: ".aiox-core/product/checklists",
+    glob: "**/*.md",
+    type: "checklist",
+  },
+  {
+    category: "product-data",
+    basePath: ".aiox-core/product/data",
+    glob: "**/*.{yaml,yml,md}",
+    type: "data",
+  },
 ];
 
 const ADAPTABILITY_DEFAULTS = {
@@ -38,19 +88,37 @@ const ADAPTABILITY_DEFAULTS = {
   task: 0.8,
   workflow: 0.4,
   util: 0.6,
-  tool: 0.7
+  tool: 0.7,
 };
 
 const EXTERNAL_TOOLS = new Set([
-  'coderabbit', 'git', 'github-cli', 'docker', 'supabase', 'browser',
-  'ffmpeg', 'n8n', 'context7', 'playwright', 'apify', 'clickup',
-  'jira', 'slack', 'exa', 'eslint', 'jest', 'npm', 'node',
-  'docker-gateway', 'desktop-commander', 'railway'
+  "coderabbit",
+  "git",
+  "github-cli",
+  "docker",
+  "supabase",
+  "browser",
+  "ffmpeg",
+  "n8n",
+  "context7",
+  "playwright",
+  "apify",
+  "clickup",
+  "jira",
+  "slack",
+  "exa",
+  "eslint",
+  "jest",
+  "npm",
+  "node",
+  "docker-gateway",
+  "desktop-commander",
+  "railway",
 ]);
 
 const DEPRECATED_PATTERNS = [/^old[-_]/, /^backup[-_]/, /deprecated/i, /^legacy[-_]/];
 
-const SENTINEL_VALUES = new Set(['n/a', 'na', 'none', 'tbd', 'todo', '-', '']);
+const SENTINEL_VALUES = new Set(["n/a", "na", "none", "tbd", "todo", "-", ""]);
 
 function isSentinel(value) {
   return SENTINEL_VALUES.has(value.toLowerCase().trim());
@@ -59,17 +127,23 @@ function isSentinel(value) {
 function isNoise(value) {
   const trimmed = value.trim();
   // Very short fragments (1-2 chars) unless they are known agent refs
-  if (trimmed.length <= 2 && !KNOWN_AGENTS.includes(trimmed)) return true;
+  if (trimmed.length <= 2 && !KNOWN_AGENTS.includes(trimmed)) {
+    return true;
+  }
   // Natural language fragments (contains spaces and > 2 words)
-  if (trimmed.includes(' ') && trimmed.split(/\s+/).length > 2) return true;
+  if (trimmed.includes(" ") && trimmed.split(/\s+/).length > 2) {
+    return true;
+  }
   // Template placeholders
-  if (trimmed.includes('{{') || trimmed.includes('${')) return true;
+  if (trimmed.includes("{{") || trimmed.includes("${")) {
+    return true;
+  }
   return false;
 }
 
 function computeChecksum(filePath) {
   const content = fs.readFileSync(filePath);
-  return 'sha256:' + crypto.createHash('sha256').update(content).digest('hex');
+  return "sha256:" + crypto.createHash("sha256").update(content).digest("hex");
 }
 
 function extractEntityId(filePath) {
@@ -85,7 +159,9 @@ function extractKeywords(filePath, content) {
     const headerWords = headerMatch[1]
       .toLowerCase()
       .split(/\s+/)
-      .filter((w) => w.length > 2 && !['the', 'and', 'for', 'with', 'this', 'that', 'from'].includes(w));
+      .filter(
+        (w) => w.length > 2 && !["the", "and", "for", "with", "this", "that", "from"].includes(w),
+      );
     parts.push(...headerWords.slice(0, 5));
   }
 
@@ -95,7 +171,7 @@ function extractKeywords(filePath, content) {
 function extractPurpose(content, filePath) {
   const purposeMatch = content.match(/^##\s*Purpose\s*\n+([\s\S]*?)(?=\n##|\n---|\n$)/im);
   if (purposeMatch) {
-    return purposeMatch[1].trim().split('\n')[0].substring(0, 200);
+    return purposeMatch[1].trim().split("\n")[0].substring(0, 200);
   }
 
   const descMatch = content.match(/(?:description|purpose|summary)[:]\s*(.+)/i);
@@ -113,26 +189,33 @@ function extractPurpose(content, filePath) {
 
 const YAML_DEP_FIELDS = {
   agent: {
-    nested: ['tasks', 'templates', 'checklists', 'tools', 'scripts'],
-    arrayFields: [
-      { arrayPath: 'commands', field: 'task' },
-    ],
+    nested: ["tasks", "templates", "checklists", "tools", "scripts"],
+    arrayFields: [{ arrayPath: "commands", field: "task" }],
   },
   workflow: {
     nested: [],
     arrayFields: [
-      { arrayPath: 'phases', field: 'task' },
-      { arrayPath: 'phases', field: 'agent' },
-      { arrayPath: 'sequence', field: 'agent' },
-      { arrayPath: 'steps', field: 'task' },
-      { arrayPath: 'steps', field: 'uses' },
+      { arrayPath: "phases", field: "task" },
+      { arrayPath: "phases", field: "agent" },
+      { arrayPath: "sequence", field: "agent" },
+      { arrayPath: "steps", field: "task" },
+      { arrayPath: "steps", field: "uses" },
     ],
   },
 };
 
 const KNOWN_AGENTS = [
-  'dev', 'qa', 'pm', 'po', 'sm', 'architect', 'devops',
-  'analyst', 'data-engineer', 'ux-design-expert', 'aiox-master'
+  "dev",
+  "qa",
+  "pm",
+  "po",
+  "sm",
+  "architect",
+  "devops",
+  "analyst",
+  "data-engineer",
+  "ux-design-expert",
+  "aiox-master",
 ];
 
 // Pattern A: YAML dependency block items (- name.md)
@@ -142,25 +225,29 @@ const LABEL_LIST_RE = /^\s*[-*]\s+\*\*[\w\s]+:\*\*\s+(.+)$/gm;
 // Pattern C: Markdown links to entity files
 const MD_LINK_RE = /\[([^\]]+)\]\(([^)]+\.(?:md|yaml|js))\)/g;
 // Pattern D: Agent references
-const AGENT_REF_RE = new RegExp('@(' + KNOWN_AGENTS.join('|') + ')\\b', 'g');
+const AGENT_REF_RE = new RegExp("@(" + KNOWN_AGENTS.join("|") + ")\\b", "g");
 
 function extractYamlDependencies(filePath, entityType, verbose = false) {
   const deps = new Set();
   const fieldMap = YAML_DEP_FIELDS[entityType];
-  if (!fieldMap) return [];
+  if (!fieldMap) {
+    return [];
+  }
 
   let content;
   try {
-    content = fs.readFileSync(filePath, 'utf8');
+    content = fs.readFileSync(filePath, "utf8");
   } catch {
     return [];
   }
 
   let doc;
   // For MD files, extract YAML from code blocks instead of parsing the whole file
-  if (path.extname(filePath) === '.md') {
+  if (path.extname(filePath) === ".md") {
     const yamlBlockMatch = content.match(/```yaml\n([\s\S]*?)```/);
-    if (!yamlBlockMatch) return [];
+    if (!yamlBlockMatch) {
+      return [];
+    }
     try {
       doc = yaml.load(yamlBlockMatch[1]);
     } catch {
@@ -176,7 +263,9 @@ function extractYamlDependencies(filePath, entityType, verbose = false) {
     }
   }
 
-  if (!doc || typeof doc !== 'object') return [];
+  if (!doc || typeof doc !== "object") {
+    return [];
+  }
 
   // Extract nested dependency fields (e.g., doc.dependencies.tasks)
   const depsSection = doc.dependencies || {};
@@ -184,15 +273,21 @@ function extractYamlDependencies(filePath, entityType, verbose = false) {
     const items = depsSection[field];
     if (Array.isArray(items)) {
       for (const item of items) {
-        if (typeof item === 'string') {
-          const cleaned = item.replace(/#.*$/, '').trim().replace(/\.md$/, '');
-          if (!cleaned) continue;
+        if (typeof item === "string") {
+          const cleaned = item.replace(/#.*$/, "").trim().replace(/\.md$/, "");
+          if (!cleaned) {
+            continue;
+          }
           if (isSentinel(cleaned)) {
-            if (verbose) console.log(`[IDS] Filtered sentinel "${cleaned}" from YAML deps in "${filePath}"`);
+            if (verbose) {
+              console.log(`[IDS] Filtered sentinel "${cleaned}" from YAML deps in "${filePath}"`);
+            }
             continue;
           }
           if (isNoise(cleaned)) {
-            if (verbose) console.log(`[IDS] Filtered noise "${cleaned}" from YAML deps in "${filePath}"`);
+            if (verbose) {
+              console.log(`[IDS] Filtered noise "${cleaned}" from YAML deps in "${filePath}"`);
+            }
             continue;
           }
           deps.add(cleaned);
@@ -206,10 +301,10 @@ function extractYamlDependencies(filePath, entityType, verbose = false) {
     const arr = doc[arrayPath] || doc.workflow?.[arrayPath] || [];
     if (Array.isArray(arr)) {
       for (const item of arr) {
-        if (item && typeof item === 'object') {
+        if (item && typeof item === "object") {
           const val = item[field];
-          if (typeof val === 'string' && val.trim()) {
-            deps.add(val.trim().replace(/\.md$/, ''));
+          if (typeof val === "string" && val.trim()) {
+            deps.add(val.trim().replace(/\.md$/, ""));
           }
         }
       }
@@ -223,13 +318,19 @@ function extractMarkdownCrossReferences(content, entityId, verbose = false) {
   const deps = new Set();
 
   const addDep = (ref) => {
-    if (ref === entityId) return;
+    if (ref === entityId) {
+      return;
+    }
     if (isSentinel(ref)) {
-      if (verbose) console.log(`[IDS] Filtered sentinel "${ref}" from MD cross-refs in "${entityId}"`);
+      if (verbose) {
+        console.log(`[IDS] Filtered sentinel "${ref}" from MD cross-refs in "${entityId}"`);
+      }
       return;
     }
     if (isNoise(ref)) {
-      if (verbose) console.log(`[IDS] Filtered noise "${ref}" from MD cross-refs in "${entityId}"`);
+      if (verbose) {
+        console.log(`[IDS] Filtered noise "${ref}" from MD cross-refs in "${entityId}"`);
+      }
       return;
     }
     deps.add(ref);
@@ -238,7 +339,7 @@ function extractMarkdownCrossReferences(content, entityId, verbose = false) {
   // Pattern A: YAML block items (- filename.md)
   let match;
   while ((match = YAML_BLOCK_RE.exec(content)) !== null) {
-    addDep(match[1].replace(/\.md$/, ''));
+    addDep(match[1].replace(/\.md$/, ""));
   }
 
   // Pattern B: Label lists (- **Tasks:** a.md, b.md)
@@ -247,7 +348,7 @@ function extractMarkdownCrossReferences(content, entityId, verbose = false) {
     for (const item of items) {
       const fileMatch = item.trim().match(/([\w.-]+\.(?:md|yaml|js))/);
       if (fileMatch) {
-        addDep(fileMatch[1].replace(/\.md$/, ''));
+        addDep(fileMatch[1].replace(/\.md$/, ""));
       }
     }
   }
@@ -273,18 +374,22 @@ function detectDependencies(content, entityId, verbose = false) {
   const requireMatches = content.matchAll(/require\s*\(\s*['"]([^'"]+)['"]\s*\)/g);
   for (const m of requireMatches) {
     const reqPath = m[1];
-    if (reqPath.startsWith('.') || reqPath.startsWith('/')) {
+    if (reqPath.startsWith(".") || reqPath.startsWith("/")) {
       const base = path.basename(reqPath, path.extname(reqPath));
-      if (base !== entityId) deps.add(base);
+      if (base !== entityId) {
+        deps.add(base);
+      }
     }
   }
 
   const importMatches = content.matchAll(/(?:from|import)\s+['"]([^'"]+)['"]/g);
   for (const m of importMatches) {
     const impPath = m[1];
-    if (impPath.startsWith('.') || impPath.startsWith('/')) {
+    if (impPath.startsWith(".") || impPath.startsWith("/")) {
       const base = path.basename(impPath, path.extname(impPath));
-      if (base !== entityId) deps.add(base);
+      if (base !== entityId) {
+        deps.add(base);
+      }
     }
   }
 
@@ -292,14 +397,20 @@ function detectDependencies(content, entityId, verbose = false) {
   if (depListMatch) {
     const items = depListMatch[1].matchAll(/-\s+(.+)/g);
     for (const item of items) {
-      const dep = item[1].trim().replace(/\.md$/, '');
-      if (dep === entityId) continue;
+      const dep = item[1].trim().replace(/\.md$/, "");
+      if (dep === entityId) {
+        continue;
+      }
       if (isSentinel(dep)) {
-        if (verbose) console.log(`[IDS] Filtered sentinel "${dep}" from "${entityId}"`);
+        if (verbose) {
+          console.log(`[IDS] Filtered sentinel "${dep}" from "${entityId}"`);
+        }
         continue;
       }
       if (isNoise(dep)) {
-        if (verbose) console.log(`[IDS] Filtered noise "${dep}" from "${entityId}"`);
+        if (verbose) {
+          console.log(`[IDS] Filtered noise "${dep}" from "${entityId}"`);
+        }
         continue;
       }
       deps.add(dep);
@@ -317,7 +428,7 @@ function scanCategory(config, verbose = false) {
     return {};
   }
 
-  const globPattern = path.posix.join(absBase.replace(/\\/g, '/'), config.glob);
+  const globPattern = path.posix.join(absBase.replace(/\\/g, "/"), config.glob);
   const files = fg.sync(globPattern, { onlyFiles: true, absolute: true });
 
   const entities = {};
@@ -327,32 +438,34 @@ function scanCategory(config, verbose = false) {
     const entityId = extractEntityId(filePath);
 
     if (seenIds.has(entityId)) {
-      console.warn(`[IDS] Duplicate entity ID "${entityId}" at ${path.relative(REPO_ROOT, filePath)} — skipping`);
+      console.warn(
+        `[IDS] Duplicate entity ID "${entityId}" at ${path.relative(REPO_ROOT, filePath)} — skipping`,
+      );
       continue;
     }
     seenIds.add(entityId);
 
-    let content = '';
+    let content = "";
     try {
-      content = fs.readFileSync(filePath, 'utf8');
+      content = fs.readFileSync(filePath, "utf8");
     } catch {
       console.warn(`[IDS] Could not read ${filePath} — skipping`);
       continue;
     }
 
-    const relPath = path.relative(REPO_ROOT, filePath).replace(/\\/g, '/');
+    const relPath = path.relative(REPO_ROOT, filePath).replace(/\\/g, "/");
     const keywords = extractKeywords(filePath, content);
     const purpose = extractPurpose(content, filePath);
     const baseDeps = detectDependencies(content, entityId, verbose);
 
     // Semantic YAML extraction for agents and workflows
-    const yamlCategories = ['agents', 'workflows'];
+    const yamlCategories = ["agents", "workflows"];
     const yamlDeps = yamlCategories.includes(config.category)
       ? extractYamlDependencies(filePath, config.type, verbose)
       : [];
 
     // Markdown cross-reference extraction for tasks, checklists, templates, product-checklists
-    const mdCategories = ['tasks', 'checklists', 'templates', 'product-checklists'];
+    const mdCategories = ["tasks", "checklists", "templates", "product-checklists"];
     const mdDeps = mdCategories.includes(config.category)
       ? extractMarkdownCrossReferences(content, entityId, verbose)
       : [];
@@ -365,18 +478,24 @@ function scanCategory(config, verbose = false) {
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
     if (frontmatterMatch) {
       const lfMatch = frontmatterMatch[1].match(/^lifecycle:\s*(.+)$/m);
-      if (lfMatch) lifecycleOverride = lfMatch[1].trim();
+      if (lfMatch) {
+        lifecycleOverride = lfMatch[1].trim();
+      }
     }
     if (!lifecycleOverride) {
       const yamlBlockMatch = content.match(/```yaml\n([\s\S]*?)```/);
       if (yamlBlockMatch) {
         const lfMatch = yamlBlockMatch[1].match(/^lifecycle:\s*(.+)$/m);
-        if (lfMatch) lifecycleOverride = lfMatch[1].trim();
+        if (lfMatch) {
+          lifecycleOverride = lfMatch[1].trim();
+        }
       }
     }
     if (!lifecycleOverride) {
       const inlineMatch = content.match(/^lifecycle:\s*(.+)$/m);
-      if (inlineMatch) lifecycleOverride = inlineMatch[1].trim();
+      if (inlineMatch) {
+        lifecycleOverride = inlineMatch[1].trim();
+      }
     }
 
     const checksum = computeChecksum(filePath);
@@ -392,14 +511,14 @@ function scanCategory(config, verbose = false) {
       dependencies,
       externalDeps: [],
       plannedDeps: [],
-      lifecycle: 'experimental',
+      lifecycle: "experimental",
       adaptability: {
         score: defaultScore,
         constraints: [],
-        extensionPoints: []
+        extensionPoints: [],
       },
       checksum,
-      lastVerified: new Date().toISOString()
+      lastVerified: new Date().toISOString(),
     };
 
     if (lifecycleOverride) {
@@ -418,11 +537,11 @@ function buildNameIndex(allEntities) {
     for (const [id, entity] of Object.entries(entities)) {
       nameIndex.set(id, { category, id });
       if (entity.path) {
-        const filename = entity.path.split('/').pop();
+        const filename = entity.path.split("/").pop();
         if (!nameIndex.has(filename)) {
           nameIndex.set(filename, { category, id });
         }
-        const basename = filename.replace(/\.[^.]+$/, '');
+        const basename = filename.replace(/\.[^.]+$/, "");
         if (!nameIndex.has(basename)) {
           nameIndex.set(basename, { category, id });
         }
@@ -439,7 +558,9 @@ function countResolution(allEntities, nameIndex) {
     for (const entity of Object.values(entities)) {
       for (const dep of entity.dependencies) {
         total++;
-        if (nameIndex.has(dep)) resolved++;
+        if (nameIndex.has(dep)) {
+          resolved++;
+        }
       }
     }
   }
@@ -501,15 +622,22 @@ function detectLifecycle(entityId, entity) {
     return val;
   }
   for (const pat of DEPRECATED_PATTERNS) {
-    if (pat.test(entityId)) return 'deprecated';
+    if (pat.test(entityId)) {
+      return "deprecated";
+    }
   }
-  const hasDeps = entity.dependencies.length > 0 ||
+  const hasDeps =
+    entity.dependencies.length > 0 ||
     (entity.externalDeps && entity.externalDeps.length > 0) ||
     (entity.plannedDeps && entity.plannedDeps.length > 0);
   const hasUsedBy = entity.usedBy.length > 0;
-  if (!hasDeps && !hasUsedBy) return 'orphan';
-  if (hasUsedBy) return 'production';
-  return 'experimental';
+  if (!hasDeps && !hasUsedBy) {
+    return "orphan";
+  }
+  if (hasUsedBy) {
+    return "production";
+  }
+  return "experimental";
 }
 
 function assignLifecycles(allEntities) {
@@ -521,9 +649,10 @@ function assignLifecycles(allEntities) {
 }
 
 function populate(options = {}) {
-  const verbose = options.verbose || process.argv.includes('--verbose') || process.env.AIOX_DEBUG === 'true';
+  const verbose =
+    options.verbose || process.argv.includes("--verbose") || process.env.AIOX_DEBUG === "true";
 
-  console.log('[IDS] Starting entity registry population...');
+  console.log("[IDS] Starting entity registry population...");
 
   const allEntities = {};
   let totalCount = 0;
@@ -541,70 +670,82 @@ function populate(options = {}) {
   // invocationExamples are manually curated and must survive re-population.
   // Limits: max 3 examples per entity, max 200 tokens per example (ADR-5).
   try {
-    const existingYaml = fs.readFileSync(REGISTRY_PATH, 'utf8');
+    const existingYaml = fs.readFileSync(REGISTRY_PATH, "utf8");
     const existingRegistry = yaml.load(existingYaml);
     if (existingRegistry && existingRegistry.entities) {
       for (const [category, entities] of Object.entries(existingRegistry.entities)) {
-        if (!allEntities[category]) continue;
+        if (!allEntities[category]) {
+          continue;
+        }
         for (const [entityId, entity] of Object.entries(entities)) {
-          if (entity.invocationExamples && Array.isArray(entity.invocationExamples) && allEntities[category][entityId]) {
+          if (
+            entity.invocationExamples &&
+            Array.isArray(entity.invocationExamples) &&
+            allEntities[category][entityId]
+          ) {
             // Enforce limits: max 3 examples, each max 200 chars
-            const examples = entity.invocationExamples.slice(0, 3).map((e) => String(e).slice(0, 200));
+            const examples = entity.invocationExamples
+              .slice(0, 3)
+              .map((e) => String(e).slice(0, 200));
             allEntities[category][entityId].invocationExamples = examples;
           }
         }
       }
-      console.log('[IDS] Preserved invocationExamples from existing registry');
+      console.log("[IDS] Preserved invocationExamples from existing registry");
     }
   } catch {
     // No existing registry or parse error — skip preservation
   }
 
-  console.log('[IDS] Resolving usedBy relationships...');
+  console.log("[IDS] Resolving usedBy relationships...");
   resolveUsedBy(allEntities);
 
   // Classify dependencies into internal, external, planned (NOG-16B)
   const nameIndex = buildNameIndex(allEntities);
-  console.log('[IDS] Classifying dependencies (internal/external/planned)...');
+  console.log("[IDS] Classifying dependencies (internal/external/planned)...");
   classifyDependencies(allEntities, nameIndex);
 
   // Assign lifecycle states (NOG-16B)
-  console.log('[IDS] Detecting entity lifecycle states...');
+  console.log("[IDS] Detecting entity lifecycle states...");
   assignLifecycles(allEntities);
 
   // Resolution rate metric (uses internal deps only after classification)
   const { total, resolved, unresolved } = countResolution(allEntities, nameIndex);
-  const rate = total > 0 ? Math.round(resolved / total * 100) : 0;
-  console.log(`[IDS] Resolution rate: ${rate}% (${resolved}/${total} deps resolved, ${unresolved} unresolved)`);
+  const rate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+  console.log(
+    `[IDS] Resolution rate: ${rate}% (${resolved}/${total} deps resolved, ${unresolved} unresolved)`,
+  );
 
   const categories = SCAN_CONFIG.map((c) => ({
     id: c.category,
     description: getCategoryDescription(c.category),
-    basePath: c.basePath
+    basePath: c.basePath,
   }));
 
   const registry = {
     metadata: {
-      version: '1.0.0',
+      version: "1.0.0",
       lastUpdated: new Date().toISOString(),
       entityCount: totalCount,
-      checksumAlgorithm: 'sha256',
-      resolutionRate: rate
+      checksumAlgorithm: "sha256",
+      resolutionRate: rate,
     },
     entities: allEntities,
-    categories
+    categories,
   };
 
   const yamlContent = yaml.dump(registry, {
     lineWidth: 120,
     noRefs: true,
-    sortKeys: false
+    sortKeys: false,
   });
 
   try {
-    fs.writeFileSync(REGISTRY_PATH, yamlContent, 'utf8');
+    fs.writeFileSync(REGISTRY_PATH, yamlContent, "utf8");
   } catch (err) {
-    throw new Error(`[IDS] Failed to write registry to ${REGISTRY_PATH}: ${err.message}`);
+    throw new Error(`[IDS] Failed to write registry to ${REGISTRY_PATH}: ${err.message}`, {
+      cause: err,
+    });
   }
   console.log(`[IDS] Registry written to ${path.relative(REPO_ROOT, REGISTRY_PATH)}`);
   console.log(`[IDS] Total entities: ${totalCount}`);
@@ -614,20 +755,20 @@ function populate(options = {}) {
 
 function getCategoryDescription(category) {
   const descriptions = {
-    tasks: 'Executable task workflows for agent operations',
-    templates: 'Document and code generation templates',
-    scripts: 'Utility and automation scripts',
-    modules: 'Core framework modules and libraries',
-    agents: 'Agent persona definitions and configurations',
-    checklists: 'Validation and review checklists',
-    data: 'Configuration and reference data files',
-    workflows: 'Multi-phase orchestration workflows',
-    utils: 'Shared utility libraries and helpers',
-    tools: 'Development tool definitions and configurations',
-    'infra-scripts': 'Infrastructure automation and utility scripts',
-    'infra-tools': 'Infrastructure tool definitions and configurations',
-    'product-checklists': 'Product validation and review checklists',
-    'product-data': 'Product reference data and configuration files'
+    tasks: "Executable task workflows for agent operations",
+    templates: "Document and code generation templates",
+    scripts: "Utility and automation scripts",
+    modules: "Core framework modules and libraries",
+    agents: "Agent persona definitions and configurations",
+    checklists: "Validation and review checklists",
+    data: "Configuration and reference data files",
+    workflows: "Multi-phase orchestration workflows",
+    utils: "Shared utility libraries and helpers",
+    tools: "Development tool definitions and configurations",
+    "infra-scripts": "Infrastructure automation and utility scripts",
+    "infra-tools": "Infrastructure tool definitions and configurations",
+    "product-checklists": "Product validation and review checklists",
+    "product-data": "Product reference data and configuration files",
   };
   return descriptions[category] || category;
 }
@@ -635,10 +776,10 @@ function getCategoryDescription(category) {
 if (require.main === module) {
   try {
     const registry = populate();
-    console.log('[IDS] Population complete.');
+    console.log("[IDS] Population complete.");
     process.exit(0);
   } catch (err) {
-    console.error('[IDS] Population failed:', err.message);
+    console.error("[IDS] Population failed:", err.message);
     process.exit(1);
   }
 }
@@ -669,5 +810,5 @@ module.exports = {
   EXTERNAL_TOOLS,
   DEPRECATED_PATTERNS,
   REPO_ROOT,
-  REGISTRY_PATH
+  REGISTRY_PATH,
 };

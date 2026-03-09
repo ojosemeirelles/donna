@@ -57,9 +57,7 @@ function resolveProgressPath(env?: NodeJS.ProcessEnv): string {
  * Load saved progress from disk. Returns a fresh default if the file
  * does not exist or is unreadable.
  */
-export async function loadProgress(
-  env?: NodeJS.ProcessEnv,
-): Promise<OnboardingProgressData> {
+export async function loadProgress(env?: NodeJS.ProcessEnv): Promise<OnboardingProgressData> {
   const filePath = resolveProgressPath(env);
   try {
     const raw = await fs.readFile(filePath, "utf-8");
@@ -87,11 +85,7 @@ export async function saveProgress(
 ): Promise<void> {
   const filePath = resolveProgressPath(env);
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  const serialized = JSON.stringify(
-    { ...data, updatedAt: new Date().toISOString() },
-    null,
-    2,
-  );
+  const serialized = JSON.stringify({ ...data, updatedAt: new Date().toISOString() }, null, 2);
   await fs.writeFile(filePath, serialized, "utf-8");
 }
 
@@ -132,9 +126,7 @@ export async function uncompleteStep(
 /**
  * Reset all progress (start over).
  */
-export async function resetProgress(
-  env?: NodeJS.ProcessEnv,
-): Promise<OnboardingProgressData> {
+export async function resetProgress(env?: NodeJS.ProcessEnv): Promise<OnboardingProgressData> {
   const fresh = defaultProgress();
   await saveProgress(fresh, env);
   return fresh;
@@ -145,10 +137,7 @@ export async function resetProgress(
 // ---------------------------------------------------------------------------
 
 /** Check if a specific step has been completed. */
-export function isStepCompleted(
-  progress: OnboardingProgressData,
-  stepId: string,
-): boolean {
+export function isStepCompleted(progress: OnboardingProgressData, stepId: string): boolean {
   return progress.completedSteps.includes(stepId);
 }
 
@@ -156,9 +145,7 @@ export function isStepCompleted(
  * Get the first step that has not been completed yet.
  * Useful for "resume from where I left off" UX.
  */
-export function getNextIncompleteStep(
-  progress: OnboardingProgressData,
-): string | undefined {
+export function getNextIncompleteStep(progress: OnboardingProgressData): string | undefined {
   for (const step of onboardingSteps) {
     if (!progress.completedSteps.includes(step.id)) {
       return step.id;
@@ -170,9 +157,7 @@ export function getNextIncompleteStep(
 /**
  * Get the first *required* step that has not been completed yet.
  */
-export function getNextRequiredStep(
-  progress: OnboardingProgressData,
-): string | undefined {
+export function getNextRequiredStep(progress: OnboardingProgressData): string | undefined {
   for (const step of getRequiredSteps()) {
     if (!progress.completedSteps.includes(step.id)) {
       return step.id;
@@ -185,9 +170,7 @@ export function getNextRequiredStep(
  * Returns true when all required steps are marked as completed
  * in the progress tracker.
  */
-export function isProgressComplete(
-  progress: OnboardingProgressData,
-): boolean {
+export function isProgressComplete(progress: OnboardingProgressData): boolean {
   const requiredIds = getRequiredSteps().map((s) => s.id);
   return requiredIds.every((id) => progress.completedSteps.includes(id));
 }
@@ -195,13 +178,11 @@ export function isProgressComplete(
 /**
  * Compute a percentage (0-100) of required steps completed.
  */
-export function progressPercent(
-  progress: OnboardingProgressData,
-): number {
+export function progressPercent(progress: OnboardingProgressData): number {
   const required = getRequiredSteps();
-  if (required.length === 0) return 100;
-  const done = required.filter((s) =>
-    progress.completedSteps.includes(s.id),
-  ).length;
+  if (required.length === 0) {
+    return 100;
+  }
+  const done = required.filter((s) => progress.completedSteps.includes(s.id)).length;
   return Math.round((done / required.length) * 100);
 }

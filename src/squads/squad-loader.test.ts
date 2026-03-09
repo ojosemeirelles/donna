@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { SquadLoader, SquadLoadError } from "./squad-loader.js";
 
 // ─── Test Fixtures ────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ describe("SquadLoader", () => {
 
     const squads = await loader.listAll();
     expect(squads).toHaveLength(1);
-    expect(squads[0]!.name).toBe("squad-valid");
+    expect(squads[0].name).toBe("squad-valid");
   });
 
   it("skips directories without squad.yaml", async () => {
@@ -152,11 +152,11 @@ describe("SquadLoader", () => {
     const squad = await loader.loadSquad("squad-test");
 
     expect(squad.agents).toHaveLength(2);
-    expect(squad.agents[0]!.name).toBe("agente1");
-    expect(squad.agents[0]!.role).toBe("Specialist");
-    expect(squad.agents[0]!.expertise).toEqual(["area1", "area2"]);
-    expect(squad.agents[0]!.systemPrompt).toContain("agente1");
-    expect(squad.agents[0]!.preferredModel).toBe("claude-sonnet-4-5");
+    expect(squad.agents[0].name).toBe("agente1");
+    expect(squad.agents[0].role).toBe("Specialist");
+    expect(squad.agents[0].expertise).toEqual(["area1", "area2"]);
+    expect(squad.agents[0].systemPrompt).toContain("agente1");
+    expect(squad.agents[0].preferredModel).toBe("claude-sonnet-4-5");
   });
 
   it("throws SquadLoadError for non-existent squad", async () => {

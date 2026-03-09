@@ -6,7 +6,7 @@
  * database operations without MCP.
  */
 
-const { execSync } = require('child_process');
+const { execSync } = require("child_process");
 
 class SupabaseAdapter {
   constructor(config = {}) {
@@ -19,12 +19,12 @@ class SupabaseAdapter {
    */
   async checkAvailability() {
     try {
-      const output = execSync('gemini extensions list --output-format json 2>/dev/null', {
-        encoding: 'utf8',
+      const output = execSync("gemini extensions list --output-format json 2>/dev/null", {
+        encoding: "utf8",
         timeout: 10000,
       });
       const extensions = JSON.parse(output);
-      this.enabled = extensions.some((e) => e.name === 'supabase');
+      this.enabled = extensions.some((e) => e.name === "supabase");
       return this.enabled;
     } catch {
       this.enabled = false;
@@ -36,12 +36,14 @@ class SupabaseAdapter {
    * List tables in database
    */
   async listTables() {
-    if (!this.enabled) throw new Error('Supabase extension not available');
+    if (!this.enabled) {
+      throw new Error("Supabase extension not available");
+    }
 
     // Would use Gemini's Supabase extension
     return {
       tables: [],
-      message: 'Use Gemini CLI with Supabase extension',
+      message: "Use Gemini CLI with Supabase extension",
     };
   }
 
@@ -50,12 +52,14 @@ class SupabaseAdapter {
    * @param {string} migrationPath - Path to migration file
    */
   async runMigration(migrationPath) {
-    if (!this.enabled) throw new Error('Supabase extension not available');
+    if (!this.enabled) {
+      throw new Error("Supabase extension not available");
+    }
 
     return {
       success: true,
       migration: migrationPath,
-      message: 'Migration queued via Gemini CLI',
+      message: "Migration queued via Gemini CLI",
     };
   }
 
@@ -64,12 +68,14 @@ class SupabaseAdapter {
    * @param {string} sql - SQL query
    */
   async query(sql) {
-    if (!this.enabled) throw new Error('Supabase extension not available');
+    if (!this.enabled) {
+      throw new Error("Supabase extension not available");
+    }
 
     return {
       success: true,
       query: sql,
-      message: 'Query queued via Gemini CLI',
+      message: "Query queued via Gemini CLI",
     };
   }
 
@@ -80,7 +86,7 @@ class SupabaseAdapter {
     // Check if MCP Supabase is also configured
     return {
       synced: false,
-      message: 'MCP sync not implemented',
+      message: "MCP sync not implemented",
     };
   }
 }

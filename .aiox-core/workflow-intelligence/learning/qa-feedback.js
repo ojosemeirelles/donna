@@ -10,8 +10,8 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 //                              CONFIGURATION
@@ -28,7 +28,7 @@ const DEFAULT_CONFIG = {
   minConfidenceThreshold: 0.3, // Below this = deprecated
 
   // Feedback storage
-  feedbackStorePath: '.aiox/qa-feedback.json',
+  feedbackStorePath: ".aiox/qa-feedback.json",
   maxFeedbackHistory: 1000,
 
   // Suggestions
@@ -76,21 +76,21 @@ class QAFeedbackProcessor {
       this._feedbackHistory = {
         history: [],
         patternStats: {},
-        metadata: { version: '1.0.0', lastUpdated: null },
+        metadata: { version: "1.0.0", lastUpdated: null },
       };
       return this._feedbackHistory;
     }
 
     try {
-      const content = fs.readFileSync(this.storePath, 'utf-8');
+      const content = fs.readFileSync(this.storePath, "utf-8");
       this._feedbackHistory = JSON.parse(content);
       return this._feedbackHistory;
     } catch (error) {
-      console.error('Failed to load feedback history:', error.message);
+      console.error("Failed to load feedback history:", error.message);
       this._feedbackHistory = {
         history: [],
         patternStats: {},
-        metadata: { version: '1.0.0', lastUpdated: null },
+        metadata: { version: "1.0.0", lastUpdated: null },
       };
       return this._feedbackHistory;
     }
@@ -117,7 +117,7 @@ class QAFeedbackProcessor {
     }
 
     this._feedbackHistory.metadata.lastUpdated = new Date().toISOString();
-    fs.writeFileSync(this.storePath, JSON.stringify(this._feedbackHistory, null, 2), 'utf-8');
+    fs.writeFileSync(this.storePath, JSON.stringify(this._feedbackHistory, null, 2), "utf-8");
   }
 
   // ─────────────────────────────────────────────────────────────────────────────────
@@ -147,7 +147,7 @@ class QAFeedbackProcessor {
 
     if (!patternId) {
       result.processed = false;
-      result.reason = 'No pattern identified';
+      result.reason = "No pattern identified";
       return result;
     }
 
@@ -172,11 +172,11 @@ class QAFeedbackProcessor {
     result.patternsAffected.push({ patternId, stats });
 
     // Process based on outcome
-    if (outcome.status === 'failure') {
+    if (outcome.status === "failure") {
       // Check for deprecation
       if (stats.consecutiveFailures >= this.config.deprecateAfterFailures) {
         result.actions.push({
-          type: 'deprecate',
+          type: "deprecate",
           patternId,
           reason: `${stats.consecutiveFailures} consecutive failures`,
         });
@@ -184,7 +184,7 @@ class QAFeedbackProcessor {
       }
 
       // Create gotcha if critical
-      if (outcome.severity === 'critical' && this.gotchaRegistry) {
+      if (outcome.severity === "critical" && this.gotchaRegistry) {
         const gotcha = this._createGotchaFromFailure(patternId, outcome, context);
         if (gotcha) {
           result.gotchasCreated.push(gotcha);
@@ -210,41 +210,41 @@ class QAFeedbackProcessor {
    */
   _determineOutcome(qaResult) {
     const outcome = {
-      status: 'success',
-      severity: 'none',
+      status: "success",
+      severity: "none",
       issues: [],
     };
 
     // Check gate decision
-    if (qaResult.gateDecision === 'FAIL') {
-      outcome.status = 'failure';
-      outcome.severity = 'critical';
-    } else if (qaResult.gateDecision === 'CONCERNS') {
-      outcome.status = 'partial';
-      outcome.severity = 'high';
+    if (qaResult.gateDecision === "FAIL") {
+      outcome.status = "failure";
+      outcome.severity = "critical";
+    } else if (qaResult.gateDecision === "CONCERNS") {
+      outcome.status = "partial";
+      outcome.severity = "high";
     }
 
     // Check for blocking issues
     if (qaResult.blockingIssues?.length > 0) {
-      outcome.status = 'failure';
-      outcome.severity = 'critical';
+      outcome.status = "failure";
+      outcome.severity = "critical";
       outcome.issues = qaResult.blockingIssues;
     }
 
     // Check security issues
     if (qaResult.securityChecklist?.critical > 0) {
-      outcome.status = 'failure';
-      outcome.severity = 'critical';
-      outcome.issues.push('Critical security vulnerabilities');
+      outcome.status = "failure";
+      outcome.severity = "critical";
+      outcome.issues.push("Critical security vulnerabilities");
     }
 
     // Check test failures
     if (qaResult.testing?.unit?.failed > 0 || qaResult.testing?.integration?.failed > 0) {
-      if (outcome.status === 'success') {
-        outcome.status = 'partial';
-        outcome.severity = 'high';
+      if (outcome.status === "success") {
+        outcome.status = "partial";
+        outcome.severity = "high";
       }
-      outcome.issues.push('Test failures detected');
+      outcome.issues.push("Test failures detected");
     }
 
     return outcome;
@@ -256,7 +256,7 @@ class QAFeedbackProcessor {
    */
   _inferPattern(context) {
     if (context.sequence) {
-      return `sequence:${context.sequence.join('->')}`;
+      return `sequence:${context.sequence.join("->")}`;
     }
     if (context.workflow) {
       return `workflow:${context.workflow}`;
@@ -289,10 +289,10 @@ class QAFeedbackProcessor {
     stats.lastOutcome = outcome.status;
     stats.lastExecuted = new Date().toISOString();
 
-    if (outcome.status === 'success') {
+    if (outcome.status === "success") {
       stats.successes++;
       stats.consecutiveFailures = 0;
-    } else if (outcome.status === 'failure') {
+    } else if (outcome.status === "failure") {
       stats.failures++;
       stats.consecutiveFailures++;
     } else {
@@ -320,11 +320,11 @@ class QAFeedbackProcessor {
 
       let adjustment = 0;
 
-      if (outcome.status === 'success') {
+      if (outcome.status === "success") {
         adjustment = this.config.successBoost;
-      } else if (outcome.status === 'failure') {
+      } else if (outcome.status === "failure") {
         adjustment =
-          outcome.severity === 'critical'
+          outcome.severity === "critical"
             ? -this.config.criticalPenalty
             : -this.config.failurePenalty;
       } else {
@@ -335,10 +335,10 @@ class QAFeedbackProcessor {
 
       this.patternStore.updatePattern(patternId, {
         confidence: newConfidence,
-        status: newConfidence < this.config.minConfidenceThreshold ? 'deprecated' : pattern.status,
+        status: newConfidence < this.config.minConfidenceThreshold ? "deprecated" : pattern.status,
       });
     } catch (error) {
-      console.error('Failed to adjust pattern confidence:', error.message);
+      console.error("Failed to adjust pattern confidence:", error.message);
     }
   }
 
@@ -353,12 +353,12 @@ class QAFeedbackProcessor {
 
     try {
       this.patternStore.updatePattern(patternId, {
-        status: 'deprecated',
+        status: "deprecated",
         deprecatedAt: new Date().toISOString(),
-        deprecatedReason: 'Consecutive QA failures',
+        deprecatedReason: "Consecutive QA failures",
       });
     } catch (error) {
-      console.error('Failed to deprecate pattern:', error.message);
+      console.error("Failed to deprecate pattern:", error.message);
     }
   }
 
@@ -374,14 +374,14 @@ class QAFeedbackProcessor {
     try {
       return this.gotchaRegistry.recordGotcha({
         pattern: patternId,
-        context: context.agent || 'unknown',
-        error: outcome.issues.join('; '),
+        context: context.agent || "unknown",
+        error: outcome.issues.join("; "),
         reason: `Pattern failed QA with ${outcome.severity} severity`,
-        keywords: [context.agent, context.action, 'qa-failure'].filter(Boolean),
-        source: 'qa-feedback',
+        keywords: [context.agent, context.action, "qa-failure"].filter(Boolean),
+        source: "qa-feedback",
       });
     } catch (error) {
-      console.error('Failed to create gotcha:', error.message);
+      console.error("Failed to create gotcha:", error.message);
       return null;
     }
   }
@@ -409,7 +409,7 @@ class QAFeedbackProcessor {
 
       for (const alt of alternatives) {
         suggestions.push({
-          type: 'alternative_pattern',
+          type: "alternative_pattern",
           original: patternId,
           suggested: alt.patternId,
           reason: `Higher success rate: ${(alt.successRate * 100).toFixed(0)}%`,
@@ -420,9 +420,9 @@ class QAFeedbackProcessor {
       // Suggest manual review
       if (stats.consecutiveFailures >= 2) {
         suggestions.push({
-          type: 'manual_review',
-          reason: 'Multiple consecutive failures suggest fundamental issue',
-          action: 'Review pattern implementation and requirements',
+          type: "manual_review",
+          reason: "Multiple consecutive failures suggest fundamental issue",
+          action: "Review pattern implementation and requirements",
         });
       }
     }
@@ -438,11 +438,15 @@ class QAFeedbackProcessor {
     const alternatives = [];
 
     // Extract pattern type
-    const [type] = patternId.split(':');
+    const [type] = patternId.split(":");
 
     for (const [id, stats] of Object.entries(this._feedbackHistory.patternStats)) {
-      if (id === patternId) continue;
-      if (!id.startsWith(type)) continue;
+      if (id === patternId) {
+        continue;
+      }
+      if (!id.startsWith(type)) {
+        continue;
+      }
 
       const successRate = stats.successes / stats.totalExecutions;
 
@@ -451,7 +455,7 @@ class QAFeedbackProcessor {
       }
     }
 
-    return alternatives.sort((a, b) => b.successRate - a.successRate).slice(0, 3);
+    return alternatives.toSorted((a, b) => b.successRate - a.successRate).slice(0, 3);
   }
 
   /**
@@ -485,7 +489,7 @@ class QAFeedbackProcessor {
         successRate: 0,
         patternsTracked: 0,
         deprecatedPatterns: 0,
-        recentTrend: 'neutral',
+        recentTrend: "neutral",
       };
     }
 
@@ -502,15 +506,19 @@ class QAFeedbackProcessor {
     const recent = history.slice(-10);
     const previous = history.slice(-20, -10);
 
-    const recentSuccessRate = recent.filter((f) => f.outcome === 'success').length / recent.length;
+    const recentSuccessRate = recent.filter((f) => f.outcome === "success").length / recent.length;
     const previousSuccessRate =
       previous.length > 0
-        ? previous.filter((f) => f.outcome === 'success').length / previous.length
+        ? previous.filter((f) => f.outcome === "success").length / previous.length
         : recentSuccessRate;
 
-    let trend = 'neutral';
-    if (recentSuccessRate > previousSuccessRate + 0.1) trend = 'improving';
-    if (recentSuccessRate < previousSuccessRate - 0.1) trend = 'declining';
+    let trend = "neutral";
+    if (recentSuccessRate > previousSuccessRate + 0.1) {
+      trend = "improving";
+    }
+    if (recentSuccessRate < previousSuccessRate - 0.1) {
+      trend = "declining";
+    }
 
     return {
       totalFeedback: history.length,
@@ -560,18 +568,18 @@ class QAFeedbackProcessor {
     const successRate = stats.successes / stats.totalExecutions;
 
     if (successRate >= 0.9) {
-      return { action: 'keep', reason: 'High success rate' };
+      return { action: "keep", reason: "High success rate" };
     }
 
     if (successRate >= 0.7) {
-      return { action: 'monitor', reason: 'Moderate success rate' };
+      return { action: "monitor", reason: "Moderate success rate" };
     }
 
     if (successRate >= 0.5) {
-      return { action: 'review', reason: 'Below average success rate' };
+      return { action: "review", reason: "Below average success rate" };
     }
 
-    return { action: 'replace', reason: 'Low success rate - consider alternatives' };
+    return { action: "replace", reason: "Low success rate - consider alternatives" };
   }
 }
 

@@ -11,14 +11,14 @@
  * @module migrate-agent
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
 // Paths
-const AGENTS_DIR = '.aiox-core/development/agents';
-const BACKUP_DIR = '.aiox/migration-backup';
-const SCHEMAS_DIR = '.aiox-core/schemas';
+const AGENTS_DIR = ".aiox-core/development/agents";
+const BACKUP_DIR = ".aiox/migration-backup";
+const SCHEMAS_DIR = ".aiox-core/schemas";
 
 // Agent capability matrix based on role
 const AGENT_CAPABILITIES = {
@@ -51,7 +51,7 @@ const AGENT_CAPABILITIES = {
       canVerify: true,
       selfCritique: {
         enabled: true,
-        checklistRef: 'story-dod-checklist.md',
+        checklistRef: "story-dod-checklist.md",
       },
     },
     recovery: {
@@ -94,7 +94,7 @@ const AGENT_CAPABILITIES = {
   sm: {
     // Scrum Master doesn't have specific Auto-Claude capabilities
   },
-  'aiox-master': {
+  "aiox-master": {
     specPipeline: {
       canGather: true,
       canAssess: true,
@@ -107,7 +107,7 @@ const AGENT_CAPABILITIES = {
       canCreateContext: true,
     },
   },
-  'data-engineer': {
+  "data-engineer": {
     execution: {
       canExecute: true,
       canVerify: true,
@@ -116,7 +116,7 @@ const AGENT_CAPABILITIES = {
       canExtractPatterns: true,
     },
   },
-  'ux-design-expert': {
+  "ux-design-expert": {
     specPipeline: {
       canResearch: true,
     },
@@ -124,7 +124,7 @@ const AGENT_CAPABILITIES = {
       canCreateContext: true,
     },
   },
-  'squad-creator': {
+  "squad-creator": {
     execution: {
       canCreatePlan: true,
     },
@@ -150,7 +150,7 @@ function extractYamlFromMarkdown(content) {
  * Check if agent already has V3 autoClaude section
  */
 function isAlreadyV3(parsed) {
-  return parsed?.autoClaude?.version === '3.0';
+  return parsed?.autoClaude?.version === "3.0";
 }
 
 /**
@@ -160,7 +160,7 @@ function generateAutoClaudeSection(agentId) {
   const capabilities = AGENT_CAPABILITIES[agentId] || {};
 
   const autoClaude = {
-    version: '3.0',
+    version: "3.0",
     migratedAt: new Date().toISOString(),
   };
 
@@ -225,7 +225,7 @@ function insertAutoClaudeSection(content, autoClaudeYaml) {
   const yamlBlockMatch = content.match(/(```yaml\n[\s\S]*?)(```)/);
 
   if (!yamlBlockMatch) {
-    return { error: 'Could not find YAML block in file' };
+    return { error: "Could not find YAML block in file" };
   }
 
   const beforeClosing = yamlBlockMatch[1];
@@ -234,7 +234,7 @@ function insertAutoClaudeSection(content, autoClaudeYaml) {
   // Insert autoClaude section before the closing ```
   const newContent = content.replace(
     yamlBlockMatch[0],
-    `${beforeClosing}\n${autoClaudeYaml}\n${closing}`
+    `${beforeClosing}\n${autoClaudeYaml}\n${closing}`,
   );
 
   return { content: newContent };
@@ -246,23 +246,23 @@ function insertAutoClaudeSection(content, autoClaudeYaml) {
 function generateDiff(agentId, autoClaude) {
   const lines = [];
 
-  lines.push('');
+  lines.push("");
   lines.push(`═══════════════════════════════════════════════════════════`);
   lines.push(`  Migration Preview: ${agentId}.md (V2 → V3)`);
   lines.push(`═══════════════════════════════════════════════════════════`);
-  lines.push('');
-  lines.push('+ Added autoClaude section:');
-  lines.push('');
+  lines.push("");
+  lines.push("+ Added autoClaude section:");
+  lines.push("");
 
   const yamlStr = autoClaudeToYaml(autoClaude);
-  yamlStr.split('\n').forEach((line) => {
+  yamlStr.split("\n").forEach((line) => {
     lines.push(`  + ${line}`);
   });
 
-  lines.push('');
+  lines.push("");
   lines.push(`═══════════════════════════════════════════════════════════`);
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -281,7 +281,7 @@ async function migrateAgent(rootPath, agentId, options = {}) {
   }
 
   // Read file
-  const content = await fs.readFile(agentPath, 'utf-8');
+  const content = await fs.readFile(agentPath, "utf-8");
 
   // Parse YAML
   const { yaml: parsed, error: parseError } = extractYamlFromMarkdown(content);
@@ -291,7 +291,7 @@ async function migrateAgent(rootPath, agentId, options = {}) {
   }
 
   if (!parsed) {
-    return { success: false, error: 'No YAML block found in file' };
+    return { success: false, error: "No YAML block found in file" };
   }
 
   // Check if already V3
@@ -299,7 +299,7 @@ async function migrateAgent(rootPath, agentId, options = {}) {
     return {
       success: false,
       error: `Agent ${agentId} is already V3. Use --force to re-migrate.`,
-      version: 'V3',
+      version: "V3",
     };
   }
 
@@ -329,7 +329,7 @@ async function migrateAgent(rootPath, agentId, options = {}) {
   // Insert autoClaude section
   const { content: newContent, error: insertError } = insertAutoClaudeSection(
     content,
-    autoClaudeYaml
+    autoClaudeYaml,
   );
 
   if (insertError) {
@@ -340,8 +340,8 @@ async function migrateAgent(rootPath, agentId, options = {}) {
   await fs.writeFile(agentPath, newContent);
 
   // Validate migration
-  const { validateFile } = require(path.join(rootPath, SCHEMAS_DIR, 'validate-v3-schema.js'));
-  const validation = await validateFile(agentPath, { type: 'agent', strict: true });
+  const { validateFile } = require(path.join(rootPath, SCHEMAS_DIR, "validate-v3-schema.js"));
+  const validation = await validateFile(agentPath, { type: "agent", strict: true });
 
   return {
     success: true,
@@ -367,10 +367,12 @@ async function listAgents(rootPath) {
   const agents = [];
 
   for (const file of files) {
-    if (!file.endsWith('.md')) continue;
+    if (!file.endsWith(".md")) {
+      continue;
+    }
 
-    const agentId = path.basename(file, '.md');
-    const content = await fs.readFile(path.join(agentsPath, file), 'utf-8');
+    const agentId = path.basename(file, ".md");
+    const content = await fs.readFile(path.join(agentsPath, file), "utf-8");
     const { yaml: parsed } = extractYamlFromMarkdown(content);
 
     const hasCapabilities = AGENT_CAPABILITIES[agentId] !== undefined;
@@ -378,8 +380,8 @@ async function listAgents(rootPath) {
 
     agents.push({
       id: agentId,
-      name: parsed?.agent?.name || 'Unknown',
-      version: isV3 ? 'V3' : 'V2',
+      name: parsed?.agent?.name || "Unknown",
+      version: isV3 ? "V3" : "V2",
       hasCapabilities,
       file,
     });
@@ -394,30 +396,30 @@ async function listAgents(rootPath) {
 function formatListOutput(agents) {
   const lines = [];
 
-  lines.push('');
-  lines.push('═══════════════════════════════════════════════════════════');
-  lines.push('  AIOX Agents - Migration Status');
-  lines.push('═══════════════════════════════════════════════════════════');
-  lines.push('');
+  lines.push("");
+  lines.push("═══════════════════════════════════════════════════════════");
+  lines.push("  AIOX Agents - Migration Status");
+  lines.push("═══════════════════════════════════════════════════════════");
+  lines.push("");
 
-  const v2Count = agents.filter((a) => a.version === 'V2').length;
-  const v3Count = agents.filter((a) => a.version === 'V3').length;
+  const v2Count = agents.filter((a) => a.version === "V2").length;
+  const v3Count = agents.filter((a) => a.version === "V3").length;
 
   lines.push(`Total: ${agents.length} agents | V2: ${v2Count} | V3: ${v3Count}`);
-  lines.push('');
+  lines.push("");
 
   agents.forEach((agent) => {
-    const vBadge = agent.version === 'V3' ? '🆕' : '📦';
-    const capBadge = agent.hasCapabilities ? '✓' : '○';
+    const vBadge = agent.version === "V3" ? "🆕" : "📦";
+    const capBadge = agent.hasCapabilities ? "✓" : "○";
     lines.push(`  ${vBadge} ${agent.id.padEnd(20)} ${agent.version} ${capBadge} ${agent.name}`);
   });
 
-  lines.push('');
-  lines.push('Legend: 🆕 V3 | 📦 V2 | ✓ Has capability mapping | ○ No mapping');
-  lines.push('');
-  lines.push('═══════════════════════════════════════════════════════════');
+  lines.push("");
+  lines.push("Legend: 🆕 V3 | 📦 V2 | ✓ Has capability mapping | ○ No mapping");
+  lines.push("");
+  lines.push("═══════════════════════════════════════════════════════════");
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -426,7 +428,7 @@ function formatListOutput(agents) {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length === 0 || args.includes('--help')) {
+  if (args.length === 0 || args.includes("--help")) {
     console.log(`
 AIOX Agent Migration Script (V2 → V3)
 
@@ -452,37 +454,37 @@ Examples:
 
   // Find project root
   let rootPath = process.cwd();
-  while (rootPath !== '/') {
+  while (rootPath !== "/") {
     try {
-      await fs.access(path.join(rootPath, '.aiox-core'));
+      await fs.access(path.join(rootPath, ".aiox-core"));
       break;
     } catch {
       rootPath = path.dirname(rootPath);
     }
   }
 
-  if (rootPath === '/') {
-    console.error('Error: Could not find .aiox-core directory. Run from project root.');
+  if (rootPath === "/") {
+    console.error("Error: Could not find .aiox-core directory. Run from project root.");
     process.exit(1);
   }
 
   // List mode
-  if (args.includes('--list')) {
+  if (args.includes("--list")) {
     const agents = await listAgents(rootPath);
     console.log(formatListOutput(agents));
     return;
   }
 
   // Migration mode
-  const agentId = args.find((a) => !a.startsWith('--'));
+  const agentId = args.find((a) => !a.startsWith("--"));
   if (!agentId) {
-    console.error('Error: Agent ID required');
+    console.error("Error: Agent ID required");
     process.exit(1);
   }
 
-  const dryRun = args.includes('--dry-run');
-  const backup = args.includes('--backup');
-  const force = args.includes('--force');
+  const dryRun = args.includes("--dry-run");
+  const backup = args.includes("--backup");
+  const force = args.includes("--force");
 
   const result = await migrateAgent(rootPath, agentId, { dryRun, backup, force });
 
@@ -493,18 +495,18 @@ Examples:
 
   if (result.dryRun) {
     console.log(result.diff);
-    console.log('\nTo apply migration, run without --dry-run flag.');
+    console.log("\nTo apply migration, run without --dry-run flag.");
   } else {
     console.log(`\n✅ Agent ${agentId} migrated to V3 successfully!`);
     if (result.backup) {
       console.log(`   Backup: ${result.backup}`);
     }
-    console.log(`   Validation: ${result.validation.valid ? 'PASSED' : 'FAILED'}`);
+    console.log(`   Validation: ${result.validation.valid ? "PASSED" : "FAILED"}`);
     if (result.validation.errors.length > 0) {
-      console.log(`   Errors: ${result.validation.errors.join(', ')}`);
+      console.log(`   Errors: ${result.validation.errors.join(", ")}`);
     }
     if (result.validation.warnings.length > 0) {
-      console.log(`   Warnings: ${result.validation.warnings.join(', ')}`);
+      console.log(`   Warnings: ${result.validation.warnings.join(", ")}`);
     }
   }
 }
@@ -520,7 +522,7 @@ module.exports = {
 // Run CLI if called directly
 if (require.main === module) {
   main().catch((error) => {
-    console.error('Error:', error.message);
+    console.error("Error:", error.message);
     process.exit(1);
   });
 }

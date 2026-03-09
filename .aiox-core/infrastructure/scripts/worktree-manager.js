@@ -1,7 +1,7 @@
-const execa = require('execa');
-const path = require('path');
-const fs = require('fs').promises;
-const chalk = require('chalk');
+const execa = require("execa");
+const path = require("path");
+const fs = require("fs").promises;
+const chalk = require("chalk");
 
 /**
  * @typedef {Object} WorktreeInfo
@@ -63,11 +63,11 @@ class WorktreeManager {
   constructor(projectRoot, options = {}) {
     this.projectRoot = projectRoot || process.cwd();
     this.maxWorktrees = options.maxWorktrees || 10;
-    this.worktreeDir = options.worktreeDir || '.aiox/worktrees';
-    this.branchPrefix = options.branchPrefix || 'auto-claude/';
+    this.worktreeDir = options.worktreeDir || ".aiox/worktrees";
+    this.branchPrefix = options.branchPrefix || "auto-claude/";
     this.staleDays = options.staleDays || 30;
-    this.mergeLogDir = options.mergeLogDir || '.aiox/logs/merges';
-    this.gitPath = 'git';
+    this.mergeLogDir = options.mergeLogDir || ".aiox/logs/merges";
+    this.gitPath = "git";
   }
 
   /**
@@ -90,7 +90,7 @@ class WorktreeManager {
 
       return stdout.trim();
     } catch (error) {
-      throw new Error(`Git command failed: ${error.message}`);
+      throw new Error(`Git command failed: ${error.message}`, { cause: error });
     }
   }
 
@@ -132,7 +132,7 @@ class WorktreeManager {
     if (currentWorktrees.length >= this.maxWorktrees) {
       throw new Error(
         `Maximum worktrees limit (${this.maxWorktrees}) reached. ` +
-          `Remove stale worktrees before creating new ones.`
+          `Remove stale worktrees before creating new ones.`,
       );
     }
 
@@ -144,7 +144,7 @@ class WorktreeManager {
     await fs.mkdir(parentDir, { recursive: true });
 
     // Create worktree with new branch
-    await this.execGit(['worktree', 'add', worktreePath, '-b', branchName]);
+    await this.execGit(["worktree", "add", worktreePath, "-b", branchName]);
 
     console.log(chalk.green(`✓ Created worktree for ${storyId} at ${worktreePath}`));
 
@@ -169,22 +169,22 @@ class WorktreeManager {
     const branchName = this.getBranchName(storyId);
 
     // Remove worktree
-    const worktreeArgs = ['worktree', 'remove', worktreePath];
+    const worktreeArgs = ["worktree", "remove", worktreePath];
     if (options.force) {
-      worktreeArgs.push('--force');
+      worktreeArgs.push("--force");
     }
     await this.execGit(worktreeArgs);
 
     // Delete branch
     try {
-      const branchArgs = ['branch', '-d', branchName];
+      const branchArgs = ["branch", "-d", branchName];
       if (options.force) {
-        branchArgs[1] = '-D'; // Force delete
+        branchArgs[1] = "-D"; // Force delete
       }
       await this.execGit(branchArgs);
     } catch (error) {
       console.warn(
-        chalk.yellow(`Warning: Could not delete branch ${branchName}: ${error.message}`)
+        chalk.yellow(`Warning: Could not delete branch ${branchName}: ${error.message}`),
       );
     }
 
@@ -198,27 +198,27 @@ class WorktreeManager {
    * @returns {Promise<WorktreeInfo[]>} Array of worktree information
    */
   async list() {
-    const output = await this.execGit(['worktree', 'list', '--porcelain']);
+    const output = await this.execGit(["worktree", "list", "--porcelain"]);
 
     if (!output) {
       return [];
     }
 
     const worktrees = [];
-    const blocks = output.split('\n\n').filter(Boolean);
+    const blocks = output.split("\n\n").filter(Boolean);
 
     for (const block of blocks) {
-      const lines = block.split('\n');
-      const worktreePath = lines[0]?.replace('worktree ', '') || '';
-      const branchLine = lines.find((l) => l.startsWith('branch '));
-      const branch = branchLine?.replace('branch refs/heads/', '') || '';
+      const lines = block.split("\n");
+      const worktreePath = lines[0]?.replace("worktree ", "") || "";
+      const branchLine = lines.find((l) => l.startsWith("branch "));
+      const branch = branchLine?.replace("branch refs/heads/", "") || "";
 
       // Skip main worktree and non-auto-claude worktrees
       if (!branch.startsWith(this.branchPrefix)) {
         continue;
       }
 
-      const storyId = branch.replace(this.branchPrefix, '');
+      const storyId = branch.replace(this.branchPrefix, "");
       const expectedPath = this.getWorktreePath(storyId);
 
       // Only include worktrees in our managed directory
@@ -252,11 +252,11 @@ class WorktreeManager {
       // Get uncommitted changes count
       let uncommittedChanges = 0;
       try {
-        const statusOutput = await execa(this.gitPath, ['status', '--porcelain'], {
+        const statusOutput = await execa(this.gitPath, ["status", "--porcelain"], {
           cwd: worktreePath,
         });
         uncommittedChanges = statusOutput.stdout
-          ? statusOutput.stdout.split('\n').filter(Boolean).length
+          ? statusOutput.stdout.split("\n").filter(Boolean).length
           : 0;
       } catch {
         // Worktree might be in invalid state
@@ -264,7 +264,7 @@ class WorktreeManager {
 
       // Determine status
       const daysSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-      const status = daysSinceCreation > this.staleDays ? 'stale' : 'active';
+      const status = daysSinceCreation > this.staleDays ? "stale" : "active";
 
       return {
         storyId,
@@ -323,8 +323,8 @@ class WorktreeManager {
     const worktrees = await this.list();
     return {
       total: worktrees.length,
-      active: worktrees.filter((w) => w.status === 'active').length,
-      stale: worktrees.filter((w) => w.status === 'stale').length,
+      active: worktrees.filter((w) => w.status === "active").length,
+      stale: worktrees.filter((w) => w.status === "stale").length,
     };
   }
 
@@ -335,7 +335,7 @@ class WorktreeManager {
    */
   async cleanupStale() {
     const worktrees = await this.list();
-    const stale = worktrees.filter((w) => w.status === 'stale');
+    const stale = worktrees.filter((w) => w.status === "stale");
     const removed = [];
 
     for (const worktree of stale) {
@@ -345,8 +345,8 @@ class WorktreeManager {
       } catch (error) {
         console.warn(
           chalk.yellow(
-            `Warning: Could not remove stale worktree ${worktree.storyId}: ${error.message}`
-          )
+            `Warning: Could not remove stale worktree ${worktree.storyId}: ${error.message}`,
+          ),
         );
       }
     }
@@ -376,20 +376,20 @@ class WorktreeManager {
     const branchName = this.getBranchName(storyId);
 
     // Save current HEAD to restore if needed
-    const currentHead = await this.execGit(['rev-parse', 'HEAD']);
+    const currentHead = await this.execGit(["rev-parse", "HEAD"]);
 
     try {
       // Attempt a dry-run merge with --no-commit
-      await execa(this.gitPath, ['merge', '--no-commit', '--no-ff', branchName], {
+      await execa(this.gitPath, ["merge", "--no-commit", "--no-ff", branchName], {
         cwd: this.projectRoot,
       });
 
       // No conflicts - abort the successful merge
-      await execa(this.gitPath, ['merge', '--abort'], {
+      await execa(this.gitPath, ["merge", "--abort"], {
         cwd: this.projectRoot,
       }).catch(() => {
         // If abort fails, reset to original HEAD
-        return execa(this.gitPath, ['reset', '--hard', currentHead], {
+        return execa(this.gitPath, ["reset", "--hard", currentHead], {
           cwd: this.projectRoot,
         });
       });
@@ -403,20 +403,20 @@ class WorktreeManager {
         // Get conflict list using diff
         const { stdout: conflictOutput } = await execa(
           this.gitPath,
-          ['diff', '--name-only', '--diff-filter=U'],
-          { cwd: this.projectRoot }
+          ["diff", "--name-only", "--diff-filter=U"],
+          { cwd: this.projectRoot },
         );
-        conflicts = conflictOutput ? conflictOutput.split('\n').filter((f) => f.trim()) : [];
+        conflicts = conflictOutput ? conflictOutput.split("\n").filter((f) => f.trim()) : [];
       } catch {
         // If diff fails, try ls-files with unmerged
         try {
-          const { stdout: lsOutput } = await execa(this.gitPath, ['ls-files', '--unmerged'], {
+          const { stdout: lsOutput } = await execa(this.gitPath, ["ls-files", "--unmerged"], {
             cwd: this.projectRoot,
           });
           // Extract unique filenames from ls-files output
           const fileSet = new Set();
-          lsOutput.split('\n').forEach((line) => {
-            const parts = line.split('\t');
+          lsOutput.split("\n").forEach((line) => {
+            const parts = line.split("\t");
             if (parts[1]) {
               fileSet.add(parts[1]);
             }
@@ -429,12 +429,12 @@ class WorktreeManager {
 
       // Abort the failed merge and reset
       try {
-        await execa(this.gitPath, ['merge', '--abort'], {
+        await execa(this.gitPath, ["merge", "--abort"], {
           cwd: this.projectRoot,
         });
       } catch {
         // If abort fails, reset to original HEAD
-        await execa(this.gitPath, ['reset', '--hard', currentHead], {
+        await execa(this.gitPath, ["reset", "--hard", currentHead], {
           cwd: this.projectRoot,
         });
       }
@@ -461,7 +461,7 @@ class WorktreeManager {
     }
 
     // Get current branch (base branch to merge into)
-    const baseBranch = await this.execGit(['rev-parse', '--abbrev-ref', 'HEAD']);
+    const baseBranch = await this.execGit(["rev-parse", "--abbrev-ref", "HEAD"]);
 
     // Initialize result object
     const result = {
@@ -487,26 +487,26 @@ class WorktreeManager {
       }
 
       // Build merge arguments
-      const mergeArgs = ['merge'];
+      const mergeArgs = ["merge"];
 
       if (options.squash) {
-        mergeArgs.push('--squash');
+        mergeArgs.push("--squash");
       }
 
       if (options.staged || options.squash) {
-        mergeArgs.push('--no-commit');
+        mergeArgs.push("--no-commit");
       }
 
       // Force merge commit (no fast-forward) when staged without squash
       // (squash already implies non-fast-forward behavior)
       if (options.staged && !options.squash) {
-        mergeArgs.push('--no-ff');
+        mergeArgs.push("--no-ff");
       }
 
       // Custom message or default
       const mergeMessage = options.message || `Merge ${branchName} (Story: ${storyId})`;
       if (!options.staged && !options.squash) {
-        mergeArgs.push('-m', mergeMessage);
+        mergeArgs.push("-m", mergeMessage);
       }
 
       mergeArgs.push(branchName);
@@ -518,7 +518,7 @@ class WorktreeManager {
 
       // If squash merge, we need to commit manually unless staged option
       if (options.squash && !options.staged) {
-        await execa(this.gitPath, ['commit', '-m', mergeMessage], {
+        await execa(this.gitPath, ["commit", "-m", mergeMessage], {
           cwd: this.projectRoot,
         });
       }
@@ -526,7 +526,7 @@ class WorktreeManager {
       // Get the resulting commit hash (if committed)
       if (!options.staged) {
         try {
-          const commitHash = await this.execGit(['rev-parse', 'HEAD']);
+          const commitHash = await this.execGit(["rev-parse", "HEAD"]);
           result.commitHash = commitHash;
         } catch {
           // Commit hash not available
@@ -545,7 +545,7 @@ class WorktreeManager {
         console.log(chalk.gray('  Use "git commit" to complete the merge'));
       } else if (options.squash) {
         console.log(
-          chalk.green(`✓ Merged ${storyId} (squashed) → ${result.commitHash?.substring(0, 7)}`)
+          chalk.green(`✓ Merged ${storyId} (squashed) → ${result.commitHash?.substring(0, 7)}`),
         );
       } else {
         console.log(chalk.green(`✓ Merged ${storyId} → ${result.commitHash?.substring(0, 7)}`));
@@ -564,22 +564,22 @@ class WorktreeManager {
 
       // Try to get conflict list
       try {
-        const conflictOutput = await this.execGit(['diff', '--name-only', '--diff-filter=U']);
-        result.conflicts = conflictOutput ? conflictOutput.split('\n').filter((f) => f.trim()) : [];
+        const conflictOutput = await this.execGit(["diff", "--name-only", "--diff-filter=U"]);
+        result.conflicts = conflictOutput ? conflictOutput.split("\n").filter((f) => f.trim()) : [];
       } catch {
         // No conflicts available
       }
 
       // Abort the failed merge
       try {
-        await this.execGit(['merge', '--abort'], { ignoreStderr: true });
+        await this.execGit(["merge", "--abort"], { ignoreStderr: true });
       } catch {
         // Abort might fail if nothing to abort
       }
 
       console.log(chalk.red(`✗ Merge failed for ${storyId}: ${error.message}`));
       if (result.conflicts.length > 0) {
-        console.log(chalk.yellow('  Conflicting files:'));
+        console.log(chalk.yellow("  Conflicting files:"));
         result.conflicts.forEach((file) => console.log(chalk.yellow(`    - ${file}`)));
       }
 
@@ -598,7 +598,7 @@ class WorktreeManager {
     const logDir = path.join(this.projectRoot, this.mergeLogDir);
     await fs.mkdir(logDir, { recursive: true });
 
-    const timestamp = result.timestamp.toISOString().replace(/[:.]/g, '-');
+    const timestamp = result.timestamp.toISOString().replace(/[:.]/g, "-");
     const logFileName = `merge-${result.storyId}-${timestamp}.json`;
     const logPath = path.join(logDir, logFileName);
 
@@ -608,7 +608,7 @@ class WorktreeManager {
       projectRoot: this.projectRoot,
     };
 
-    await fs.writeFile(logPath, JSON.stringify(logEntry, null, 2), 'utf8');
+    await fs.writeFile(logPath, JSON.stringify(logEntry, null, 2), "utf8");
 
     return logPath;
   }
@@ -629,13 +629,13 @@ class WorktreeManager {
     }
 
     const files = await fs.readdir(logDir);
-    const pattern = storyId ? `merge-${storyId}-` : 'merge-';
-    const logFiles = files.filter((f) => f.startsWith(pattern) && f.endsWith('.json'));
+    const pattern = storyId ? `merge-${storyId}-` : "merge-";
+    const logFiles = files.filter((f) => f.startsWith(pattern) && f.endsWith(".json"));
 
     const history = [];
     for (const file of logFiles) {
       try {
-        const content = await fs.readFile(path.join(logDir, file), 'utf8');
+        const content = await fs.readFile(path.join(logDir, file), "utf8");
         const entry = JSON.parse(content);
         entry.timestamp = new Date(entry.timestamp);
         history.push(entry);
@@ -645,7 +645,7 @@ class WorktreeManager {
     }
 
     // Sort by timestamp descending
-    return history.sort((a, b) => b.timestamp - a.timestamp);
+    return history.toSorted((a, b) => b.timestamp - a.timestamp);
   }
 
   /**
@@ -656,27 +656,27 @@ class WorktreeManager {
    */
   formatList(worktrees) {
     if (worktrees.length === 0) {
-      return chalk.gray('No active worktrees');
+      return chalk.gray("No active worktrees");
     }
 
     const lines = [
       chalk.bold(`📁 Active Worktrees (${worktrees.length}/${this.maxWorktrees})`),
-      chalk.gray('━'.repeat(50)),
+      chalk.gray("━".repeat(50)),
     ];
 
     for (const wt of worktrees) {
-      const statusIcon = wt.status === 'active' ? (wt.uncommittedChanges > 0 ? '🟢' : '🟡') : '⚫';
+      const statusIcon = wt.status === "active" ? (wt.uncommittedChanges > 0 ? "🟢" : "🟡") : "⚫";
       const changesText =
-        wt.uncommittedChanges > 0 ? `${wt.uncommittedChanges} uncommitted` : 'clean';
+        wt.uncommittedChanges > 0 ? `${wt.uncommittedChanges} uncommitted` : "clean";
       const age = this.formatAge(wt.createdAt);
-      const staleTag = wt.status === 'stale' ? chalk.red(' (stale)') : '';
+      const staleTag = wt.status === "stale" ? chalk.red(" (stale)") : "";
 
       lines.push(
-        `${statusIcon} ${chalk.cyan(wt.storyId.padEnd(12))} │ ${wt.branch.padEnd(25)} │ ${changesText.padEnd(15)} │ ${age}${staleTag}`
+        `${statusIcon} ${chalk.cyan(wt.storyId.padEnd(12))} │ ${wt.branch.padEnd(25)} │ ${changesText.padEnd(15)} │ ${age}${staleTag}`,
       );
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -696,7 +696,7 @@ class WorktreeManager {
     if (hours > 0) {
       return `${hours}h ago`;
     }
-    return 'just now';
+    return "just now";
   }
 }
 

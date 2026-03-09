@@ -12,7 +12,7 @@
  * console.log(result.waves); // [{ waveNumber: 1, tasks: [...], parallel: true }, ...]
  */
 
-'use strict';
+"use strict";
 
 /**
  * Custom error class for circular dependency detection
@@ -23,8 +23,8 @@ class CircularDependencyError extends Error {
    * @param {string[]} cycle - Array of task names forming the cycle
    */
   constructor(cycle) {
-    super(`Circular dependency detected: ${cycle.join(' → ')}`);
-    this.name = 'CircularDependencyError';
+    super(`Circular dependency detected: ${cycle.join(" → ")}`);
+    this.name = "CircularDependencyError";
     this.cycle = cycle;
   }
 
@@ -34,7 +34,7 @@ class CircularDependencyError extends Error {
    */
   getSuggestion() {
     if (this.cycle.length < 2) {
-      return 'Remove the self-referencing dependency';
+      return "Remove the self-referencing dependency";
     }
     const _lastEdge = `${this.cycle[this.cycle.length - 2]} → ${this.cycle[this.cycle.length - 1]}`;
     return `Consider removing the dependency from ${this.cycle[this.cycle.length - 1]} to ${this.cycle[0]}`;
@@ -46,14 +46,14 @@ class CircularDependencyError extends Error {
  * @type {Object}
  */
 const DEFAULT_TASK_DURATIONS = {
-  'read-story': 5,
-  'setup-branch': 2,
+  "read-story": 5,
+  "setup-branch": 2,
   implement: 30,
-  'write-tests': 10,
-  'update-docs': 5,
-  'run-tests': 5,
-  'review-qa': 15,
-  'apply-qa-fixes': 10,
+  "write-tests": 10,
+  "update-docs": 5,
+  "run-tests": 5,
+  "review-qa": 15,
+  "apply-qa-fixes": 10,
   default: 10,
 };
 
@@ -87,10 +87,10 @@ class WaveAnalyzer {
 
     if (!this._registryModule) {
       try {
-        const { createWorkflowRegistry } = require('../registry/workflow-registry');
+        const { createWorkflowRegistry } = require("../registry/workflow-registry");
         this._registryModule = createWorkflowRegistry();
       } catch (error) {
-        throw new Error(`Failed to load WorkflowRegistry: ${error.message}`);
+        throw new Error(`Failed to load WorkflowRegistry: ${error.message}`, { cause: error });
       }
     }
 
@@ -115,7 +115,7 @@ class WaveAnalyzer {
         workflowId,
         totalTasks: 0,
         waves: [],
-        optimizationGain: '0%',
+        optimizationGain: "0%",
         criticalPath: [],
         analysisTime: Date.now() - startTime,
       };
@@ -382,7 +382,7 @@ class WaveAnalyzer {
 
       if (waveTasks.length === 0) {
         // Should not happen if we checked for cycles
-        throw new Error('Unexpected cycle detected during wave analysis');
+        throw new Error("Unexpected cycle detected during wave analysis");
       }
 
       // Calculate wave duration (max of parallel tasks)
@@ -526,7 +526,9 @@ class WaveAnalyzer {
    * @private
    */
   _calculateOptimizationGain(sequentialTime, parallelTime) {
-    if (sequentialTime === 0) return 0;
+    if (sequentialTime === 0) {
+      return 0;
+    }
     const gain = ((sequentialTime - parallelTime) / sequentialTime) * 100;
     return Math.round(gain);
   }
@@ -611,8 +613,8 @@ class WaveAnalyzer {
     const lines = [];
 
     lines.push(`Wave Analysis: ${analysis.workflowId}`);
-    lines.push('═'.repeat(40));
-    lines.push('');
+    lines.push("═".repeat(40));
+    lines.push("");
 
     if (options.visual) {
       for (const wave of analysis.waves) {
@@ -623,34 +625,34 @@ class WaveAnalyzer {
         } else {
           lines.push(`${prefix}──┬── ${wave.tasks[0]} (${wave.estimatedDuration})`);
           for (let i = 1; i < wave.tasks.length; i++) {
-            const connector = i === wave.tasks.length - 1 ? '└' : '├';
+            const connector = i === wave.tasks.length - 1 ? "└" : "├";
             lines.push(`         ${connector}── ${wave.tasks[i]}`);
           }
         }
 
         if (wave.waveNumber < analysis.waves.length) {
-          lines.push('              │');
+          lines.push("              │");
         }
       }
     } else {
       for (const wave of analysis.waves) {
-        const parallelIndicator = wave.parallel ? '(parallel)' : '';
+        const parallelIndicator = wave.parallel ? "(parallel)" : "";
         lines.push(`Wave ${wave.waveNumber} ${parallelIndicator}:`);
         for (const task of wave.tasks) {
           lines.push(`  └─ ${task}`);
         }
-        lines.push('');
+        lines.push("");
       }
     }
 
-    lines.push('');
-    lines.push(`Total Sequential: ${analysis.metrics?.sequentialTime || 'N/A'}`);
-    lines.push(`Total Parallel:   ${analysis.metrics?.parallelTime || 'N/A'}`);
+    lines.push("");
+    lines.push(`Total Sequential: ${analysis.metrics?.sequentialTime || "N/A"}`);
+    lines.push(`Total Parallel:   ${analysis.metrics?.parallelTime || "N/A"}`);
     lines.push(`Optimization:     ${analysis.optimizationGain} faster`);
-    lines.push('');
-    lines.push(`Critical Path: ${analysis.criticalPath.join(' → ')}`);
+    lines.push("");
+    lines.push(`Critical Path: ${analysis.criticalPath.join(" → ")}`);
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 }
 

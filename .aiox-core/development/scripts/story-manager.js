@@ -9,10 +9,10 @@
  * - Managing story frontmatter and metadata
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
-const { syncStoryToClickUp, detectChanges } = require('./story-update-hook');
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
+const { syncStoryToClickUp, detectChanges } = require("./story-update-hook");
 
 /**
  * Resolves the ClickUp MCP tool
@@ -21,8 +21,8 @@ const { syncStoryToClickUp, detectChanges } = require('./story-update-hook');
 async function getClickUpTool() {
   try {
     // Try using tool-resolver (test environment or future production)
-    const { resolveTool } = require('../../infrastructure/scripts/tool-resolver');
-    return await resolveTool('clickup');
+    const { resolveTool } = require("../../infrastructure/scripts/tool-resolver");
+    return await resolveTool("clickup");
   } catch (_error) {
     // Fall back to global references (current production pattern)
     return {
@@ -40,7 +40,7 @@ async function getClickUpTool() {
  * @returns {Promise<object>} Parsed story content
  */
 async function parseStoryFile(storyFilePath) {
-  const fileContent = await fs.readFile(storyFilePath, 'utf-8');
+  const fileContent = await fs.readFile(storyFilePath, "utf-8");
 
   // Extract frontmatter
   const frontmatterMatch = fileContent.match(/^---\n([\s\S]*?)\n---/);
@@ -53,26 +53,26 @@ async function parseStoryFile(storyFilePath) {
 
   // Parse story sections
   const statusMatch = fileContent.match(/\*\*Status:\*\* (.+)/);
-  const status = statusMatch ? statusMatch[1] : 'Draft';
+  const status = statusMatch ? statusMatch[1] : "Draft";
 
   // Parse tasks (checkbox items)
   const taskMatches = fileContent.matchAll(/^- \[([ x])\] (.+)$/gm);
-  const tasks = Array.from(taskMatches).map(match => ({
-    completed: match[1] === 'x',
+  const tasks = Array.from(taskMatches).map((match) => ({
+    completed: match[1] === "x",
     text: match[2],
   }));
 
   // Extract File List section
   const fileListMatch = fileContent.match(/### File List\n\n([\s\S]*?)(?=\n##|$)/);
-  const fileList = fileListMatch ? fileListMatch[1].trim().split('\n') : [];
+  const fileList = fileListMatch ? fileListMatch[1].trim().split("\n") : [];
 
   // Extract Dev Notes section
   const devNotesMatch = fileContent.match(/## Dev Notes\n\n([\s\S]*?)(?=\n##|$)/);
-  const devNotes = devNotesMatch ? devNotesMatch[1].trim() : '';
+  const devNotes = devNotesMatch ? devNotesMatch[1].trim() : "";
 
   // Extract Acceptance Criteria section
   const acMatch = fileContent.match(/## Acceptance Criteria\n\n([\s\S]*?)(?=\n##|$)/);
-  const acceptanceCriteria = acMatch ? acMatch[1].trim() : '';
+  const acceptanceCriteria = acMatch ? acMatch[1].trim() : "";
 
   return {
     frontmatter,
@@ -96,21 +96,21 @@ async function parseStoryFile(storyFilePath) {
 async function saveStoryFile(storyFilePath, content, skipSync = false) {
   try {
     // Read previous version for change detection
-    let previousContentString = '';
+    let previousContentString = "";
     try {
-      previousContentString = await fs.readFile(storyFilePath, 'utf-8');
+      previousContentString = await fs.readFile(storyFilePath, "utf-8");
     } catch (_error) {
       // File might not exist yet (new story)
-      console.log('No previous version found - creating new story file');
+      console.log("No previous version found - creating new story file");
     }
 
     // Write new content
-    await fs.writeFile(storyFilePath, content, 'utf-8');
+    await fs.writeFile(storyFilePath, content, "utf-8");
     console.log(`✅ Story file saved: ${path.basename(storyFilePath)}`);
 
     // Skip sync if requested or no previous version
     if (skipSync || !previousContentString) {
-      return { saved: true, synced: false, reason: skipSync ? 'skip_requested' : 'new_file' };
+      return { saved: true, synced: false, reason: skipSync ? "skip_requested" : "new_file" };
     }
 
     // Detect changes between previous and current content
@@ -131,20 +131,24 @@ async function saveStoryFile(storyFilePath, content, skipSync = false) {
     // Sync to ClickUp if there are changes
     await syncStoryToClickUp(storyFile, changes);
 
-    const hasChanges = changes.status.changed ||
-                      changes.tasksCompleted.length > 0 ||
-                      changes.filesAdded.length > 0 ||
-                      changes.devNotesAdded ||
-                      changes.acceptanceCriteriaChanged;
+    const hasChanges =
+      changes.status.changed ||
+      changes.tasksCompleted.length > 0 ||
+      changes.filesAdded.length > 0 ||
+      changes.devNotesAdded ||
+      changes.acceptanceCriteriaChanged;
 
     if (hasChanges) {
-      console.log('✅ Story synced to ClickUp');
-      return { saved: true, synced: true, changes: Object.keys(changes).filter(k => changes[k] && changes[k] !== false).length };
+      console.log("✅ Story synced to ClickUp");
+      return {
+        saved: true,
+        synced: true,
+        changes: Object.keys(changes).filter((k) => changes[k] && changes[k] !== false).length,
+      };
     } else {
-      console.log('ℹ️ No sync needed: no changes detected');
-      return { saved: true, synced: false, reason: 'no_changes' };
+      console.log("ℹ️ No sync needed: no changes detected");
+      return { saved: true, synced: false, reason: "no_changes" };
     }
-
   } catch (error) {
     console.error(`Error saving story file: ${error.message}`);
     throw error;
@@ -159,7 +163,7 @@ async function saveStoryFile(storyFilePath, content, skipSync = false) {
  * @returns {Promise<object>} Updated frontmatter object
  */
 async function updateFrontmatter(storyFilePath, updates) {
-  const fileContent = await fs.readFile(storyFilePath, 'utf-8');
+  const fileContent = await fs.readFile(storyFilePath, "utf-8");
 
   // Extract existing frontmatter
   const frontmatterMatch = fileContent.match(/^---\n([\s\S]*?)\n---/);
@@ -229,32 +233,31 @@ async function createStoryInClickUp({
   storyFilePath,
 }) {
   // Validation
-  if (typeof epicNum !== 'number') {
-    throw new Error('epic_number must be a number');
+  if (typeof epicNum !== "number") {
+    throw new Error("epic_number must be a number");
   }
-  if (typeof storyNum !== 'number' && isNaN(Number(storyNum))) {
-    throw new Error('story_number must be numeric');
+  if (typeof storyNum !== "number" && isNaN(Number(storyNum))) {
+    throw new Error("story_number must be numeric");
   }
 
   // Format story identifier
-  const storyId = subStoryNum
-    ? `${epicNum}.${subStoryNum}.${storyNum}`
-    : `${epicNum}.${storyNum}`;
+  const storyId = subStoryNum ? `${epicNum}.${subStoryNum}.${storyNum}` : `${epicNum}.${storyNum}`;
 
   const storyName = `Story ${storyId}: ${title}`;
 
   // Generate tags: ["story", "epic-{epicNum}", "story-{storyId}"]
-  const tags = ['story', `epic-${epicNum}`, `story-${storyId}`];
+  const tags = ["story", `epic-${epicNum}`, `story-${storyId}`];
 
   // Auto-generate file path if not provided
-  const filePath = storyFilePath || `docs/stories/${storyId}.${title.toLowerCase().replace(/\s+/g, '-')}.md`;
+  const filePath =
+    storyFilePath || `docs/stories/${storyId}.${title.toLowerCase().replace(/\s+/g, "-")}.md`;
 
   // Prepare custom fields
   const customFields = [
-    { id: 'epic_number', value: epicNum },
-    { id: 'story_number', value: storyId },
-    { id: 'story_file_path', value: filePath },
-    { id: 'story-status', value: 'Draft' },
+    { id: "epic_number", value: epicNum },
+    { id: "story_number", value: storyId },
+    { id: "story_file_path", value: filePath },
+    { id: "story-status", value: "Draft" },
   ];
 
   try {
@@ -267,7 +270,7 @@ async function createStoryInClickUp({
     const result = await clickUpTool.createTask({
       listName: listName,
       name: storyName,
-      parent: epicTaskId,  // Creates as subtask
+      parent: epicTaskId, // Creates as subtask
       markdown_description: storyContent,
       tags: tags,
       custom_fields: customFields,
@@ -279,10 +282,9 @@ async function createStoryInClickUp({
       taskId: result.id,
       url: result.url || `https://app.clickup.com/t/${result.id}`,
     };
-
   } catch (error) {
-    console.error('Error creating story in ClickUp:', error);
-    throw new Error(`Failed to create story in ClickUp: ${error.message}`);
+    console.error("Error creating story in ClickUp:", error);
+    throw new Error(`Failed to create story in ClickUp: ${error.message}`, { cause: error });
   }
 }
 
@@ -293,7 +295,7 @@ async function createStoryInClickUp({
  */
 async function syncStoryToPM(storyPath) {
   try {
-    const { getPMAdapter } = require('../../infrastructure/scripts/pm-adapter-factory');
+    const { getPMAdapter } = require("../../infrastructure/scripts/pm-adapter-factory");
     const adapter = getPMAdapter();
 
     console.log(`📤 Syncing to ${adapter.getName()}...`);
@@ -301,7 +303,7 @@ async function syncStoryToPM(storyPath) {
     const result = await adapter.syncStory(storyPath);
 
     if (result.success) {
-      console.log('✅ Story synced successfully');
+      console.log("✅ Story synced successfully");
       if (result.url) {
         console.log(`   URL: ${result.url}`);
       }
@@ -311,7 +313,7 @@ async function syncStoryToPM(storyPath) {
 
     return result;
   } catch (error) {
-    console.error('Error syncing story:', error);
+    console.error("Error syncing story:", error);
     return {
       success: false,
       error: error.message,
@@ -326,10 +328,13 @@ async function syncStoryToPM(storyPath) {
  */
 async function pullStoryFromPM(storyId) {
   try {
-    const { getPMAdapter, isPMToolConfigured } = require('../../infrastructure/scripts/pm-adapter-factory');
+    const {
+      getPMAdapter,
+      isPMToolConfigured,
+    } = require("../../infrastructure/scripts/pm-adapter-factory");
 
     if (!isPMToolConfigured()) {
-      console.log('ℹ️  Local-only mode: No PM tool configured');
+      console.log("ℹ️  Local-only mode: No PM tool configured");
       return {
         success: true,
         updates: null,
@@ -344,9 +349,9 @@ async function pullStoryFromPM(storyId) {
 
     if (result.success) {
       if (result.updates) {
-        console.log('📥 Updates found:', result.updates);
+        console.log("📥 Updates found:", result.updates);
       } else {
-        console.log('✅ Story is up to date');
+        console.log("✅ Story is up to date");
       }
     } else {
       console.error(`❌ Pull failed: ${result.error}`);
@@ -354,7 +359,7 @@ async function pullStoryFromPM(storyId) {
 
     return result;
   } catch (error) {
-    console.error('Error pulling story:', error);
+    console.error("Error pulling story:", error);
     return {
       success: false,
       error: error.message,
@@ -366,7 +371,7 @@ module.exports = {
   parseStoryFile,
   saveStoryFile,
   updateFrontmatter,
-  updateStoryFrontmatter: updateFrontmatter,  // Alias for test compatibility
+  updateStoryFrontmatter: updateFrontmatter, // Alias for test compatibility
   updateFrontmatterTimestamp,
   createStoryInClickUp,
   // PM adapter-aware functions (Story 3.20)

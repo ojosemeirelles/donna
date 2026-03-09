@@ -1,29 +1,32 @@
 #!/usr/bin/env node
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 function parseArgs(argv = process.argv.slice(2)) {
   const args = new Set(argv);
   return {
-    quiet: args.has('--quiet') || args.has('-q'),
-    json: args.has('--json'),
+    quiet: args.has("--quiet") || args.has("-q"),
+    json: args.has("--json"),
   };
 }
 
 function countMarkdownFiles(dirPath) {
-  if (!fs.existsSync(dirPath)) return 0;
-  return fs.readdirSync(dirPath).filter((f) => f.endsWith('.md')).length;
+  if (!fs.existsSync(dirPath)) {
+    return 0;
+  }
+  return fs.readdirSync(dirPath).filter((f) => f.endsWith(".md")).length;
 }
 
 function validateClaudeIntegration(options = {}) {
   const projectRoot = options.projectRoot || process.cwd();
-  const rulesFile = options.rulesFile || path.join(projectRoot, '.claude', 'CLAUDE.md');
-  const agentsDir = options.agentsDir || path.join(projectRoot, '.claude', 'commands', 'AIOX', 'agents');
-  const hooksDir = options.hooksDir || path.join(projectRoot, '.claude', 'hooks');
+  const rulesFile = options.rulesFile || path.join(projectRoot, ".claude", "CLAUDE.md");
+  const agentsDir =
+    options.agentsDir || path.join(projectRoot, ".claude", "commands", "AIOX", "agents");
+  const hooksDir = options.hooksDir || path.join(projectRoot, ".claude", "hooks");
   const sourceAgentsDir =
-    options.sourceAgentsDir || path.join(projectRoot, '.aiox-core', 'development', 'agents');
+    options.sourceAgentsDir || path.join(projectRoot, ".aiox-core", "development", "agents");
 
   const errors = [];
   const warnings = [];
@@ -57,11 +60,13 @@ function validateClaudeIntegration(options = {}) {
 
 function formatHumanReport(result) {
   if (result.ok) {
-    const lines = [`✅ Claude integration validation passed (agents: ${result.metrics.claudeAgents})`];
+    const lines = [
+      `✅ Claude integration validation passed (agents: ${result.metrics.claudeAgents})`,
+    ];
     if (result.warnings.length > 0) {
       lines.push(...result.warnings.map((w) => `⚠️ ${w}`));
     }
-    return lines.join('\n');
+    return lines.join("\n");
   }
   const lines = [
     `❌ Claude integration validation failed (${result.errors.length} issue(s))`,
@@ -70,7 +75,7 @@ function formatHumanReport(result) {
   if (result.warnings.length > 0) {
     lines.push(...result.warnings.map((w) => `⚠️ ${w}`));
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function main() {

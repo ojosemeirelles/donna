@@ -9,7 +9,7 @@
  * @story 2.7 - Discovery CLI Search
  */
 
-const { getRegistry } = require('../../../core/registry/registry-loader');
+const { getRegistry } = require("../../../core/registry/registry-loader");
 
 /**
  * Calculate Levenshtein distance between two strings
@@ -36,8 +36,8 @@ function levenshteinDistance(a, b) {
       } else {
         matrix[i][j] = Math.min(
           matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j] + 1,      // deletion
+          matrix[i][j - 1] + 1, // insertion
+          matrix[i - 1][j] + 1, // deletion
         );
       }
     }
@@ -53,7 +53,9 @@ function levenshteinDistance(a, b) {
  * @returns {number} Match score
  */
 function fuzzyMatchScore(text, query) {
-  if (!text || !query) return 0;
+  if (!text || !query) {
+    return 0;
+  }
 
   const textLower = text.toLowerCase();
   const queryLower = query.toLowerCase();
@@ -74,8 +76,8 @@ function fuzzyMatchScore(text, query) {
   }
 
   // Check individual words
-  const queryWords = queryLower.split(/\s+/).filter(w => w.length > 0);
-  const textWords = textLower.split(/\s+/).filter(w => w.length > 0);
+  const queryWords = queryLower.split(/\s+/).filter((w) => w.length > 0);
+  const textWords = textLower.split(/\s+/).filter((w) => w.length > 0);
 
   // Quick check: if no word overlap possible, return early
   if (textWords.length === 0 || queryWords.length === 0) {
@@ -121,11 +123,13 @@ function fuzzyMatchScore(text, query) {
       for (const textWord of textWords) {
         // Skip very different length words
         const lenDiff = Math.abs(queryWord.length - textWord.length);
-        if (lenDiff > 3) continue;
+        if (lenDiff > 3) {
+          continue;
+        }
 
         const distance = levenshteinDistance(queryWord, textWord);
         const maxLen = Math.max(queryWord.length, textWord.length);
-        const similarity = 1 - (distance / maxLen);
+        const similarity = 1 - distance / maxLen;
 
         if (similarity >= 0.7) {
           bestWordScore = Math.max(bestWordScore, Math.round(similarity * 70));
@@ -156,7 +160,7 @@ function fuzzyMatchScore(text, query) {
  * @returns {string} Escaped string
  */
 function escapeRegex(str) {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /**
@@ -166,14 +170,14 @@ function escapeRegex(str) {
  */
 function buildSearchFields(worker) {
   return {
-    id: worker.id || '',
-    name: worker.name || '',
-    description: worker.description || '',
-    category: worker.category || '',
-    subcategory: worker.subcategory || '',
-    tags: (worker.tags || []).join(' '),
-    inputs: (worker.inputs || []).join(' '),
-    outputs: (worker.outputs || []).join(' '),
+    id: worker.id || "",
+    name: worker.name || "",
+    description: worker.description || "",
+    category: worker.category || "",
+    subcategory: worker.subcategory || "",
+    tags: (worker.tags || []).join(" "),
+    inputs: (worker.inputs || []).join(" "),
+    outputs: (worker.outputs || []).join(" "),
     combined: [
       worker.id,
       worker.name,
@@ -183,7 +187,9 @@ function buildSearchFields(worker) {
       ...(worker.tags || []),
       ...(worker.inputs || []),
       ...(worker.outputs || []),
-    ].filter(Boolean).join(' '),
+    ]
+      .filter(Boolean)
+      .join(" "),
   };
 }
 
@@ -201,32 +207,32 @@ async function searchKeyword(query) {
 
   for (const worker of workers) {
     // Quick pre-check: does ID or name contain query?
-    const idLower = (worker.id || '').toLowerCase();
-    const nameLower = (worker.name || '').toLowerCase();
+    const idLower = (worker.id || "").toLowerCase();
+    const nameLower = (worker.name || "").toLowerCase();
 
     // Fast path: exact ID match
     if (idLower === queryLower) {
-      results.push({ ...worker, score: 100, matchType: 'id' });
+      results.push({ ...worker, score: 100, matchType: "id" });
       continue;
     }
 
     // Fast path: ID contains query
     if (idLower.includes(queryLower)) {
-      results.push({ ...worker, score: 95, matchType: 'id' });
+      results.push({ ...worker, score: 95, matchType: "id" });
       continue;
     }
 
     // Fast path: name contains query
     if (nameLower.includes(queryLower)) {
-      results.push({ ...worker, score: 90, matchType: 'name' });
+      results.push({ ...worker, score: 90, matchType: "name" });
       continue;
     }
 
     // Check tags quickly
-    const tags = (worker.tags || []).map(t => t.toLowerCase());
-    const tagMatch = tags.find(t => t === queryLower || t.includes(queryLower));
+    const tags = (worker.tags || []).map((t) => t.toLowerCase());
+    const tagMatch = tags.find((t) => t === queryLower || t.includes(queryLower));
     if (tagMatch) {
-      results.push({ ...worker, score: 85, matchType: 'tags' });
+      results.push({ ...worker, score: 85, matchType: "tags" });
       continue;
     }
 
@@ -235,20 +241,20 @@ async function searchKeyword(query) {
 
     // Only do expensive fuzzy scoring on important fields
     let bestScore = 0;
-    let matchType = 'combined';
+    let matchType = "combined";
 
     // Check ID with fuzzy
     const idScore = fuzzyMatchScore(fields.id, queryLower) * 1.5;
     if (idScore > bestScore) {
       bestScore = idScore;
-      matchType = 'id';
+      matchType = "id";
     }
 
     // Check name with fuzzy
     const nameScore = fuzzyMatchScore(fields.name, queryLower) * 1.3;
     if (nameScore > bestScore) {
       bestScore = nameScore;
-      matchType = 'name';
+      matchType = "name";
     }
 
     // Check description (skip if we already have good score)
@@ -256,7 +262,7 @@ async function searchKeyword(query) {
       const descScore = fuzzyMatchScore(fields.description, queryLower) * 0.8;
       if (descScore > bestScore) {
         bestScore = descScore;
-        matchType = 'description';
+        matchType = "description";
       }
     }
 
@@ -288,11 +294,11 @@ async function searchByTags(tags) {
   for (const tag of tags) {
     const workers = await registry.getByTag(tag);
     for (const worker of workers) {
-      if (!results.find(r => r.id === worker.id)) {
+      if (!results.find((r) => r.id === worker.id)) {
         results.push({
           ...worker,
           score: 100,
-          matchType: 'tag-exact',
+          matchType: "tag-exact",
         });
       }
     }

@@ -6,9 +6,9 @@
  * @version 2.0.0
  */
 
-'use strict';
+"use strict";
 
-const inquirer = require('inquirer');
+const inquirer = require("inquirer");
 
 /**
  * Map template variable types to inquirer question types
@@ -17,17 +17,17 @@ const inquirer = require('inquirer');
  */
 function mapQuestionType(type) {
   const typeMap = {
-    string: 'input',
-    text: 'editor',
-    number: 'number',
-    boolean: 'confirm',
-    choice: 'list',
-    multichoice: 'checkbox',
-    password: 'password',
-    array: 'input',
+    string: "input",
+    text: "editor",
+    number: "number",
+    boolean: "confirm",
+    choice: "list",
+    multichoice: "checkbox",
+    password: "password",
+    array: "input",
   };
 
-  return typeMap[type] || 'input';
+  return typeMap[type] || "input";
 }
 
 /**
@@ -50,12 +50,12 @@ function createQuestion(variable, context = {}) {
   }
 
   // Add validation
-  if (variable.required && variable.type !== 'boolean') {
+  if (variable.required && variable.type !== "boolean") {
     question.validate = (input) => {
-      if (variable.type === 'array') {
+      if (variable.type === "array") {
         return input && input.trim().length > 0 ? true : `${variable.name} is required`;
       }
-      if (input === undefined || input === null || input === '') {
+      if (input === undefined || input === null || input === "") {
         return `${variable.name} is required`;
       }
       return true;
@@ -68,7 +68,9 @@ function createQuestion(variable, context = {}) {
     question.validate = (input) => {
       if (baseValidate) {
         const baseResult = baseValidate(input);
-        if (baseResult !== true) return baseResult;
+        if (baseResult !== true) {
+          return baseResult;
+        }
       }
 
       if (variable.validation.minLength && input.length < variable.validation.minLength) {
@@ -89,10 +91,13 @@ function createQuestion(variable, context = {}) {
   }
 
   // Transform array input
-  if (variable.type === 'array') {
+  if (variable.type === "array") {
     question.filter = (input) => {
-      if (typeof input === 'string') {
-        return input.split(',').map(s => s.trim()).filter(Boolean);
+      if (typeof input === "string") {
+        return input
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
       }
       return input;
     };
@@ -111,7 +116,7 @@ class VariableElicitation {
    * @param {boolean} options.interactive - Enable interactive mode (default: true)
    */
   constructor(options = {}) {
-    this.interactive = options.interactive !== false;
+    this.interactive = options.interactive;
     this.autoResolvers = new Map();
     this.registerDefaultAutoResolvers();
   }
@@ -121,17 +126,17 @@ class VariableElicitation {
    */
   registerDefaultAutoResolvers() {
     // Next number resolvers
-    this.autoResolvers.set('next_adr_number', async () => this.getNextNumber('adr'));
-    this.autoResolvers.set('next_pmdr_number', async () => this.getNextNumber('pmdr'));
-    this.autoResolvers.set('next_dbdr_number', async () => this.getNextNumber('dbdr'));
-    this.autoResolvers.set('next_story_number', async () => this.getNextNumber('story'));
-    this.autoResolvers.set('next_epic_number', async () => this.getNextNumber('epic'));
-    this.autoResolvers.set('next_task_number', async () => this.getNextNumber('task'));
+    this.autoResolvers.set("next_adr_number", async () => this.getNextNumber("adr"));
+    this.autoResolvers.set("next_pmdr_number", async () => this.getNextNumber("pmdr"));
+    this.autoResolvers.set("next_dbdr_number", async () => this.getNextNumber("dbdr"));
+    this.autoResolvers.set("next_story_number", async () => this.getNextNumber("story"));
+    this.autoResolvers.set("next_epic_number", async () => this.getNextNumber("epic"));
+    this.autoResolvers.set("next_task_number", async () => this.getNextNumber("task"));
 
     // Current date/time
-    this.autoResolvers.set('current_date', async () => new Date().toISOString().split('T')[0]);
-    this.autoResolvers.set('current_datetime', async () => new Date().toISOString());
-    this.autoResolvers.set('now', async () => new Date());
+    this.autoResolvers.set("current_date", async () => new Date().toISOString().split("T")[0]);
+    this.autoResolvers.set("current_datetime", async () => new Date().toISOString());
+    this.autoResolvers.set("now", async () => new Date());
   }
 
   /**
@@ -140,23 +145,23 @@ class VariableElicitation {
    * @returns {Promise<number>} Next available number
    */
   async getNextNumber(docType) {
-    const path = require('path');
-    const fg = require('fast-glob');
+    const path = require("path");
+    const fg = require("fast-glob");
 
     const patterns = {
-      adr: 'docs/architecture/decisions/adr-*.md',
-      pmdr: 'docs/decisions/pmdr-*.md',
-      dbdr: 'docs/decisions/dbdr-*.md',
-      story: 'docs/stories/**/story-*.md',
-      epic: 'docs/epics/epic-*.md',
-      task: 'docs/tasks/task-*.md',
+      adr: "docs/architecture/decisions/adr-*.md",
+      pmdr: "docs/decisions/pmdr-*.md",
+      dbdr: "docs/decisions/dbdr-*.md",
+      story: "docs/stories/**/story-*.md",
+      epic: "docs/epics/epic-*.md",
+      task: "docs/tasks/task-*.md",
     };
 
     const pattern = patterns[docType] || `**/${docType}-*.md`;
 
     try {
       const files = fg.sync(pattern, { cwd: process.cwd() });
-      const numbers = files.map(f => {
+      const numbers = files.map((f) => {
         const match = path.basename(f).match(new RegExp(`${docType}-(\\d+)`));
         return match ? parseInt(match[1], 10) : 0;
       });
@@ -229,7 +234,9 @@ class VariableElicitation {
       if (this.interactive) {
         questions.push(createQuestion(variable, context));
       } else if (variable.required && variable.default === undefined) {
-        throw new Error(`Required variable ${variable.name} has no default and interactive mode is disabled`);
+        throw new Error(
+          `Required variable ${variable.name} has no default and interactive mode is disabled`,
+        );
       } else {
         values[variable.name] = variable.default;
       }
@@ -259,7 +266,7 @@ class VariableElicitation {
 
       if (isRequired) {
         const value = values[variable.name];
-        if (value === undefined || value === null || value === '') {
+        if (value === undefined || value === null || value === "") {
           errors.push(`Missing required variable: ${variable.name}`);
         }
       }

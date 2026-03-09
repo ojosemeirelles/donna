@@ -105,11 +105,11 @@ describe("slack outbound hook wiring", () => {
 
     await sendSlackTextWithDefaults({
       text: "hello",
-      identity: { emoji: ":lobster:" },
+      identity: { emoji: ":crescent_moon:" },
     });
 
     expectSlackSendCalledWith("hello", {
-      identity: { iconEmoji: ":lobster:" },
+      identity: { iconEmoji: ":crescent_moon:" },
     });
   });
 

@@ -9,20 +9,20 @@
  * @story 6.9
  */
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs");
+const path = require("path");
+const yaml = require("js-yaml");
 
 // Template directory
-const TEMPLATES_DIR = path.join(__dirname, '..', '..', 'templates', 'core-config');
+const TEMPLATES_DIR = path.join(__dirname, "..", "..", "templates", "core-config");
 
 /**
  * Template file names
  * @enum {string}
  */
 const ConfigTemplates = {
-  GREENFIELD: 'core-config-greenfield.tmpl.yaml',
-  BROWNFIELD: 'core-config-brownfield.tmpl.yaml',
+  GREENFIELD: "core-config-greenfield.tmpl.yaml",
+  BROWNFIELD: "core-config-brownfield.tmpl.yaml",
 };
 
 /**
@@ -30,8 +30,8 @@ const ConfigTemplates = {
  * @enum {string}
  */
 const DeploymentWorkflow = {
-  STAGING_FIRST: 'staging-first',
-  DIRECT_TO_MAIN: 'direct-to-main',
+  STAGING_FIRST: "staging-first",
+  DIRECT_TO_MAIN: "direct-to-main",
 };
 
 /**
@@ -39,11 +39,11 @@ const DeploymentWorkflow = {
  * @enum {string}
  */
 const DeploymentPlatform = {
-  RAILWAY: 'Railway',
-  VERCEL: 'Vercel',
-  AWS: 'AWS',
-  DOCKER: 'Docker',
-  NONE: 'None',
+  RAILWAY: "Railway",
+  VERCEL: "Vercel",
+  AWS: "AWS",
+  DOCKER: "Docker",
+  NONE: "None",
 };
 
 /**
@@ -52,11 +52,11 @@ const DeploymentPlatform = {
  */
 const DEFAULT_DEPLOYMENT_CONFIG = {
   workflow: DeploymentWorkflow.STAGING_FIRST,
-  stagingBranch: 'staging',
-  productionBranch: 'main',
-  defaultTarget: 'staging',
-  stagingEnvName: 'Staging',
-  productionEnvName: 'Production',
+  stagingBranch: "staging",
+  productionBranch: "main",
+  defaultTarget: "staging",
+  stagingEnvName: "Staging",
+  productionEnvName: "Production",
   platform: DeploymentPlatform.NONE,
   qualityGates: {
     lint: true,
@@ -75,11 +75,11 @@ const DEFAULT_DEPLOYMENT_CONFIG = {
  */
 function escapeYamlString(str) {
   return String(str)
-    .replace(/\\/g, '\\\\') // Escape backslashes first
+    .replace(/\\/g, "\\\\") // Escape backslashes first
     .replace(/"/g, '\\"') // Escape double quotes
-    .replace(/\n/g, '\\n') // Escape newlines
-    .replace(/\r/g, '\\r') // Escape carriage returns
-    .replace(/\t/g, '\\t'); // Escape tabs
+    .replace(/\n/g, "\\n") // Escape newlines
+    .replace(/\r/g, "\\r") // Escape carriage returns
+    .replace(/\t/g, "\\t"); // Escape tabs
 }
 
 /**
@@ -91,10 +91,10 @@ function escapeYamlString(str) {
  */
 function formatArrayAsYaml(arr, indent = 4) {
   if (!Array.isArray(arr) || arr.length === 0) {
-    return '[]';
+    return "[]";
   }
-  const spaces = ' '.repeat(indent);
-  const items = arr.map((item) => `\n${spaces}- "${escapeYamlString(item)}"`).join('');
+  const spaces = " ".repeat(indent);
+  const items = arr.map((item) => `\n${spaces}- "${escapeYamlString(item)}"`).join("");
   return items;
 }
 
@@ -114,17 +114,17 @@ function buildConfigContext(projectName, mode, deploymentConfig = {}, analysisRe
   const context = {
     // Basic info
     PROJECT_NAME: projectName,
-    GENERATED_DATE: new Date().toISOString().split('T')[0],
-    PROJECT_VERSION: analysisResults.version || '0.1.0',
+    GENERATED_DATE: new Date().toISOString().split("T")[0],
+    PROJECT_VERSION: analysisResults.version || "0.1.0",
 
     // Deployment workflow
     DEPLOYMENT_WORKFLOW: config.workflow,
 
     // Branch configuration
-    STAGING_BRANCH: isStaging ? config.stagingBranch : 'null',
+    STAGING_BRANCH: isStaging ? config.stagingBranch : "null",
     PRODUCTION_BRANCH: config.productionBranch,
     // Use symbolic name ('staging'/'production') - deployment-config-loader resolves to actual branch
-    DEFAULT_TARGET: isStaging ? 'staging' : 'production',
+    DEFAULT_TARGET: isStaging ? "staging" : "production",
 
     // Environment names
     STAGING_ENV_NAME: config.stagingEnvName,
@@ -144,14 +144,14 @@ function buildConfigContext(projectName, mode, deploymentConfig = {}, analysisRe
     HAS_EXISTING_STRUCTURE: analysisResults.hasExistingStructure || false,
     HAS_EXISTING_WORKFLOWS: analysisResults.hasExistingWorkflows || false,
     HAS_EXISTING_STANDARDS: analysisResults.hasExistingStandards || false,
-    MERGE_STRATEGY: analysisResults.mergeStrategy || 'parallel',
+    MERGE_STRATEGY: analysisResults.mergeStrategy || "parallel",
 
     // Detected configs (brownfield)
     DETECTED_TECH_STACK: JSON.stringify(analysisResults.techStack || []),
     DETECTED_FRAMEWORKS: JSON.stringify(analysisResults.frameworks || []),
-    DETECTED_LINTING: analysisResults.linting || 'none',
-    DETECTED_FORMATTING: analysisResults.formatting || 'none',
-    DETECTED_TESTING: analysisResults.testing || 'none',
+    DETECTED_LINTING: analysisResults.linting || "none",
+    DETECTED_FORMATTING: analysisResults.formatting || "none",
+    DETECTED_TESTING: analysisResults.testing || "none",
 
     // Auto deploy settings
     STAGING_AUTO_DEPLOY: config.stagingAutoDeploy !== false,
@@ -162,21 +162,21 @@ function buildConfigContext(projectName, mode, deploymentConfig = {}, analysisRe
     DRAFT_BY_DEFAULT: config.draftByDefault || false,
 
     // Existing config paths (brownfield)
-    ESLINT_CONFIG_PATH: analysisResults.eslintPath || 'null',
-    PRETTIER_CONFIG_PATH: analysisResults.prettierPath || 'null',
-    TSCONFIG_PATH: analysisResults.tsconfigPath || 'null',
-    FLAKE8_CONFIG_PATH: analysisResults.flake8Path || 'null',
-    GITHUB_WORKFLOWS_PATH: analysisResults.githubWorkflowsPath || 'null',
-    GITLAB_CI_PATH: analysisResults.gitlabCiPath || 'null',
-    PACKAGE_JSON_PATH: analysisResults.packageJsonPath || 'null',
-    REQUIREMENTS_PATH: analysisResults.requirementsPath || 'null',
-    GO_MOD_PATH: analysisResults.goModPath || 'null',
+    ESLINT_CONFIG_PATH: analysisResults.eslintPath || "null",
+    PRETTIER_CONFIG_PATH: analysisResults.prettierPath || "null",
+    TSCONFIG_PATH: analysisResults.tsconfigPath || "null",
+    FLAKE8_CONFIG_PATH: analysisResults.flake8Path || "null",
+    GITHUB_WORKFLOWS_PATH: analysisResults.githubWorkflowsPath || "null",
+    GITLAB_CI_PATH: analysisResults.gitlabCiPath || "null",
+    PACKAGE_JSON_PATH: analysisResults.packageJsonPath || "null",
+    REQUIREMENTS_PATH: analysisResults.requirementsPath || "null",
+    GO_MOD_PATH: analysisResults.goModPath || "null",
 
     // Merge settings
     MERGE_WORKFLOWS: analysisResults.mergeWorkflows || false,
 
     // Migration notes (brownfield)
-    MIGRATION_SUMMARY: analysisResults.summary || 'No analysis performed',
+    MIGRATION_SUMMARY: analysisResults.summary || "No analysis performed",
     MANUAL_REVIEW_ITEMS: analysisResults.manualReviewItems || [],
     CONFLICTS: analysisResults.conflicts || [],
     RECOMMENDATIONS: analysisResults.recommendations || [],
@@ -206,9 +206,15 @@ function renderConfigTemplate(template, context) {
   // Replace simple variables {{variable}}
   result = result.replace(/\{\{([^#/}][^}]*)\}\}/g, (match, key) => {
     const value = context[key.trim()];
-    if (value === undefined) return match;
-    if (typeof value === 'boolean') return value.toString();
-    if (typeof value === 'number') return value.toString();
+    if (value === undefined) {
+      return match;
+    }
+    if (typeof value === "boolean") {
+      return value.toString();
+    }
+    if (typeof value === "number") {
+      return value.toString();
+    }
     return String(value);
   });
 
@@ -228,14 +234,14 @@ function processEachBlocks(template, context) {
   return template.replace(eachRegex, (match, arrayName, content) => {
     const array = context[arrayName];
     if (!Array.isArray(array) || array.length === 0) {
-      return '';
+      return "";
     }
 
     return array
       .map((item) => {
         return content.replace(/\{\{this\}\}/g, String(item));
       })
-      .join('');
+      .join("");
   });
 }
 
@@ -253,7 +259,7 @@ function loadConfigTemplate(templateName) {
     throw new Error(`Config template not found: ${templatePath}`);
   }
 
-  return fs.readFileSync(templatePath, 'utf8');
+  return fs.readFileSync(templatePath, "utf8");
 }
 
 /**
@@ -268,7 +274,7 @@ function loadConfigTemplate(templateName) {
  */
 function generateConfig(targetDir, mode, context, options = {}) {
   const templateName =
-    mode === 'brownfield' ? ConfigTemplates.BROWNFIELD : ConfigTemplates.GREENFIELD;
+    mode === "brownfield" ? ConfigTemplates.BROWNFIELD : ConfigTemplates.GREENFIELD;
 
   try {
     const template = loadConfigTemplate(templateName);
@@ -285,12 +291,12 @@ function generateConfig(targetDir, mode, context, options = {}) {
       };
     }
 
-    const configDir = path.join(targetDir, '.aiox-core');
-    const configPath = path.join(configDir, 'core-config.yaml');
+    const configDir = path.join(targetDir, ".aiox-core");
+    const configPath = path.join(configDir, "core-config.yaml");
 
     if (!options.dryRun) {
       fs.mkdirSync(configDir, { recursive: true });
-      fs.writeFileSync(configPath, rendered, 'utf8');
+      fs.writeFileSync(configPath, rendered, "utf8");
     }
 
     return {
@@ -316,10 +322,10 @@ function generateConfig(targetDir, mode, context, options = {}) {
 function buildDeploymentConfig(inputs = {}) {
   return {
     workflow: inputs.workflow || DeploymentWorkflow.STAGING_FIRST,
-    stagingBranch: inputs.stagingBranch || 'staging',
-    productionBranch: inputs.productionBranch || 'main',
-    stagingEnvName: inputs.stagingEnvName || 'Staging',
-    productionEnvName: inputs.productionEnvName || 'Production',
+    stagingBranch: inputs.stagingBranch || "staging",
+    productionBranch: inputs.productionBranch || "main",
+    stagingEnvName: inputs.stagingEnvName || "Staging",
+    productionEnvName: inputs.productionEnvName || "Production",
     platform: inputs.platform || DeploymentPlatform.NONE,
     qualityGates: {
       lint: inputs.lint !== false,
@@ -340,7 +346,7 @@ function buildDeploymentConfig(inputs = {}) {
  * @returns {Object} Default deployment config
  */
 function getDefaultDeploymentConfig(mode) {
-  if (mode === 'brownfield') {
+  if (mode === "brownfield") {
     // Brownfield might use direct-to-main if solo project
     return {
       ...DEFAULT_DEPLOYMENT_CONFIG,

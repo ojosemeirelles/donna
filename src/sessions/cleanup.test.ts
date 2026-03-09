@@ -60,11 +60,11 @@ describe("cleanupSessions", () => {
     expect(result.deletedCount).toBe(2);
     expect(result.keptCount).toBe(3);
     // The two oldest files should have been removed.
-    expect(fs.existsSync(files[0]!)).toBe(false);
-    expect(fs.existsSync(files[1]!)).toBe(false);
-    expect(fs.existsSync(files[2]!)).toBe(true);
-    expect(fs.existsSync(files[3]!)).toBe(true);
-    expect(fs.existsSync(files[4]!)).toBe(true);
+    expect(fs.existsSync(files[0])).toBe(false);
+    expect(fs.existsSync(files[1])).toBe(false);
+    expect(fs.existsSync(files[2])).toBe(true);
+    expect(fs.existsSync(files[3])).toBe(true);
+    expect(fs.existsSync(files[4])).toBe(true);
   });
 
   it("dry run reports deletions without deleting files", async () => {
@@ -150,8 +150,8 @@ describe("cleanupSessions", () => {
     expect(fs.existsSync(oldA)).toBe(false);
     expect(fs.existsSync(oldB)).toBe(false);
     // The two most recent should survive.
-    expect(fs.existsSync(recentFiles[2]!)).toBe(true);
-    expect(fs.existsSync(recentFiles[3]!)).toBe(true);
+    expect(fs.existsSync(recentFiles[2])).toBe(true);
+    expect(fs.existsSync(recentFiles[3])).toBe(true);
   });
 
   it("ignores non-jsonl files", async () => {

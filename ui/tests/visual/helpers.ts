@@ -9,7 +9,7 @@ import type { Page } from "playwright/test";
 
 /**
  * Navigate to a path and wait until the Lit app has rendered.
- * The Control UI registers `<openclaw-app>` as the root element; we wait for
+ * The Control UI registers `<donna-app>` as the root element; we wait for
  * its shadow root (or at least its first child) to appear.
  */
 export async function navigateAndWait(page: Page, path: string): Promise<void> {
@@ -18,8 +18,10 @@ export async function navigateAndWait(page: Page, path: string): Promise<void> {
   // Wait for the Lit custom element to hydrate.
   await page.waitForFunction(
     () => {
-      const app = document.querySelector("openclaw-app");
-      if (!app) return false;
+      const app = document.querySelector("donna-app");
+      if (!app) {
+        return false;
+      }
       // Lit elements expose `updateComplete`; wait for at least one child.
       return app.children.length > 0 || (app.shadowRoot?.children?.length ?? 0) > 0;
     },

@@ -14,7 +14,7 @@
  * - Epics: Use native ClickUp status field
  */
 
-const { mapStatusToClickUp } = require('./status-mapper');
+const { mapStatusToClickUp } = require("./status-mapper");
 
 /**
  * Resolves the ClickUp MCP tool
@@ -23,8 +23,8 @@ const { mapStatusToClickUp } = require('./status-mapper');
 async function getClickUpTool() {
   try {
     // Try using tool-resolver (test environment or future production)
-    const { resolveTool } = require('./tool-resolver');
-    return await resolveTool('clickup');
+    const { resolveTool } = require("./tool-resolver");
+    return await resolveTool("clickup");
   } catch (error) {
     // Fall back to global references (current production pattern)
     return {
@@ -60,16 +60,16 @@ async function updateStoryStatus(taskId, newStatus) {
       taskId: taskId,
       custom_fields: [
         {
-          id: 'story-status',
+          id: "story-status",
           value: mappedStatus,
         },
       ],
     });
 
-    console.log('✅ Story status updated successfully');
+    console.log("✅ Story status updated successfully");
   } catch (error) {
     console.error(`Error updating story status for ${taskId}:`, error);
-    throw new Error(`Failed to update story status: ${error.message}`);
+    throw new Error(`Failed to update story status: ${error.message}`, { cause: error });
   }
 }
 
@@ -86,9 +86,11 @@ async function updateStoryStatus(taskId, newStatus) {
 async function updateEpicStatus(epicTaskId, newStatus) {
   try {
     // Validate Epic status (must be one of the three valid values)
-    const validStatuses = ['Planning', 'In Progress', 'Done'];
+    const validStatuses = ["Planning", "In Progress", "Done"];
     if (!validStatuses.includes(newStatus)) {
-      throw new Error(`Invalid Epic status: ${newStatus}. Must be one of: ${validStatuses.join(', ')}`);
+      throw new Error(
+        `Invalid Epic status: ${newStatus}. Must be one of: ${validStatuses.join(", ")}`,
+      );
     }
 
     console.log(`Updating Epic ${epicTaskId} status to: ${newStatus}`);
@@ -98,13 +100,13 @@ async function updateEpicStatus(epicTaskId, newStatus) {
 
     await tool.updateTask({
       taskId: epicTaskId,
-      status: newStatus,  // Native field for Epics
+      status: newStatus, // Native field for Epics
     });
 
-    console.log('✅ Epic status updated successfully');
+    console.log("✅ Epic status updated successfully");
   } catch (error) {
     console.error(`Error updating Epic status for ${epicTaskId}:`, error);
-    throw new Error(`Failed to update Epic status: ${error.message}`);
+    throw new Error(`Failed to update Epic status: ${error.message}`, { cause: error });
   }
 }
 
@@ -127,10 +129,10 @@ async function updateTaskDescription(taskId, markdown) {
       markdown_description: markdown,
     });
 
-    console.log('✅ Task description updated successfully');
+    console.log("✅ Task description updated successfully");
   } catch (error) {
     console.error(`Error updating task description for ${taskId}:`, error);
-    throw new Error(`Failed to update task description: ${error.message}`);
+    throw new Error(`Failed to update task description: ${error.message}`, { cause: error });
   }
 }
 
@@ -153,10 +155,10 @@ async function addTaskComment(taskId, comment) {
       commentText: comment,
     });
 
-    console.log('✅ Changelog comment added successfully');
+    console.log("✅ Changelog comment added successfully");
   } catch (error) {
     console.error(`Error adding comment to task ${taskId}:`, error);
-    throw new Error(`Failed to add task comment: ${error.message}`);
+    throw new Error(`Failed to add task comment: ${error.message}`, { cause: error });
   }
 }
 
@@ -183,23 +185,30 @@ async function verifyEpicExists(epicNum) {
     });
 
     if (!result || !result.tasks || result.tasks.length === 0) {
-      throw new Error(`Epic ${epicNum} not found in ClickUp Backlog list. Please create Epic task with tags: ['epic', 'epic-${epicNum}'] and status: Planning or In Progress`);
+      throw new Error(
+        `Epic ${epicNum} not found in ClickUp Backlog list. Please create Epic task with tags: ['epic', 'epic-${epicNum}'] and status: Planning or In Progress`,
+      );
     }
 
     // Filter for Epics (should have 'epic' tag and valid status)
-    const epics = result.tasks.filter(task =>
-      task.tags &&
-      task.tags.includes('epic') &&
-      task.tags.includes(`epic-${epicNum}`) &&
-      ['Planning', 'In Progress'].includes(task.status),
+    const epics = result.tasks.filter(
+      (task) =>
+        task.tags &&
+        task.tags.includes("epic") &&
+        task.tags.includes(`epic-${epicNum}`) &&
+        ["Planning", "In Progress"].includes(task.status),
     );
 
     if (epics.length === 0) {
-      throw new Error(`Epic ${epicNum} found but has invalid status. Status must be 'Planning' or 'In Progress'.`);
+      throw new Error(
+        `Epic ${epicNum} found but has invalid status. Status must be 'Planning' or 'In Progress'.`,
+      );
     }
 
     if (epics.length > 1) {
-      console.warn(`⚠️ Multiple Epics found with epic-${epicNum} tag. Using first one: ${epics[0].id}`);
+      console.warn(
+        `⚠️ Multiple Epics found with epic-${epicNum} tag. Using first one: ${epics[0].id}`,
+      );
     }
 
     const epic = epics[0];
@@ -210,7 +219,6 @@ async function verifyEpicExists(epicNum) {
       epicTaskId: epic.id,
       epic: epic,
     };
-
   } catch (error) {
     console.error(`Error verifying Epic ${epicNum}:`, error);
     throw error;

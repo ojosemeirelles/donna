@@ -5,8 +5,8 @@
  * Used by CommitMessageGenerator for analyzing modifications.
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
+const { execSync } = require("child_process");
+const path = require("path");
 
 /**
  * Generates diff information for files and commits
@@ -23,9 +23,9 @@ class DiffGenerator {
    */
   getStagedDiff() {
     try {
-      return execSync('git diff --cached', { encoding: 'utf-8' });
+      return execSync("git diff --cached", { encoding: "utf-8" });
     } catch (error) {
-      return '';
+      return "";
     }
   }
 
@@ -35,9 +35,9 @@ class DiffGenerator {
    */
   getUnstagedDiff() {
     try {
-      return execSync('git diff', { encoding: 'utf-8' });
+      return execSync("git diff", { encoding: "utf-8" });
     } catch (error) {
-      return '';
+      return "";
     }
   }
 
@@ -47,11 +47,11 @@ class DiffGenerator {
    * @param {string} toCommit - Ending commit
    * @returns {string} Diff output
    */
-  getCommitDiff(fromCommit, toCommit = 'HEAD') {
+  getCommitDiff(fromCommit, toCommit = "HEAD") {
     try {
-      return execSync(`git diff ${fromCommit} ${toCommit}`, { encoding: 'utf-8' });
+      return execSync(`git diff ${fromCommit} ${toCommit}`, { encoding: "utf-8" });
     } catch (error) {
-      return '';
+      return "";
     }
   }
 
@@ -62,14 +62,16 @@ class DiffGenerator {
    */
   getChangedFiles(staged = false) {
     try {
-      const cmd = staged ? 'git diff --cached --name-status' : 'git diff --name-status';
-      const output = execSync(cmd, { encoding: 'utf-8' });
+      const cmd = staged ? "git diff --cached --name-status" : "git diff --name-status";
+      const output = execSync(cmd, { encoding: "utf-8" });
 
-      return output.trim().split('\n')
-        .filter(line => line)
-        .map(line => {
-          const [status, ...fileParts] = line.split('\t');
-          const filePath = fileParts.join('\t');
+      return output
+        .trim()
+        .split("\n")
+        .filter((line) => line)
+        .map((line) => {
+          const [status, ...fileParts] = line.split("\t");
+          const filePath = fileParts.join("\t");
           return {
             status: this._parseStatus(status),
             path: filePath,
@@ -86,13 +88,13 @@ class DiffGenerator {
    */
   _parseStatus(code) {
     const statusMap = {
-      'A': 'added',
-      'M': 'modified',
-      'D': 'deleted',
-      'R': 'renamed',
-      'C': 'copied',
+      A: "added",
+      M: "modified",
+      D: "deleted",
+      R: "renamed",
+      C: "copied",
     };
-    return statusMap[code] || 'unknown';
+    return statusMap[code] || "unknown";
   }
 
   /**
@@ -101,18 +103,20 @@ class DiffGenerator {
    * @returns {Object} Diff summary
    */
   analyzeDiff(diff) {
-    const lines = diff.split('\n');
+    const lines = diff.split("\n");
     let additions = 0;
     let deletions = 0;
     const files = new Set();
 
     for (const line of lines) {
-      if (line.startsWith('+++') || line.startsWith('---')) {
+      if (line.startsWith("+++") || line.startsWith("---")) {
         const match = line.match(/^[+-]{3} [ab]\/(.+)$/);
-        if (match) files.add(match[1]);
-      } else if (line.startsWith('+') && !line.startsWith('+++')) {
+        if (match) {
+          files.add(match[1]);
+        }
+      } else if (line.startsWith("+") && !line.startsWith("+++")) {
         additions++;
-      } else if (line.startsWith('-') && !line.startsWith('---')) {
+      } else if (line.startsWith("-") && !line.startsWith("---")) {
         deletions++;
       }
     }

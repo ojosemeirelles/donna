@@ -219,7 +219,7 @@ ${theme.muted("Docs:")} ${formatDocsLink("/cli/agent", "docs.donna.ai/cli/agent"
         `
 ${theme.heading("Examples:")}
 ${formatHelpExamples([
-  ['donna agents set-identity --agent main --name "Donna" --emoji "🦞"', "Set name + emoji."],
+  ['donna agents set-identity --agent main --name "Donna" --emoji "🌙"', "Set name + emoji."],
   ["donna agents set-identity --agent main --avatar avatars/donna.png", "Set avatar path."],
   [
     "donna agents set-identity --workspace ~/.donna/workspace --from-identity",

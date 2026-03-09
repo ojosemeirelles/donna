@@ -1,7 +1,7 @@
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { Migration, SchemaVersionRow } from "./types.js";
 import { MigrationRunner } from "./runner.js";
+import type { Migration, SchemaVersionRow } from "./types.js";
 
 function openInMemoryDb(): DatabaseSync {
   return new DatabaseSync(":memory:");
@@ -88,8 +88,8 @@ describe("MigrationRunner", () => {
     const runner = new MigrationRunner(db, [testMigrationV1, testMigrationV2]);
     const pending = runner.getPendingMigrations();
     expect(pending).toHaveLength(2);
-    expect(pending[0]!.version).toBe(1);
-    expect(pending[1]!.version).toBe(2);
+    expect(pending[0].version).toBe(1);
+    expect(pending[1].version).toBe(2);
   });
 
   // -------------------------------------------------------------------------
@@ -115,7 +115,7 @@ describe("MigrationRunner", () => {
 
     const rows = runner.getAppliedMigrations();
     expect(rows).toHaveLength(1);
-    const row = rows[0] as SchemaVersionRow;
+    const row = rows[0];
     expect(row.version).toBe(1);
     expect(row.description).toBe("create users table");
     // applied_at should be a valid ISO date string

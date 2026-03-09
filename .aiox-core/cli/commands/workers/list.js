@@ -9,28 +9,30 @@
  * @story 2.8-2.9 - Discovery CLI Info & List
  */
 
-const { Command } = require('commander');
-const { getRegistry } = require('../../../core/registry/registry-loader');
-const { formatTree } = require('./formatters/list-tree');
-const { formatList, formatCount } = require('./formatters/list-table');
-const { paginate, formatPaginationHint } = require('./utils/pagination');
+const { Command } = require("commander");
+const { getRegistry } = require("../../../core/registry/registry-loader");
+const { formatTree } = require("./formatters/list-tree");
+const { formatList, formatCount } = require("./formatters/list-table");
+const { paginate, formatPaginationHint } = require("./utils/pagination");
 
 /**
  * Create the list command
  * @returns {Command} Commander command instance
  */
 function createListCommand() {
-  const list = new Command('list');
+  const list = new Command("list");
 
   list
-    .description('List all workers in the service registry')
-    .option('-c, --category <category>', 'Filter by category')
-    .option('-f, --format <format>', 'Output format: tree, table, json, yaml', 'tree')
-    .option('-p, --page <n>', 'Page number for pagination', '1')
-    .option('-l, --limit <n>', 'Items per page', '20')
-    .option('--count', 'Show count summary only')
-    .option('-v, --verbose', 'Show verbose/debug output')
-    .addHelpText('after', `
+    .description("List all workers in the service registry")
+    .option("-c, --category <category>", "Filter by category")
+    .option("-f, --format <format>", "Output format: tree, table, json, yaml", "tree")
+    .option("-p, --page <n>", "Page number for pagination", "1")
+    .option("-l, --limit <n>", "Items per page", "20")
+    .option("--count", "Show count summary only")
+    .option("-v, --verbose", "Show verbose/debug output")
+    .addHelpText(
+      "after",
+      `
 Examples:
   $ aiox workers list
   $ aiox workers list --category=task
@@ -53,7 +55,8 @@ Categories:
   checklist  Quality validation checklists
   workflow   Multi-step workflow definitions
   data       Knowledge base and configuration data
-`)
+`,
+    )
     .action(executeList);
 
   return list;
@@ -70,11 +73,13 @@ async function executeList(options) {
     const registry = getRegistry();
 
     if (options.verbose) {
-      console.log('Loading worker registry...');
-      if (options.category) console.log(`Category filter: ${options.category}`);
+      console.log("Loading worker registry...");
+      if (options.category) {
+        console.log(`Category filter: ${options.category}`);
+      }
       console.log(`Output format: ${options.format}`);
       console.log(`Page: ${options.page}, Limit: ${options.limit}`);
-      console.log('');
+      console.log("");
     }
 
     // Handle count-only mode
@@ -94,8 +99,8 @@ async function executeList(options) {
         const categories = await registry.getCategories();
         if (!categories[options.category.toLowerCase()]) {
           console.error(`Error: Category '${options.category}' not found.`);
-          console.log('\nAvailable categories:');
-          Object.keys(categories).forEach(cat => {
+          console.log("\nAvailable categories:");
+          Object.keys(categories).forEach((cat) => {
             console.log(`  - ${cat} (${categories[cat].count} workers)`);
           });
           process.exit(1);
@@ -114,9 +119,9 @@ async function executeList(options) {
     });
 
     // Format based on output type
-    const format = (options.format || 'tree').toLowerCase();
+    const format = (options.format || "tree").toLowerCase();
 
-    if (format === 'tree') {
+    if (format === "tree") {
       // Tree format doesn't use pagination (shows all grouped)
       const output = formatTree(workers, {
         verbose: options.verbose,
@@ -138,7 +143,7 @@ async function executeList(options) {
       console.log(output);
 
       // Show pagination hint for table format
-      if (format === 'table' && paginatedResult.pagination.totalPages > 1) {
+      if (format === "table" && paginatedResult.pagination.totalPages > 1) {
         const hint = formatPaginationHint(paginatedResult.pagination);
         if (hint) {
           console.log(hint);
@@ -147,7 +152,6 @@ async function executeList(options) {
     }
 
     logPerformance(startTime, options.verbose);
-
   } catch (error) {
     console.error(`Error: ${error.message}`);
     if (options.verbose) {
@@ -179,7 +183,7 @@ async function executeCountMode(registry, options) {
     console.log(`${category.toUpperCase()}: ${catData.count} workers`);
 
     if (options.verbose && catData.subcategories) {
-      console.log(`  Subcategories: ${catData.subcategories.join(', ')}`);
+      console.log(`  Subcategories: ${catData.subcategories.join(", ")}`);
     }
   } else {
     // Show all categories

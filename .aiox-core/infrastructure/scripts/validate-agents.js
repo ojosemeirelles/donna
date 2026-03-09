@@ -21,48 +21,48 @@
  *   1 - Validation errors found
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
 // Paths
-const ROOT_DIR = path.join(__dirname, '..', '..');
-const AGENTS_DIR = path.join(ROOT_DIR, 'development', 'agents');
-const TASKS_DIR = path.join(ROOT_DIR, 'development', 'tasks');
-const TEMPLATES_DIR = path.join(ROOT_DIR, 'development', 'templates');
-const CHECKLISTS_DIR = path.join(ROOT_DIR, 'development', 'checklists');
-const DATA_DIR = path.join(ROOT_DIR, 'development', 'data');
-const UTILS_DIR = path.join(ROOT_DIR, 'development', 'utils');
-const WORKFLOWS_DIR = path.join(ROOT_DIR, 'development', 'workflows');
-const SCRIPTS_DIR = path.join(ROOT_DIR, 'development', 'scripts');
+const ROOT_DIR = path.join(__dirname, "..", "..");
+const AGENTS_DIR = path.join(ROOT_DIR, "development", "agents");
+const TASKS_DIR = path.join(ROOT_DIR, "development", "tasks");
+const TEMPLATES_DIR = path.join(ROOT_DIR, "development", "templates");
+const CHECKLISTS_DIR = path.join(ROOT_DIR, "development", "checklists");
+const DATA_DIR = path.join(ROOT_DIR, "development", "data");
+const UTILS_DIR = path.join(ROOT_DIR, "development", "utils");
+const WORKFLOWS_DIR = path.join(ROOT_DIR, "development", "workflows");
+const SCRIPTS_DIR = path.join(ROOT_DIR, "development", "scripts");
 
 // Commands that are allowed to be shared by multiple agents
 // These are utility/infrastructure commands, not domain-specific
 const SHARED_COMMANDS = new Set([
   // Core utility commands (all agents)
-  'help',
-  'yolo',
-  'exit',
-  'guide',
-  'session-info',
+  "help",
+  "yolo",
+  "exit",
+  "guide",
+  "session-info",
   // Document operations (multiple agents can output docs)
-  'doc-out',
-  'shard-doc',
-  'shard-prd',
-  'research',
-  'execute-checklist',
+  "doc-out",
+  "shard-doc",
+  "shard-prd",
+  "research",
+  "execute-checklist",
   // Status/monitoring (multiple agents can check status)
-  'status',
+  "status",
   // Infrastructure commands delegated to specific agents but callable from many
-  'document-project',
+  "document-project",
   // Backlog operations (PO and QA both manage backlog items)
-  'backlog-add',
-  'backlog-review',
+  "backlog-add",
+  "backlog-review",
   // Build/rollback (dev operations that overlap between dev/devops/data)
-  'build',
-  'rollback',
+  "build",
+  "rollback",
   // Correct-course (all agents can use on own domain)
-  'correct-course',
+  "correct-course",
 ]);
 
 /**
@@ -89,16 +89,16 @@ async function loadAllAgents() {
   try {
     const files = await fs.readdir(AGENTS_DIR);
     for (const file of files) {
-      if (file.endsWith('.md') && !file.startsWith('_')) {
+      if (file.endsWith(".md") && !file.startsWith("_")) {
         const filePath = path.join(AGENTS_DIR, file);
-        const content = await fs.readFile(filePath, 'utf-8');
+        const content = await fs.readFile(filePath, "utf-8");
         const parsed = extractYamlFromMarkdown(content);
 
         if (parsed?.agent) {
           agents.push({
             file,
             path: filePath,
-            id: parsed.agent.id || file.replace('.md', ''),
+            id: parsed.agent.id || file.replace(".md", ""),
             name: parsed.agent.name,
             commands: parsed.commands || [],
             dependencies: parsed.dependencies || {},
@@ -136,21 +136,25 @@ function validateCommandUniqueness(agents) {
   const warnings = [];
 
   for (const agent of agents) {
-    if (!Array.isArray(agent.commands)) continue;
+    if (!Array.isArray(agent.commands)) {
+      continue;
+    }
     for (const cmd of agent.commands) {
       let cmdName;
-      if (typeof cmd === 'string') {
+      if (typeof cmd === "string") {
         // String format: 'command: description'
-        cmdName = cmd.split(':')[0].trim();
+        cmdName = cmd.split(":")[0].trim();
       } else if (cmd.name) {
         // Explicit format: { name: 'command', ... }
         cmdName = cmd.name;
-      } else if (typeof cmd === 'object') {
+      } else if (typeof cmd === "object") {
         // Shorthand format: { command: 'description' } - take first key
         const keys = Object.keys(cmd);
-        cmdName = keys[0]?.split(' ')[0]; // Handle 'command {args}' format
+        cmdName = keys[0]?.split(" ")[0]; // Handle 'command {args}' format
       }
-      if (!cmdName) continue;
+      if (!cmdName) {
+        continue;
+      }
 
       if (!commandOwners.has(cmdName)) {
         commandOwners.set(cmdName, []);
@@ -166,9 +170,9 @@ function validateCommandUniqueness(agents) {
   // Check for duplicates
   for (const [cmd, owners] of commandOwners) {
     if (owners.length > 1 && !SHARED_COMMANDS.has(cmd)) {
-      const ownerList = owners.map((o) => `@${o.agent}`).join(', ');
+      const ownerList = owners.map((o) => `@${o.agent}`).join(", ");
       errors.push({
-        type: 'DUPLICATE_COMMAND',
+        type: "DUPLICATE_COMMAND",
         command: cmd,
         owners: owners.map((o) => o.agent),
         message: `Command "*${cmd}" has multiple owners: ${ownerList}`,
@@ -198,20 +202,31 @@ async function validateDependencies(agents) {
   };
 
   // Dependency types that are not file-based (external tools, integrations)
-  const skipDepTypes = new Set(['tools', 'coderabbit_integration', 'pr_automation', 'repository_agnostic_design', 'git_authority', 'workflow_examples']);
+  const skipDepTypes = new Set([
+    "tools",
+    "coderabbit_integration",
+    "pr_automation",
+    "repository_agnostic_design",
+    "git_authority",
+    "workflow_examples",
+  ]);
 
   for (const agent of agents) {
     const deps = agent.dependencies;
 
     for (const [depType, depList] of Object.entries(deps)) {
       // Skip non-file-based dependency types
-      if (skipDepTypes.has(depType)) continue;
-      if (!Array.isArray(depList)) continue;
+      if (skipDepTypes.has(depType)) {
+        continue;
+      }
+      if (!Array.isArray(depList)) {
+        continue;
+      }
 
       const depDir = depDirs[depType];
       if (!depDir) {
         warnings.push({
-          type: 'UNKNOWN_DEP_TYPE',
+          type: "UNKNOWN_DEP_TYPE",
           agent: agent.id,
           depType,
           message: `Unknown dependency type "${depType}" in @${agent.id}`,
@@ -226,7 +241,7 @@ async function validateDependencies(agents) {
         if (!exists) {
           // Missing dependencies are warnings, not errors (pre-existing technical debt)
           warnings.push({
-            type: 'MISSING_DEPENDENCY',
+            type: "MISSING_DEPENDENCY",
             agent: agent.id,
             depType,
             depFile,
@@ -255,36 +270,36 @@ function validateAgentFormat(agents) {
     // Check required fields
     if (!parsed.agent.id) {
       errors.push({
-        type: 'MISSING_FIELD',
+        type: "MISSING_FIELD",
         agent: id,
-        field: 'agent.id',
+        field: "agent.id",
         message: `Missing agent.id in ${file}`,
       });
     }
 
     if (!parsed.agent.name) {
       errors.push({
-        type: 'MISSING_FIELD',
+        type: "MISSING_FIELD",
         agent: id,
-        field: 'agent.name',
+        field: "agent.name",
         message: `Missing agent.name in ${file}`,
       });
     }
 
     if (!parsed.agent.title) {
       errors.push({
-        type: 'MISSING_FIELD',
+        type: "MISSING_FIELD",
         agent: id,
-        field: 'agent.title',
+        field: "agent.title",
         message: `Missing agent.title in ${file}`,
       });
     }
 
     if (!parsed.agent.icon) {
       warnings.push({
-        type: 'MISSING_FIELD',
+        type: "MISSING_FIELD",
         agent: id,
-        field: 'agent.icon',
+        field: "agent.icon",
         message: `Missing agent.icon in ${file}`,
       });
     }
@@ -296,14 +311,14 @@ function validateAgentFormat(agents) {
     // 3. 'cmd: description' - string format (deprecated)
     for (let i = 0; i < agent.commands.length; i++) {
       const cmd = agent.commands[i];
-      if (typeof cmd === 'string') {
+      if (typeof cmd === "string") {
         // String format is deprecated but we'll just warn
         warnings.push({
-          type: 'DEPRECATED_COMMAND_FORMAT',
+          type: "DEPRECATED_COMMAND_FORMAT",
           agent: id,
           command: cmd,
           message: `Command "${cmd}" in @${id} uses deprecated string format`,
-          suggestion: `Consider converting to: - name: ${cmd.split(':')[0].trim()}\n    description: "${cmd.split(':')[1]?.trim() || 'TODO: add description'}"`,
+          suggestion: `Consider converting to: - name: ${cmd.split(":")[0].trim()}\n    description: "${cmd.split(":")[1]?.trim() || "TODO: add description"}"`,
         });
       }
       // Note: { cmd: 'description' } shorthand format is valid and does NOT generate errors
@@ -312,7 +327,7 @@ function validateAgentFormat(agents) {
     // Check autoClaude section
     if (!parsed.autoClaude) {
       warnings.push({
-        type: 'MISSING_AUTOCLAUDE',
+        type: "MISSING_AUTOCLAUDE",
         agent: id,
         message: `Missing autoClaude section in ${file} (V2 format)`,
         suggestion: `Add autoClaude section with version: '3.0'`,
@@ -320,12 +335,12 @@ function validateAgentFormat(agents) {
     }
 
     // Check greeting script
-    const activation = parsed['activation-instructions'];
+    const activation = parsed["activation-instructions"];
     if (activation) {
-      const activationStr = Array.isArray(activation) ? activation.join('\n') : String(activation);
-      if (activationStr.includes('generate-greeting.js')) {
+      const activationStr = Array.isArray(activation) ? activation.join("\n") : String(activation);
+      if (activationStr.includes("generate-greeting.js")) {
         warnings.push({
-          type: 'DEPRECATED_GREETING',
+          type: "DEPRECATED_GREETING",
           agent: id,
           message: `@${id} uses deprecated generate-greeting.js`,
           suggestion: `Change to greeting-builder.js`,
@@ -344,17 +359,17 @@ function formatResults(results, showSuggestions = false) {
   const lines = [];
   const { commandValidation, dependencyValidation, formatValidation, summary } = results;
 
-  lines.push('');
-  lines.push('━'.repeat(60));
-  lines.push('  AIOX Agent Consistency Validation Report');
-  lines.push('━'.repeat(60));
-  lines.push('');
+  lines.push("");
+  lines.push("━".repeat(60));
+  lines.push("  AIOX Agent Consistency Validation Report");
+  lines.push("━".repeat(60));
+  lines.push("");
 
   // Command Uniqueness
-  lines.push('📋 Command Uniqueness Check');
-  lines.push('─'.repeat(40));
+  lines.push("📋 Command Uniqueness Check");
+  lines.push("─".repeat(40));
   if (commandValidation.errors.length === 0) {
-    lines.push('  ✅ All commands have unique owners (or are shared)');
+    lines.push("  ✅ All commands have unique owners (or are shared)");
   } else {
     for (const err of commandValidation.errors) {
       lines.push(`  ❌ ${err.message}`);
@@ -363,13 +378,13 @@ function formatResults(results, showSuggestions = false) {
       }
     }
   }
-  lines.push('');
+  lines.push("");
 
   // Dependencies
-  lines.push('📦 Dependencies Existence Check');
-  lines.push('─'.repeat(40));
+  lines.push("📦 Dependencies Existence Check");
+  lines.push("─".repeat(40));
   if (dependencyValidation.errors.length === 0) {
-    lines.push('  ✅ All dependencies exist');
+    lines.push("  ✅ All dependencies exist");
   } else {
     for (const err of dependencyValidation.errors) {
       lines.push(`  ❌ ${err.message}`);
@@ -383,13 +398,13 @@ function formatResults(results, showSuggestions = false) {
       lines.push(`  ⚠️  ${warn.message}`);
     }
   }
-  lines.push('');
+  lines.push("");
 
   // Format Validation
-  lines.push('📝 Agent Format Check');
-  lines.push('─'.repeat(40));
+  lines.push("📝 Agent Format Check");
+  lines.push("─".repeat(40));
   if (formatValidation.errors.length === 0) {
-    lines.push('  ✅ All agents follow standard format');
+    lines.push("  ✅ All agents follow standard format");
   } else {
     for (const err of formatValidation.errors) {
       lines.push(`  ❌ ${err.message}`);
@@ -406,25 +421,25 @@ function formatResults(results, showSuggestions = false) {
       }
     }
   }
-  lines.push('');
+  lines.push("");
 
   // Summary
-  lines.push('━'.repeat(60));
-  lines.push('  Summary');
-  lines.push('━'.repeat(60));
+  lines.push("━".repeat(60));
+  lines.push("  Summary");
+  lines.push("━".repeat(60));
   lines.push(`  Agents validated: ${summary.totalAgents}`);
   lines.push(`  Errors: ${summary.totalErrors}`);
   lines.push(`  Warnings: ${summary.totalWarnings}`);
-  lines.push('');
+  lines.push("");
 
   if (summary.totalErrors === 0) {
-    lines.push('  ✅ All validations passed!');
+    lines.push("  ✅ All validations passed!");
   } else {
     lines.push(`  ❌ ${summary.totalErrors} error(s) found - please fix before committing`);
   }
-  lines.push('');
+  lines.push("");
 
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 /**
@@ -437,7 +452,7 @@ async function validateAgents(options = {}) {
   const agents = await loadAllAgents();
 
   if (agents.length === 0) {
-    console.error('No agents found in', AGENTS_DIR);
+    console.error("No agents found in", AGENTS_DIR);
     process.exit(1);
   }
 
@@ -481,9 +496,9 @@ async function validateAgents(options = {}) {
 
 // CLI handler
 async function main() {
-  const args = process.argv.slice(2);
+  const args = new Set(process.argv.slice(2));
 
-  if (args.includes('--help') || args.includes('-h')) {
+  if (args.has("--help") || args.has("-h")) {
     console.log(`
 AIOX Agent Consistency Validator
 
@@ -500,8 +515,8 @@ Exit codes:
   }
 
   const options = {
-    json: args.includes('--json'),
-    fixSuggestions: args.includes('--fix-suggestions') || args.includes('--fix'),
+    json: args.has("--json"),
+    fixSuggestions: args.has("--fix-suggestions") || args.has("--fix"),
   };
 
   const results = await validateAgents(options);
@@ -520,7 +535,7 @@ module.exports = {
 // Run CLI if called directly
 if (require.main === module) {
   main().catch((error) => {
-    console.error('Error:', error.message);
+    console.error("Error:", error.message);
     process.exit(1);
   });
 }

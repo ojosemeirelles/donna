@@ -8,17 +8,17 @@
  * @story 2.8-2.9 - Discovery CLI Info & List
  */
 
-const yaml = require('js-yaml');
+const yaml = require("js-yaml");
 
 /**
  * Column definitions with default widths
  */
 const COLUMNS = {
-  num: { header: '#', width: 4 },
-  id: { header: 'ID', width: 30 },
-  name: { header: 'NAME', width: 30 },
-  category: { header: 'CATEGORY', width: 12 },
-  subcategory: { header: 'SUBCATEGORY', width: 15 },
+  num: { header: "#", width: 4 },
+  id: { header: "ID", width: 30 },
+  name: { header: "NAME", width: 30 },
+  category: { header: "CATEGORY", width: 12 },
+  subcategory: { header: "SUBCATEGORY", width: 15 },
 };
 
 /**
@@ -33,30 +33,39 @@ function formatTable(workers, options = {}) {
   const { pagination, verbose = false } = options;
 
   if (workers.length === 0) {
-    return 'No workers found.\n';
+    return "No workers found.\n";
   }
 
   // Calculate dynamic column widths based on content
-  const idWidth = Math.min(35, Math.max(COLUMNS.id.width, ...workers.map(w => w.id.length)));
-  const nameWidth = Math.min(35, Math.max(COLUMNS.name.width, ...workers.map(w => w.name.length)));
-  const categoryWidth = Math.min(15, Math.max(COLUMNS.category.width, ...workers.map(w => (w.category || '').length)));
-  const subcategoryWidth = Math.min(15, Math.max(COLUMNS.subcategory.width, ...workers.map(w => (w.subcategory || '').length)));
+  const idWidth = Math.min(35, Math.max(COLUMNS.id.width, ...workers.map((w) => w.id.length)));
+  const nameWidth = Math.min(
+    35,
+    Math.max(COLUMNS.name.width, ...workers.map((w) => w.name.length)),
+  );
+  const categoryWidth = Math.min(
+    15,
+    Math.max(COLUMNS.category.width, ...workers.map((w) => (w.category || "").length)),
+  );
+  const subcategoryWidth = Math.min(
+    15,
+    Math.max(COLUMNS.subcategory.width, ...workers.map((w) => (w.subcategory || "").length)),
+  );
 
-  let output = '';
+  let output = "";
 
   // Table header
-  output += `${'#'.padEnd(4)}  `;
-  output += `${'ID'.padEnd(idWidth)}  `;
-  output += `${'NAME'.padEnd(nameWidth)}  `;
-  output += `${'CATEGORY'.padEnd(categoryWidth)}  `;
-  output += `${'SUBCATEGORY'.padEnd(subcategoryWidth)}\n`;
+  output += `${"#".padEnd(4)}  `;
+  output += `${"ID".padEnd(idWidth)}  `;
+  output += `${"NAME".padEnd(nameWidth)}  `;
+  output += `${"CATEGORY".padEnd(categoryWidth)}  `;
+  output += `${"SUBCATEGORY".padEnd(subcategoryWidth)}\n`;
 
   // Header separator
-  output += `${'─'.repeat(4)}  `;
-  output += `${'─'.repeat(idWidth)}  `;
-  output += `${'─'.repeat(nameWidth)}  `;
-  output += `${'─'.repeat(categoryWidth)}  `;
-  output += `${'─'.repeat(subcategoryWidth)}\n`;
+  output += `${"─".repeat(4)}  `;
+  output += `${"─".repeat(idWidth)}  `;
+  output += `${"─".repeat(nameWidth)}  `;
+  output += `${"─".repeat(categoryWidth)}  `;
+  output += `${"─".repeat(subcategoryWidth)}\n`;
 
   // Determine starting row number based on pagination
   const startNum = pagination ? pagination.startIndex : 1;
@@ -66,8 +75,10 @@ function formatTable(workers, options = {}) {
     const num = (startNum + index).toString().padEnd(4);
     const id = truncate(worker.id, idWidth).padEnd(idWidth);
     const name = truncate(worker.name, nameWidth).padEnd(nameWidth);
-    const category = truncate(worker.category || '', categoryWidth).padEnd(categoryWidth);
-    const subcategory = truncate(worker.subcategory || '', subcategoryWidth).padEnd(subcategoryWidth);
+    const category = truncate(worker.category || "", categoryWidth).padEnd(categoryWidth);
+    const subcategory = truncate(worker.subcategory || "", subcategoryWidth).padEnd(
+      subcategoryWidth,
+    );
 
     output += `${num}  ${id}  ${name}  ${category}  ${subcategory}\n`;
   });
@@ -79,7 +90,7 @@ function formatTable(workers, options = {}) {
 
   // Verbose debug info
   if (verbose) {
-    output += '\n[Debug Info]\n';
+    output += "\n[Debug Info]\n";
     output += `  Displayed: ${workers.length} workers\n`;
     if (pagination) {
       output += `  Page: ${pagination.page}/${pagination.totalPages}\n`;
@@ -99,7 +110,7 @@ function formatTable(workers, options = {}) {
 function formatJSON(workers, options = {}) {
   const { pagination } = options;
 
-  const output = workers.map(worker => ({
+  const output = workers.map((worker) => ({
     id: worker.id,
     name: worker.name,
     category: worker.category,
@@ -109,15 +120,19 @@ function formatJSON(workers, options = {}) {
   }));
 
   if (pagination) {
-    return JSON.stringify({
-      data: output,
-      pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        totalItems: pagination.totalItems,
-        totalPages: pagination.totalPages,
+    return JSON.stringify(
+      {
+        data: output,
+        pagination: {
+          page: pagination.page,
+          limit: pagination.limit,
+          totalItems: pagination.totalItems,
+          totalPages: pagination.totalPages,
+        },
       },
-    }, null, 2);
+      null,
+      2,
+    );
   }
 
   return JSON.stringify(output, null, 2);
@@ -133,7 +148,7 @@ function formatJSON(workers, options = {}) {
 function formatYAML(workers, options = {}) {
   const { pagination } = options;
 
-  const output = workers.map(worker => ({
+  const output = workers.map((worker) => ({
     id: worker.id,
     name: worker.name,
     category: worker.category,
@@ -143,19 +158,22 @@ function formatYAML(workers, options = {}) {
   }));
 
   if (pagination) {
-    return yaml.dump({
-      data: output,
-      pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        totalItems: pagination.totalItems,
-        totalPages: pagination.totalPages,
+    return yaml.dump(
+      {
+        data: output,
+        pagination: {
+          page: pagination.page,
+          limit: pagination.limit,
+          totalItems: pagination.totalItems,
+          totalPages: pagination.totalPages,
+        },
       },
-    }, {
-      indent: 2,
-      lineWidth: 120,
-      noRefs: true,
-    });
+      {
+        indent: 2,
+        lineWidth: 120,
+        noRefs: true,
+      },
+    );
   }
 
   return yaml.dump(output, {
@@ -178,8 +196,7 @@ function formatCount(categories, totalWorkers, options = {}) {
   let output = `Total: ${totalWorkers} workers\n\n`;
 
   // Sort categories by count descending
-  const sorted = Object.entries(categories)
-    .sort((a, b) => b[1].count - a[1].count);
+  const sorted = Object.entries(categories).toSorted((a, b) => b[1].count - a[1].count);
 
   for (const [name, data] of sorted) {
     output += `${name.toUpperCase().padEnd(15)} ${data.count.toString().padStart(4)} workers\n`;
@@ -205,14 +222,14 @@ function formatCount(categories, totalWorkers, options = {}) {
  * @returns {string} Formatted output
  */
 function formatList(workers, options = {}) {
-  const format = (options.format || 'table').toLowerCase();
+  const format = (options.format || "table").toLowerCase();
 
   switch (format) {
-    case 'json':
+    case "json":
       return formatJSON(workers, options);
-    case 'yaml':
+    case "yaml":
       return formatYAML(workers, options);
-    case 'table':
+    case "table":
     default:
       return formatTable(workers, options);
   }
@@ -225,9 +242,13 @@ function formatList(workers, options = {}) {
  * @returns {string} Truncated string
  */
 function truncate(str, maxLen) {
-  if (!str) return '';
-  if (str.length <= maxLen) return str;
-  return str.substring(0, maxLen - 1) + '…';
+  if (!str) {
+    return "";
+  }
+  if (str.length <= maxLen) {
+    return str;
+  }
+  return str.substring(0, maxLen - 1) + "…";
 }
 
 /**
@@ -238,18 +259,26 @@ function truncate(str, maxLen) {
 function formatPaginationLine(pagination) {
   const { startIndex, endIndex, totalItems, page, totalPages } = pagination;
 
-  if (totalItems === 0) return 'No items found.';
-  if (totalPages === 1) return `Showing all ${totalItems} workers.`;
+  if (totalItems === 0) {
+    return "No items found.";
+  }
+  if (totalPages === 1) {
+    return `Showing all ${totalItems} workers.`;
+  }
 
   let line = `Showing ${startIndex}-${endIndex} of ${totalItems} workers`;
   line += ` (page ${page}/${totalPages})`;
 
   const hints = [];
-  if (page > 1) hints.push(`--page=${page - 1} prev`);
-  if (page < totalPages) hints.push(`--page=${page + 1} next`);
+  if (page > 1) {
+    hints.push(`--page=${page - 1} prev`);
+  }
+  if (page < totalPages) {
+    hints.push(`--page=${page + 1} next`);
+  }
 
   if (hints.length > 0) {
-    line += `  [${hints.join(', ')}]`;
+    line += `  [${hints.join(", ")}]`;
   }
 
   return line;

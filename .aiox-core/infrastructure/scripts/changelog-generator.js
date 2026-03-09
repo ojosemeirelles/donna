@@ -6,9 +6,9 @@
  * Follows Keep a Changelog format (https://keepachangelog.com)
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
 
 class ChangelogGenerator {
   constructor(config = {}) {
@@ -17,24 +17,24 @@ class ChangelogGenerator {
 
     // Category mapping (conventional commits → changelog)
     this.categories = {
-      feat: 'Added',
-      feature: 'Added',
-      add: 'Added',
-      fix: 'Fixed',
-      bugfix: 'Fixed',
-      perf: 'Performance',
-      performance: 'Performance',
-      refactor: 'Changed',
-      change: 'Changed',
-      update: 'Changed',
-      docs: 'Documentation',
-      doc: 'Documentation',
-      breaking: 'Breaking Changes',
-      deprecated: 'Deprecated',
-      deprecate: 'Deprecated',
-      removed: 'Removed',
-      remove: 'Removed',
-      security: 'Security',
+      feat: "Added",
+      feature: "Added",
+      add: "Added",
+      fix: "Fixed",
+      bugfix: "Fixed",
+      perf: "Performance",
+      performance: "Performance",
+      refactor: "Changed",
+      change: "Changed",
+      update: "Changed",
+      docs: "Documentation",
+      doc: "Documentation",
+      breaking: "Breaking Changes",
+      deprecated: "Deprecated",
+      deprecate: "Deprecated",
+      removed: "Removed",
+      remove: "Removed",
+      security: "Security",
       chore: null, // Don't include chores
       test: null, // Don't include tests
       ci: null, // Don't include CI
@@ -42,15 +42,15 @@ class ChangelogGenerator {
 
     // Changelog order
     this.categoryOrder = [
-      'Breaking Changes',
-      'Added',
-      'Changed',
-      'Deprecated',
-      'Removed',
-      'Fixed',
-      'Security',
-      'Performance',
-      'Documentation',
+      "Breaking Changes",
+      "Added",
+      "Changed",
+      "Deprecated",
+      "Removed",
+      "Fixed",
+      "Security",
+      "Performance",
+      "Documentation",
     ];
 
     // Story patterns
@@ -62,8 +62,8 @@ class ChangelogGenerator {
     ];
 
     // Output paths
-    this.changelogPath = config.changelogPath || path.join(this.rootPath, 'docs', 'CHANGELOG.md');
-    this.jsonPath = config.jsonPath || path.join(this.rootPath, '.aiox', 'changelog.json');
+    this.changelogPath = config.changelogPath || path.join(this.rootPath, "docs", "CHANGELOG.md");
+    this.jsonPath = config.jsonPath || path.join(this.rootPath, ".aiox", "changelog.json");
   }
 
   /**
@@ -73,8 +73,8 @@ class ChangelogGenerator {
    */
   async generate(options = {}) {
     const since = options.since || (await this.getLastReleaseTag());
-    const until = options.until || 'HEAD';
-    const version = options.version || 'Unreleased';
+    const until = options.until || "HEAD";
+    const version = options.version || "Unreleased";
 
     // Get commits
     const commits = await this.getCommits(since, until);
@@ -110,20 +110,20 @@ class ChangelogGenerator {
    */
   async getLastReleaseTag() {
     try {
-      const tag = execSync('git describe --tags --abbrev=0 2>/dev/null', {
+      const tag = execSync("git describe --tags --abbrev=0 2>/dev/null", {
         cwd: this.rootPath,
-        encoding: 'utf8',
+        encoding: "utf8",
       }).trim();
       return tag;
     } catch {
       // No tags, get first commit
       try {
-        return execSync('git rev-list --max-parents=0 HEAD', {
+        return execSync("git rev-list --max-parents=0 HEAD", {
           cwd: this.rootPath,
-          encoding: 'utf8',
+          encoding: "utf8",
         }).trim();
       } catch {
-        return 'HEAD~100'; // Fallback to last 100 commits
+        return "HEAD~100"; // Fallback to last 100 commits
       }
     }
   }
@@ -137,27 +137,29 @@ class ChangelogGenerator {
   async getCommits(since, until) {
     try {
       // Use unique separator to avoid conflicts with message content
-      const separator = '|||CHANGELOG_SEP|||';
+      const separator = "|||CHANGELOG_SEP|||";
       const format = `%H${separator}%s${separator}%an${separator}%aI`;
       const log = execSync(`git log ${since}..${until} --format="${format}" --no-merges`, {
         cwd: this.rootPath,
-        encoding: 'utf8',
+        encoding: "utf8",
         maxBuffer: 10 * 1024 * 1024,
       });
 
       const commits = [];
-      const entries = log.split('\n').filter((l) => l.trim());
+      const entries = log.split("\n").filter((l) => l.trim());
 
       for (const entry of entries) {
         const parts = entry.split(separator);
-        if (parts.length < 4) continue; // Skip malformed entries
+        if (parts.length < 4) {
+          continue;
+        } // Skip malformed entries
 
         const [hash, subject, author, date] = parts;
 
         commits.push({
           hash: hash?.substring(0, 8),
           message: subject,
-          body: '', // Body removed to avoid parsing issues
+          body: "", // Body removed to avoid parsing issues
           author,
           date,
         });
@@ -165,7 +167,7 @@ class ChangelogGenerator {
 
       return commits;
     } catch (error) {
-      console.warn('Failed to get commits:', error.message);
+      console.warn("Failed to get commits:", error.message);
       return [];
     }
   }
@@ -177,7 +179,7 @@ class ChangelogGenerator {
    */
   async getCompletedStories(since) {
     const stories = [];
-    const storiesDir = path.join(this.rootPath, 'docs', 'stories');
+    const storiesDir = path.join(this.rootPath, "docs", "stories");
 
     if (!fs.existsSync(storiesDir)) {
       return stories;
@@ -188,7 +190,7 @@ class ChangelogGenerator {
     try {
       const dateStr = execSync(`git log -1 --format=%aI ${since}`, {
         cwd: this.rootPath,
-        encoding: 'utf8',
+        encoding: "utf8",
       }).trim();
       sinceDate = new Date(dateStr);
     } catch {
@@ -205,18 +207,18 @@ class ChangelogGenerator {
 
           if (entry.isDirectory()) {
             walkDir(fullPath);
-          } else if (entry.name.endsWith('.md') || entry.name.endsWith('.yaml')) {
+          } else if (entry.name.endsWith(".md") || entry.name.endsWith(".yaml")) {
             try {
-              const content = fs.readFileSync(fullPath, 'utf8');
+              const content = fs.readFileSync(fullPath, "utf8");
               const stat = fs.statSync(fullPath);
 
               // Check if modified after since date
               if (stat.mtime > sinceDate) {
                 // Check if completed
                 if (
-                  content.includes('Status: Done') ||
-                  content.includes('Status: Complete') ||
-                  content.includes('status: done')
+                  content.includes("Status: Done") ||
+                  content.includes("Status: Complete") ||
+                  content.includes("status: done")
                 ) {
                   const story = this.parseStory(content, entry.name);
                   if (story) {
@@ -248,30 +250,30 @@ class ChangelogGenerator {
   parseStory(content, filename) {
     // Extract title
     const titleMatch = content.match(/^#\s+(.+)$/m) || content.match(/title:\s*(.+)/i);
-    const title = titleMatch ? titleMatch[1].trim() : filename.replace(/\.(md|yaml)$/, '');
+    const title = titleMatch ? titleMatch[1].trim() : filename.replace(/\.(md|yaml)$/, "");
 
     // Extract ID
     const idMatch = filename.match(/story[_-]?(\d+\.?\d*)/i) || content.match(/id:\s*(\d+\.?\d*)/i);
     const id = idMatch ? idMatch[1] : null;
 
     // Extract type
-    let type = 'feature';
-    if (content.includes('bug') || content.includes('fix')) {
-      type = 'fix';
-    } else if (content.includes('refactor')) {
-      type = 'refactor';
-    } else if (content.includes('docs') || content.includes('documentation')) {
-      type = 'docs';
+    let type = "feature";
+    if (content.includes("bug") || content.includes("fix")) {
+      type = "fix";
+    } else if (content.includes("refactor")) {
+      type = "refactor";
+    } else if (content.includes("docs") || content.includes("documentation")) {
+      type = "docs";
     }
 
     // Extract user story if present
     const userStoryMatch = content.match(
-      /\*\*As a\*\*\s+(.+),\s*\*\*I want\*\*\s+(.+),\s*\*\*so that\*\*\s+(.+)/i
+      /\*\*As a\*\*\s+(.+),\s*\*\*I want\*\*\s+(.+),\s*\*\*so that\*\*\s+(.+)/i,
     );
 
     return {
       id,
-      title: title.replace(/^Story:?\s*/i, ''),
+      title: title.replace(/^Story:?\s*/i, ""),
       type,
       userStory: userStoryMatch
         ? {
@@ -300,21 +302,25 @@ class ChangelogGenerator {
     // Process commits
     for (const commit of commits) {
       // Skip invalid commits
-      if (!commit || !commit.message) continue;
+      if (!commit || !commit.message) {
+        continue;
+      }
 
       const type = this.extractCommitType(commit.message);
       const category = this.categories[type];
 
-      if (!category) continue; // Skip chores, tests, etc.
+      if (!category) {
+        continue;
+      } // Skip chores, tests, etc.
 
       // Check for breaking changes
       const isBreaking =
-        commit.message.includes('BREAKING') ||
-        commit.message.includes('!:') ||
-        commit.body?.includes('BREAKING');
+        commit.message.includes("BREAKING") ||
+        commit.message.includes("!:") ||
+        commit.body?.includes("BREAKING");
 
       if (isBreaking) {
-        result['Breaking Changes'].push(this.formatCommit(commit));
+        result["Breaking Changes"].push(this.formatCommit(commit));
       } else {
         if (!result[category]) {
           result[category] = [];
@@ -349,7 +355,7 @@ class ChangelogGenerator {
   extractCommitType(message) {
     // Guard against undefined/null message
     if (!message) {
-      return 'change';
+      return "change";
     }
 
     // Conventional commit format: type(scope): description
@@ -360,13 +366,23 @@ class ChangelogGenerator {
 
     // Fallback: look for keywords
     const lower = message.toLowerCase();
-    if (lower.startsWith('fix') || lower.includes('bug')) return 'fix';
-    if (lower.startsWith('add') || lower.startsWith('feat')) return 'feat';
-    if (lower.startsWith('remove') || lower.startsWith('delete')) return 'removed';
-    if (lower.startsWith('deprecate')) return 'deprecated';
-    if (lower.startsWith('doc')) return 'docs';
+    if (lower.startsWith("fix") || lower.includes("bug")) {
+      return "fix";
+    }
+    if (lower.startsWith("add") || lower.startsWith("feat")) {
+      return "feat";
+    }
+    if (lower.startsWith("remove") || lower.startsWith("delete")) {
+      return "removed";
+    }
+    if (lower.startsWith("deprecate")) {
+      return "deprecated";
+    }
+    if (lower.startsWith("doc")) {
+      return "docs";
+    }
 
-    return 'change'; // Default to Changed
+    return "change"; // Default to Changed
   }
 
   /**
@@ -376,16 +392,16 @@ class ChangelogGenerator {
    */
   storyToCategory(story) {
     const typeMapping = {
-      feature: 'Added',
-      feat: 'Added',
-      fix: 'Fixed',
-      bugfix: 'Fixed',
-      refactor: 'Changed',
-      docs: 'Documentation',
-      breaking: 'Breaking Changes',
+      feature: "Added",
+      feat: "Added",
+      fix: "Fixed",
+      bugfix: "Fixed",
+      refactor: "Changed",
+      docs: "Documentation",
+      breaking: "Breaking Changes",
     };
 
-    return typeMapping[story.type] || 'Added';
+    return typeMapping[story.type] || "Added";
   }
 
   /**
@@ -396,11 +412,11 @@ class ChangelogGenerator {
   formatCommit(commit) {
     // Guard against undefined message
     if (!commit.message) {
-      return commit.hash || 'Unknown commit';
+      return commit.hash || "Unknown commit";
     }
 
     // Remove type prefix
-    let message = commit.message.replace(/^(\w+)(?:\([^)]+\))?!?:\s*/, '').trim();
+    let message = commit.message.replace(/^(\w+)(?:\([^)]+\))?!?:\s*/, "").trim();
 
     // Capitalize first letter
     message = message.charAt(0).toUpperCase() + message.slice(1);
@@ -451,18 +467,20 @@ class ChangelogGenerator {
    * @returns {string} - Formatted changelog
    */
   format(categorized, version) {
-    const date = new Date().toISOString().split('T')[0];
+    const date = new Date().toISOString().split("T")[0];
     let output = `## [${version}] - ${date}\n\n`;
 
     for (const category of this.categoryOrder) {
       const items = categorized[category];
-      if (!items || items.length === 0) continue;
+      if (!items || items.length === 0) {
+        continue;
+      }
 
       output += `### ${category}\n\n`;
       for (const item of items) {
         output += `- ${item}\n`;
       }
-      output += '\n';
+      output += "\n";
     }
 
     return output;
@@ -488,17 +506,17 @@ class ChangelogGenerator {
 
     // Append to existing changelog or create new
     if (fs.existsSync(this.changelogPath)) {
-      const existing = fs.readFileSync(this.changelogPath, 'utf8');
+      const existing = fs.readFileSync(this.changelogPath, "utf8");
 
       // Insert after header
-      const headerEnd = existing.indexOf('\n## ');
+      const headerEnd = existing.indexOf("\n## ");
       if (headerEnd > 0) {
         const header = existing.substring(0, headerEnd + 1);
         const rest = existing.substring(headerEnd + 1);
         fs.writeFileSync(this.changelogPath, header + changelog + rest);
       } else {
         // Append at end
-        fs.writeFileSync(this.changelogPath, existing + '\n' + changelog);
+        fs.writeFileSync(this.changelogPath, existing + "\n" + changelog);
       }
     } else {
       // Create new changelog
@@ -532,9 +550,9 @@ if (require.main === module) {
   const generator = new ChangelogGenerator();
 
   const options = {
-    save: args.includes('--save'),
-    version: args.find((a) => a.startsWith('--version='))?.split('=')[1],
-    since: args.find((a) => a.startsWith('--since='))?.split('=')[1],
+    save: args.includes("--save"),
+    version: args.find((a) => a.startsWith("--version="))?.split("=")[1],
+    since: args.find((a) => a.startsWith("--since="))?.split("=")[1],
   };
 
   generator
@@ -544,7 +562,7 @@ if (require.main === module) {
       console.log(`\n---\nCommits: ${result.commitCount}, Stories: ${result.storyCount}`);
     })
     .catch((error) => {
-      console.error('Error:', error.message);
+      console.error("Error:", error.message);
       process.exit(1);
     });
 }

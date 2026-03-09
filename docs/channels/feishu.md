@@ -542,14 +542,14 @@ Use `bindings` to route Feishu DMs or groups to different agents.
     list: [
       { id: "main" },
       {
-        id: "clawd-fan",
-        workspace: "/home/user/clawd-fan",
-        agentDir: "/home/user/.donna/agents/clawd-fan/agent",
+        id: "donna-fan",
+        workspace: "/home/user/donna-fan",
+        agentDir: "/home/user/.donna/agents/donna-fan/agent",
       },
       {
-        id: "clawd-xi",
-        workspace: "/home/user/clawd-xi",
-        agentDir: "/home/user/.donna/agents/clawd-xi/agent",
+        id: "donna-xi",
+        workspace: "/home/user/donna-xi",
+        agentDir: "/home/user/.donna/agents/donna-xi/agent",
       },
     ],
   },
@@ -562,14 +562,14 @@ Use `bindings` to route Feishu DMs or groups to different agents.
       },
     },
     {
-      agentId: "clawd-fan",
+      agentId: "donna-fan",
       match: {
         channel: "feishu",
         peer: { kind: "direct", id: "ou_yyy" },
       },
     },
     {
-      agentId: "clawd-xi",
+      agentId: "donna-xi",
       match: {
         channel: "feishu",
         peer: { kind: "group", id: "oc_zzz" },

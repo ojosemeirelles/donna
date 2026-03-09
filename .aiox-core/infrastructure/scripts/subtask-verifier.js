@@ -7,27 +7,27 @@
  * @module subtask-verifier
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require("fs").promises;
+const path = require("path");
 
 // Optional dependencies with graceful fallback
 let yaml;
 try {
-  yaml = require('js-yaml');
+  yaml = require("js-yaml");
 } catch {
   yaml = null;
 }
 
 let execa;
 try {
-  execa = require('execa').execa;
+  execa = require("execa").execa;
 } catch {
   execa = null;
 }
 
 let chalk;
 try {
-  chalk = require('chalk');
+  chalk = require("chalk");
 } catch {
   chalk = {
     blue: (s) => s,
@@ -88,7 +88,7 @@ class SubtaskVerifier {
 
     // Verify required dependencies
     if (!yaml) {
-      throw new Error('js-yaml module not available - install with: npm install js-yaml');
+      throw new Error("js-yaml module not available - install with: npm install js-yaml");
     }
   }
 
@@ -96,7 +96,7 @@ class SubtaskVerifier {
    * Log message with timestamp
    * @private
    */
-  _log(message, level = 'info') {
+  _log(message, level = "info") {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
     this.logs.push(logEntry);
@@ -119,12 +119,12 @@ class SubtaskVerifier {
    */
   async loadImplementation() {
     try {
-      const content = await fs.readFile(this.implementationPath, 'utf8');
+      const content = await fs.readFile(this.implementationPath, "utf8");
       this.implementation = yaml.load(content);
-      this._log(`Loaded implementation from ${this.implementationPath}`, 'info');
+      this._log(`Loaded implementation from ${this.implementationPath}`, "info");
       return this.implementation;
     } catch (error) {
-      throw new Error(`Failed to load implementation.yaml: ${error.message}`);
+      throw new Error(`Failed to load implementation.yaml: ${error.message}`, { cause: error });
     }
   }
 
@@ -166,19 +166,19 @@ class SubtaskVerifier {
     // Find subtask
     const subtask = this.findSubtask(subtaskId);
     if (!subtask) {
-      return this._createResult(subtaskId, false, 'unknown', startTime, {
+      return this._createResult(subtaskId, false, "unknown", startTime, {
         error: new Error(`Subtask ${subtaskId} not found in implementation`),
       });
     }
 
-    this._log(`Verifying subtask ${subtaskId}: ${subtask.description}`, 'info');
+    this._log(`Verifying subtask ${subtaskId}: ${subtask.description}`, "info");
 
     // Get verification config
     const verification = subtask.verification;
     if (!verification) {
-      this._log(`No verification config for subtask ${subtaskId}, marking as manual`, 'warn');
-      return this._createResult(subtaskId, true, 'manual', startTime, {
-        logs: ['No automated verification configured - manual check required'],
+      this._log(`No verification config for subtask ${subtaskId}, marking as manual`, "warn");
+      return this._createResult(subtaskId, true, "manual", startTime, {
+        logs: ["No automated verification configured - manual check required"],
       });
     }
 
@@ -191,37 +191,37 @@ class SubtaskVerifier {
    * @private
    */
   async _verifyWithRetries(subtaskId, verification, startTime) {
-    const verificationType = verification.type || 'command';
+    const verificationType = verification.type || "command";
     let lastError = null;
     let attempts = 0;
 
     for (let i = 0; i < this.maxRetries; i++) {
       attempts = i + 1;
       try {
-        this._log(`Attempt ${attempts}/${this.maxRetries} for subtask ${subtaskId}`, 'info');
+        this._log(`Attempt ${attempts}/${this.maxRetries} for subtask ${subtaskId}`, "info");
 
         const result = await this._runVerification(verification);
 
         if (result.passed) {
-          this._log(`Verification passed on attempt ${attempts}`, 'success');
+          this._log(`Verification passed on attempt ${attempts}`, "success");
           return this._createResult(subtaskId, true, verificationType, startTime, {
             attempts,
             output: result.output,
           });
         }
 
-        lastError = new Error(result.error || 'Verification returned false');
-        this._log(`Attempt ${attempts} failed: ${lastError.message}`, 'warn');
+        lastError = new Error(result.error || "Verification returned false");
+        this._log(`Attempt ${attempts} failed: ${lastError.message}`, "warn");
 
         // Wait before retry (exponential backoff)
         if (i < this.maxRetries - 1) {
           const delay = Math.min(1000 * Math.pow(2, i), 10000);
-          this._log(`Waiting ${delay}ms before retry...`, 'info');
+          this._log(`Waiting ${delay}ms before retry...`, "info");
           await this._sleep(delay);
         }
       } catch (error) {
         lastError = error;
-        this._log(`Attempt ${attempts} threw error: ${error.message}`, 'error');
+        this._log(`Attempt ${attempts} threw error: ${error.message}`, "error");
 
         // Check if this is a transient error worth retrying
         if (!this._isTransientError(error) || i === this.maxRetries - 1) {
@@ -244,17 +244,17 @@ class SubtaskVerifier {
    * @private
    */
   async _runVerification(config) {
-    const type = config.type || 'command';
+    const type = config.type || "command";
     const timeout = (config.timeout || 60) * 1000;
 
     switch (type) {
-      case 'command':
+      case "command":
         return this._verifyCommand(config, timeout);
-      case 'api':
+      case "api":
         return this._verifyApi(config, timeout);
-      case 'browser':
+      case "browser":
         return this._verifyBrowser(config, timeout);
-      case 'e2e':
+      case "e2e":
         return this._verifyE2E(config, timeout);
       default:
         throw new Error(`Unknown verification type: ${type}`);
@@ -270,20 +270,20 @@ class SubtaskVerifier {
       throw new Error('Command verification requires "command" field');
     }
 
-    this._log(`Running command: ${config.command}`, 'info');
+    this._log(`Running command: ${config.command}`, "info");
 
     if (!execa) {
       // Fallback to child_process
-      const { execSync } = require('child_process');
+      const { execSync } = require("child_process");
       try {
         const output = execSync(config.command, {
           cwd: this.cwd,
           timeout,
-          encoding: 'utf8',
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env, CI: 'true' },
+          encoding: "utf8",
+          stdio: ["pipe", "pipe", "pipe"],
+          env: { ...process.env, CI: "true" },
         });
-        this._log(`Command output: ${output.substring(0, 200)}...`, 'info');
+        this._log(`Command output: ${output.substring(0, 200)}...`, "info");
         return { passed: true, output };
       } catch (error) {
         return {
@@ -295,7 +295,7 @@ class SubtaskVerifier {
     }
 
     try {
-      const parts = config.command.split(' ');
+      const parts = config.command.split(" ");
       const program = parts[0];
       const args = parts.slice(1);
 
@@ -303,13 +303,13 @@ class SubtaskVerifier {
         cwd: this.cwd,
         shell: true,
         timeout,
-        encoding: 'utf8',
-        env: { ...process.env, CI: 'true' },
+        encoding: "utf8",
+        env: { ...process.env, CI: "true" },
         reject: false,
       });
 
       if (exitCode === 0) {
-        this._log(`Command succeeded with output: ${stdout.substring(0, 200)}...`, 'info');
+        this._log(`Command succeeded with output: ${stdout.substring(0, 200)}...`, "info");
         return { passed: true, output: stdout };
       }
 
@@ -320,7 +320,7 @@ class SubtaskVerifier {
       };
     } catch (error) {
       if (error.timedOut) {
-        throw new Error(`Command timed out after ${timeout}ms`);
+        throw new Error(`Command timed out after ${timeout}ms`, { cause: error });
       }
       throw error;
     }
@@ -335,23 +335,23 @@ class SubtaskVerifier {
       throw new Error('API verification requires "url" field');
     }
 
-    this._log(`Calling API: ${config.url}`, 'info');
+    this._log(`Calling API: ${config.url}`, "info");
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
       const fetchOptions = {
-        method: config.method || 'GET',
+        method: config.method || "GET",
         signal: controller.signal,
-        ...(config.options || {}),
+        ...config.options,
       };
 
       if (config.body) {
         fetchOptions.body = JSON.stringify(config.body);
         fetchOptions.headers = {
-          'Content-Type': 'application/json',
-          ...(fetchOptions.headers || {}),
+          "Content-Type": "application/json",
+          ...fetchOptions.headers,
         };
       }
 
@@ -368,13 +368,13 @@ class SubtaskVerifier {
         output = await response.text();
       }
 
-      this._log(`API response: status=${response.status}, expected=${expectedStatus}`, 'info');
+      this._log(`API response: status=${response.status}, expected=${expectedStatus}`, "info");
 
       if (passed) {
         // Additional validation if expectedOutput pattern provided
         if (config.expectedOutput) {
           const regex = new RegExp(config.expectedOutput);
-          const outputStr = typeof output === 'string' ? output : JSON.stringify(output);
+          const outputStr = typeof output === "string" ? output : JSON.stringify(output);
           if (!regex.test(outputStr)) {
             return {
               passed: false,
@@ -393,8 +393,8 @@ class SubtaskVerifier {
       };
     } catch (error) {
       clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        throw new Error(`API request timed out after ${timeout}ms`);
+      if (error.name === "AbortError") {
+        throw new Error(`API request timed out after ${timeout}ms`, { cause: error });
       }
       throw error;
     }
@@ -405,14 +405,14 @@ class SubtaskVerifier {
    * @private
    */
   async _verifyBrowser(config, timeout) {
-    this._log('Running browser verification with Playwright...', 'info');
+    this._log("Running browser verification with Playwright...", "info");
 
     let playwright;
     try {
-      playwright = require('playwright');
+      playwright = require("playwright");
     } catch {
       throw new Error(
-        'Browser verification requires Playwright - install with: npm install playwright'
+        "Browser verification requires Playwright - install with: npm install playwright",
       );
     }
 
@@ -429,8 +429,8 @@ class SubtaskVerifier {
         throw new Error('Browser verification requires "url" field');
       }
 
-      await page.goto(config.url, { waitUntil: 'networkidle' });
-      this._log(`Navigated to ${config.url}`, 'info');
+      await page.goto(config.url, { waitUntil: "networkidle" });
+      this._log(`Navigated to ${config.url}`, "info");
 
       // Check for selector if provided
       if (config.selector) {
@@ -461,7 +461,7 @@ class SubtaskVerifier {
       if (config.screenshot) {
         screenshotPath = config.screenshot;
         await page.screenshot({ path: screenshotPath, fullPage: true });
-        this._log(`Screenshot saved to ${screenshotPath}`, 'info');
+        this._log(`Screenshot saved to ${screenshotPath}`, "info");
       }
 
       return {
@@ -483,7 +483,7 @@ class SubtaskVerifier {
       throw new Error('E2E verification requires "testCommand" or "command" field');
     }
 
-    this._log(`Running E2E tests: ${testCommand}`, 'info');
+    this._log(`Running E2E tests: ${testCommand}`, "info");
 
     // E2E tests reuse command verification
     return this._verifyCommand({ command: testCommand }, timeout);
@@ -495,17 +495,17 @@ class SubtaskVerifier {
    */
   _isTransientError(error) {
     const transientPatterns = [
-      'ECONNRESET',
-      'ETIMEDOUT',
-      'ECONNREFUSED',
-      'socket hang up',
-      'network timeout',
-      'temporarily unavailable',
+      "ECONNRESET",
+      "ETIMEDOUT",
+      "ECONNREFUSED",
+      "socket hang up",
+      "network timeout",
+      "temporarily unavailable",
     ];
 
-    const message = error.message || '';
+    const message = error.message || "";
     return transientPatterns.some((pattern) =>
-      message.toLowerCase().includes(pattern.toLowerCase())
+      message.toLowerCase().includes(pattern.toLowerCase()),
     );
   }
 
@@ -557,14 +557,14 @@ class SubtaskVerifier {
         results.totalSubtasks++;
 
         // Skip already completed subtasks
-        if (subtask.status === 'completed') {
+        if (subtask.status === "completed") {
           results.skipped++;
           results.subtasks.push({
             subtaskId: subtask.id,
             passed: true,
-            verificationType: 'skipped',
+            verificationType: "skipped",
             duration: 0,
-            logs: ['Subtask already completed - skipped verification'],
+            logs: ["Subtask already completed - skipped verification"],
             attempts: 0,
           });
           continue;
@@ -593,32 +593,32 @@ class SubtaskVerifier {
     const lines = [];
     const isMultiple = Array.isArray(results.subtasks);
 
-    lines.push('');
-    lines.push(chalk.bold('='.repeat(60)));
-    lines.push(chalk.bold(' Subtask Verification Report'));
-    lines.push(chalk.bold('='.repeat(60)));
-    lines.push('');
+    lines.push("");
+    lines.push(chalk.bold("=".repeat(60)));
+    lines.push(chalk.bold(" Subtask Verification Report"));
+    lines.push(chalk.bold("=".repeat(60)));
+    lines.push("");
 
     if (isMultiple) {
-      lines.push(`Story: ${results.storyId || 'Unknown'}`);
+      lines.push(`Story: ${results.storyId || "Unknown"}`);
       lines.push(`Total Subtasks: ${results.totalSubtasks}`);
-      lines.push(`  ${chalk.green('Passed')}: ${results.passed}`);
-      lines.push(`  ${chalk.red('Failed')}: ${results.failed}`);
-      lines.push(`  ${chalk.yellow('Skipped')}: ${results.skipped}`);
-      lines.push('');
-      lines.push('-'.repeat(60));
+      lines.push(`  ${chalk.green("Passed")}: ${results.passed}`);
+      lines.push(`  ${chalk.red("Failed")}: ${results.failed}`);
+      lines.push(`  ${chalk.yellow("Skipped")}: ${results.skipped}`);
+      lines.push("");
+      lines.push("-".repeat(60));
 
       for (const result of results.subtasks) {
-        const status = result.passed ? chalk.green('PASS') : chalk.red('FAIL');
+        const status = result.passed ? chalk.green("PASS") : chalk.red("FAIL");
         lines.push(
-          `${status} [${result.subtaskId}] ${result.verificationType} (${result.duration}ms)`
+          `${status} [${result.subtaskId}] ${result.verificationType} (${result.duration}ms)`,
         );
         if (!result.passed && result.error) {
           lines.push(`     Error: ${result.error.message || result.error}`);
         }
       }
     } else {
-      const status = results.passed ? chalk.green('PASS') : chalk.red('FAIL');
+      const status = results.passed ? chalk.green("PASS") : chalk.red("FAIL");
       lines.push(`Subtask: ${results.subtaskId}`);
       lines.push(`Status: ${status}`);
       lines.push(`Type: ${results.verificationType}`);
@@ -626,25 +626,25 @@ class SubtaskVerifier {
       lines.push(`Attempts: ${results.attempts}`);
 
       if (!results.passed && results.error) {
-        lines.push('');
-        lines.push(chalk.red('Error:'));
+        lines.push("");
+        lines.push(chalk.red("Error:"));
         lines.push(`  ${results.error.message || results.error}`);
       }
 
       if (results.logs && results.logs.length > 0) {
-        lines.push('');
-        lines.push('Logs:');
+        lines.push("");
+        lines.push("Logs:");
         for (const log of results.logs.slice(-10)) {
           lines.push(`  ${chalk.gray(log)}`);
         }
       }
     }
 
-    lines.push('');
-    lines.push('='.repeat(60));
-    lines.push('');
+    lines.push("");
+    lines.push("=".repeat(60));
+    lines.push("");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -668,7 +668,9 @@ class SubtaskVerifier {
           break;
         }
       }
-      if (found) break;
+      if (found) {
+        break;
+      }
     }
 
     if (!found) {
@@ -682,8 +684,8 @@ class SubtaskVerifier {
       noRefs: true,
     });
 
-    await fs.writeFile(this.implementationPath, yamlContent, 'utf8');
-    this._log(`Updated status for ${subtaskId} to ${status}`, 'info');
+    await fs.writeFile(this.implementationPath, yamlContent, "utf8");
+    this._log(`Updated status for ${subtaskId} to ${status}`, "info");
   }
 }
 
@@ -691,7 +693,7 @@ class SubtaskVerifier {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
+  if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
     console.log(`
 Usage: subtask-verifier <subtask-id> [options]
 
@@ -723,30 +725,30 @@ Examples:
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--implementation' || arg === '-i') {
+    if (arg === "--implementation" || arg === "-i") {
       implementationPath = args[++i];
-    } else if (arg === '--timeout' || arg === '-t') {
+    } else if (arg === "--timeout" || arg === "-t") {
       timeout = parseInt(args[++i], 10);
-    } else if (arg === '--retries' || arg === '-r') {
+    } else if (arg === "--retries" || arg === "-r") {
       maxRetries = parseInt(args[++i], 10);
-    } else if (arg === '--verbose' || arg === '-v') {
+    } else if (arg === "--verbose" || arg === "-v") {
       verbose = true;
-    } else if (arg === '--all') {
+    } else if (arg === "--all") {
       verifyAll = true;
-    } else if (arg === '--update') {
+    } else if (arg === "--update") {
       update = true;
-    } else if (!arg.startsWith('-')) {
+    } else if (!arg.startsWith("-")) {
       subtaskId = arg;
     }
   }
 
   if (!implementationPath) {
-    console.error(chalk.red('Error: --implementation path is required'));
+    console.error(chalk.red("Error: --implementation path is required"));
     process.exit(1);
   }
 
   if (!verifyAll && !subtaskId) {
-    console.error(chalk.red('Error: subtask-id or --all is required'));
+    console.error(chalk.red("Error: subtask-id or --all is required"));
     process.exit(1);
   }
 
@@ -765,7 +767,7 @@ Examples:
       results = await verifier.verify(subtaskId);
 
       if (update) {
-        const status = results.passed ? 'completed' : 'failed';
+        const status = results.passed ? "completed" : "failed";
         await verifier.updateSubtaskStatus(subtaskId, status);
       }
     }

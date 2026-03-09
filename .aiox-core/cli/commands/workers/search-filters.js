@@ -23,19 +23,18 @@ function applyFilters(results, filters = {}) {
   // Apply category filter
   if (filters.category) {
     const categoryLower = filters.category.toLowerCase();
-    filtered = filtered.filter(worker => {
-      const workerCategory = (worker.category || '').toLowerCase();
-      return workerCategory === categoryLower ||
-             workerCategory.includes(categoryLower);
+    filtered = filtered.filter((worker) => {
+      const workerCategory = (worker.category || "").toLowerCase();
+      return workerCategory === categoryLower || workerCategory.includes(categoryLower);
     });
   }
 
   // Apply tag filters (AND logic - worker must have ALL specified tags)
   if (filters.tags && filters.tags.length > 0) {
-    filtered = filtered.filter(worker => {
-      const workerTags = (worker.tags || []).map(t => t.toLowerCase());
-      return filters.tags.every(tag =>
-        workerTags.some(wt => wt === tag.toLowerCase() || wt.includes(tag.toLowerCase())),
+    filtered = filtered.filter((worker) => {
+      const workerTags = (worker.tags || []).map((t) => t.toLowerCase());
+      return filters.tags.every((tag) =>
+        workerTags.some((wt) => wt === tag.toLowerCase() || wt.includes(tag.toLowerCase())),
       );
     });
   }
@@ -50,11 +49,13 @@ function applyFilters(results, filters = {}) {
  * @returns {Array} Filtered results
  */
 function filterByCategory(results, category) {
-  if (!category) return results;
+  if (!category) {
+    return results;
+  }
 
   const categoryLower = category.toLowerCase();
-  return results.filter(worker => {
-    const workerCategory = (worker.category || '').toLowerCase();
+  return results.filter((worker) => {
+    const workerCategory = (worker.category || "").toLowerCase();
     return workerCategory === categoryLower;
   });
 }
@@ -66,13 +67,15 @@ function filterByCategory(results, category) {
  * @returns {Array} Filtered results
  */
 function filterByTags(results, tags) {
-  if (!tags || tags.length === 0) return results;
+  if (!tags || tags.length === 0) {
+    return results;
+  }
 
-  const tagsLower = tags.map(t => t.toLowerCase());
+  const tagsLower = tags.map((t) => t.toLowerCase());
 
-  return results.filter(worker => {
-    const workerTags = new Set((worker.tags || []).map(t => t.toLowerCase()));
-    return tagsLower.every(tag => workerTags.has(tag));
+  return results.filter((worker) => {
+    const workerTags = new Set((worker.tags || []).map((t) => t.toLowerCase()));
+    return tagsLower.every((tag) => workerTags.has(tag));
   });
 }
 
@@ -83,13 +86,15 @@ function filterByTags(results, tags) {
  * @returns {Array} Filtered results
  */
 function filterByAnyTag(results, tags) {
-  if (!tags || tags.length === 0) return results;
+  if (!tags || tags.length === 0) {
+    return results;
+  }
 
-  const tagsLower = tags.map(t => t.toLowerCase());
+  const tagsLower = tags.map((t) => t.toLowerCase());
 
-  return results.filter(worker => {
-    const workerTags = new Set((worker.tags || []).map(t => t.toLowerCase()));
-    return tagsLower.some(tag => workerTags.has(tag));
+  return results.filter((worker) => {
+    const workerTags = new Set((worker.tags || []).map((t) => t.toLowerCase()));
+    return tagsLower.some((tag) => workerTags.has(tag));
   });
 }
 
@@ -100,11 +105,13 @@ function filterByAnyTag(results, tags) {
  * @returns {Array} Filtered results
  */
 function filterBySubcategory(results, subcategory) {
-  if (!subcategory) return results;
+  if (!subcategory) {
+    return results;
+  }
 
   const subcategoryLower = subcategory.toLowerCase();
-  return results.filter(worker => {
-    const workerSubcategory = (worker.subcategory || '').toLowerCase();
+  return results.filter((worker) => {
+    const workerSubcategory = (worker.subcategory || "").toLowerCase();
     return workerSubcategory === subcategoryLower;
   });
 }
@@ -116,11 +123,11 @@ function filterBySubcategory(results, subcategory) {
  * @returns {Array} Filtered results
  */
 function filterByTaskFormat(results, taskFormat) {
-  if (!taskFormat) return results;
+  if (!taskFormat) {
+    return results;
+  }
 
-  return results.filter(worker =>
-    worker.taskFormat === taskFormat,
-  );
+  return results.filter((worker) => worker.taskFormat === taskFormat);
 }
 
 /**
@@ -130,9 +137,11 @@ function filterByTaskFormat(results, taskFormat) {
  * @returns {Array} Filtered results
  */
 function filterByExecutorType(results, executorType) {
-  if (!executorType) return results;
+  if (!executorType) {
+    return results;
+  }
 
-  return results.filter(worker => {
+  return results.filter((worker) => {
     const executorTypes = worker.executorTypes || [];
     return executorTypes.includes(executorType);
   });
@@ -149,22 +158,22 @@ function applyMultipleFilters(results, filterList) {
 
   for (const filter of filterList) {
     switch (filter.type) {
-      case 'category':
+      case "category":
         filtered = filterByCategory(filtered, filter.value);
         break;
-      case 'tags':
+      case "tags":
         filtered = filterByTags(filtered, filter.value);
         break;
-      case 'anyTag':
+      case "anyTag":
         filtered = filterByAnyTag(filtered, filter.value);
         break;
-      case 'subcategory':
+      case "subcategory":
         filtered = filterBySubcategory(filtered, filter.value);
         break;
-      case 'taskFormat':
+      case "taskFormat":
         filtered = filterByTaskFormat(filtered, filter.value);
         break;
-      case 'executorType':
+      case "executorType":
         filtered = filterByExecutorType(filtered, filter.value);
         break;
     }

@@ -13,10 +13,10 @@
  * const result = await engine.suggestNext(context);
  */
 
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 // Lazy-loaded dependencies for performance
 let wis = null;
@@ -50,8 +50,8 @@ class SuggestionEngine {
    */
   constructor(options = {}) {
     this.cacheTTL = options.cacheTTL || SUGGESTION_CACHE_TTL;
-    this.lazyLoad = options.lazyLoad !== false;
-    this.useLearnedPatterns = options.useLearnedPatterns !== false;
+    this.lazyLoad = options.lazyLoad;
+    this.useLearnedPatterns = options.useLearnedPatterns;
     this.learnedPatternBoost = options.learnedPatternBoost || 0.15;
     this.suggestionCache = null;
     this.cacheTimestamp = null;
@@ -70,36 +70,36 @@ class SuggestionEngine {
   _loadDependencies() {
     if (!wis) {
       try {
-        wis = require('../index');
+        wis = require("../index");
       } catch (error) {
-        console.warn('[SuggestionEngine] Failed to load WIS module:', error.message);
+        console.warn("[SuggestionEngine] Failed to load WIS module:", error.message);
         wis = null;
       }
     }
 
     if (!SessionContextLoader) {
       try {
-        SessionContextLoader = require('../../core/session/context-loader');
+        SessionContextLoader = require("../../core/session/context-loader");
       } catch (error) {
-        console.warn('[SuggestionEngine] Failed to load SessionContextLoader:', error.message);
+        console.warn("[SuggestionEngine] Failed to load SessionContextLoader:", error.message);
         SessionContextLoader = null;
       }
     }
 
     if (!learning && this.useLearnedPatterns) {
       try {
-        learning = require('../learning');
+        learning = require("../learning");
       } catch (error) {
-        console.warn('[SuggestionEngine] Failed to load learning module:', error.message);
+        console.warn("[SuggestionEngine] Failed to load learning module:", error.message);
         learning = null;
       }
     }
 
     if (!WorkflowStateManager) {
       try {
-        ({ WorkflowStateManager } = require('../../development/scripts/workflow-state-manager'));
+        ({ WorkflowStateManager } = require("../../development/scripts/workflow-state-manager"));
       } catch (error) {
-        console.warn('[SuggestionEngine] Failed to load WorkflowStateManager:', error.message);
+        console.warn("[SuggestionEngine] Failed to load WorkflowStateManager:", error.message);
         WorkflowStateManager = null;
       }
     }
@@ -126,7 +126,7 @@ class SuggestionEngine {
     };
 
     // 1. Load session context if available
-    if (options.autoDetect !== false && SessionContextLoader) {
+    if (options.autoDetect && SessionContextLoader) {
       try {
         const loader = new SessionContextLoader();
         const sessionContext = loader.loadContext(context.agentId);
@@ -136,7 +136,7 @@ class SuggestionEngine {
         context.storyPath = sessionContext.currentStory || null;
         context.workflowActive = sessionContext.workflowActive || null;
       } catch (error) {
-        console.warn('[SuggestionEngine] Failed to load session context:', error.message);
+        console.warn("[SuggestionEngine] Failed to load session context:", error.message);
       }
     }
 
@@ -179,7 +179,7 @@ class SuggestionEngine {
       confidence: 0,
       suggestions: [],
       isUncertain: true,
-      message: 'Unable to determine workflow context',
+      message: "Unable to determine workflow context",
     };
 
     if (!wis) {
@@ -191,10 +191,13 @@ class SuggestionEngine {
       const suggestions = wis.getSuggestions(context);
 
       if (!suggestions || suggestions.length === 0) {
-        return this._withRuntimeRecommendation({
-          ...defaultResult,
-          message: 'No matching workflow found for current context',
-        }, runtimeNext);
+        return this._withRuntimeRecommendation(
+          {
+            ...defaultResult,
+            message: "No matching workflow found for current context",
+          },
+          runtimeNext,
+        );
       }
 
       // Get workflow match info
@@ -211,10 +214,10 @@ class SuggestionEngine {
       let formattedSuggestions = suggestions.map((s, index) => ({
         command: `*${s.command}`,
         args: this._interpolateArgs(s.args_template, context),
-        description: s.description || '',
+        description: s.description || "",
         confidence: Math.round((s.confidence || 0) * 100) / 100,
         priority: s.priority || index + 1,
-        source: 'workflow',
+        source: "workflow",
       }));
 
       // Apply learned pattern boost (WIS-5)
@@ -249,7 +252,7 @@ class SuggestionEngine {
 
       return result;
     } catch (error) {
-      console.error('[SuggestionEngine] Error getting suggestions:', error.message);
+      console.error("[SuggestionEngine] Error getting suggestions:", error.message);
       return {
         ...defaultResult,
         message: `Error: ${error.message}`,
@@ -266,24 +269,26 @@ class SuggestionEngine {
   _buildRuntimeSignals(context = {}) {
     const projectState = context.projectState || {};
     const hasUncommitted =
-      typeof projectState.hasUncommittedChanges === 'boolean'
+      typeof projectState.hasUncommittedChanges === "boolean"
         ? projectState.hasUncommittedChanges
         : false;
 
     const baseSignals = {
       story_status:
-        projectState.story_status || projectState.storyStatus || (projectState.activeStory ? 'in_progress' : 'unknown'),
-      qa_status: projectState.qa_status || projectState.qaStatus || 'unknown',
+        projectState.story_status ||
+        projectState.storyStatus ||
+        (projectState.activeStory ? "in_progress" : "unknown"),
+      qa_status: projectState.qa_status || projectState.qaStatus || "unknown",
       ci_status:
         projectState.ci_status ||
         projectState.ciStatus ||
-        (projectState.failingTests ? 'failed' : 'unknown'),
+        (projectState.failingTests ? "failed" : "unknown"),
       has_uncommitted_changes: hasUncommitted,
     };
 
     return {
       ...baseSignals,
-      ...(context.executionSignals || {}),
+      ...context.executionSignals,
     };
   }
 
@@ -302,10 +307,10 @@ class SuggestionEngine {
       const manager = new WorkflowStateManager();
       const runtimeSignals = this._buildRuntimeSignals(context);
       const recommendation = manager.getNextActionRecommendation(runtimeSignals, {
-        story: context.storyPath || '',
+        story: context.storyPath || "",
       });
 
-      if (!recommendation || recommendation.state === 'unknown') {
+      if (!recommendation || recommendation.state === "unknown") {
         return null;
       }
 
@@ -329,19 +334,24 @@ class SuggestionEngine {
 
     const runtimeSuggestion = {
       command: runtimeNext.command,
-      args: '',
+      args: "",
       description: runtimeNext.rationale,
       confidence: runtimeNext.confidence,
       priority: 0,
-      source: 'runtime_first',
+      source: "runtime_first",
       agent: runtimeNext.agent,
       executionState: runtimeNext.state,
     };
 
     const existing = Array.isArray(result.suggestions) ? result.suggestions : [];
-    const normalizedRuntimeCommand = String(runtimeSuggestion.command || '').trim().toLowerCase();
+    const normalizedRuntimeCommand = String(runtimeSuggestion.command || "")
+      .trim()
+      .toLowerCase();
     const deduped = existing.filter(
-      (s) => String((s.command || '') + (s.args ? ` ${s.args}` : '')).trim().toLowerCase() !== normalizedRuntimeCommand,
+      (s) =>
+        String((s.command || "") + (s.args ? ` ${s.args}` : ""))
+          .trim()
+          .toLowerCase() !== normalizedRuntimeCommand,
     );
 
     return {
@@ -361,11 +371,11 @@ class SuggestionEngine {
   _detectCurrentAgent() {
     // Check environment variable first
     if (process.env.AIOX_CURRENT_AGENT) {
-      return process.env.AIOX_CURRENT_AGENT.replace('@', '');
+      return process.env.AIOX_CURRENT_AGENT.replace("@", "");
     }
 
     // Default to 'dev' if unknown
-    return 'dev';
+    return "dev";
   }
 
   /**
@@ -375,7 +385,9 @@ class SuggestionEngine {
    * @private
    */
   _resolveStoryPath(storyPath) {
-    if (!storyPath) return null;
+    if (!storyPath) {
+      return null;
+    }
 
     // Handle relative paths
     const resolved = path.isAbsolute(storyPath)
@@ -402,11 +414,11 @@ class SuggestionEngine {
    */
   _detectGitBranch() {
     try {
-      const gitHeadPath = path.join(process.cwd(), '.git', 'HEAD');
+      const gitHeadPath = path.join(process.cwd(), ".git", "HEAD");
       if (fs.existsSync(gitHeadPath)) {
-        const content = fs.readFileSync(gitHeadPath, 'utf8').trim();
-        if (content.startsWith('ref: refs/heads/')) {
-          return content.replace('ref: refs/heads/', '');
+        const content = fs.readFileSync(gitHeadPath, "utf8").trim();
+        if (content.startsWith("ref: refs/heads/")) {
+          return content.replace("ref: refs/heads/", "");
         }
       }
     } catch (_error) {
@@ -431,7 +443,7 @@ class SuggestionEngine {
 
     // Check for uncommitted changes
     try {
-      const gitStatusPath = path.join(process.cwd(), '.git', 'index');
+      const gitStatusPath = path.join(process.cwd(), ".git", "index");
       if (fs.existsSync(gitStatusPath)) {
         // Simple check - if there are modified files in git status
         // For production, would use git status command
@@ -444,14 +456,14 @@ class SuggestionEngine {
     // Infer workflow phase from last command
     if (context.lastCommand) {
       const cmd = context.lastCommand.toLowerCase();
-      if (cmd.includes('develop') || cmd.includes('implement')) {
-        state.workflowPhase = 'development';
-      } else if (cmd.includes('review') || cmd.includes('qa')) {
-        state.workflowPhase = 'review';
-      } else if (cmd.includes('push') || cmd.includes('pr') || cmd.includes('deploy')) {
-        state.workflowPhase = 'deployment';
-      } else if (cmd.includes('create') || cmd.includes('story') || cmd.includes('epic')) {
-        state.workflowPhase = 'planning';
+      if (cmd.includes("develop") || cmd.includes("implement")) {
+        state.workflowPhase = "development";
+      } else if (cmd.includes("review") || cmd.includes("qa")) {
+        state.workflowPhase = "review";
+      } else if (cmd.includes("push") || cmd.includes("pr") || cmd.includes("deploy")) {
+        state.workflowPhase = "deployment";
+      } else if (cmd.includes("create") || cmd.includes("story") || cmd.includes("epic")) {
+        state.workflowPhase = "planning";
       }
     }
 
@@ -466,16 +478,18 @@ class SuggestionEngine {
    * @private
    */
   _interpolateArgs(argsTemplate, context) {
-    if (!argsTemplate) return '';
+    if (!argsTemplate) {
+      return "";
+    }
 
     return argsTemplate
-      .replace(/\$\{story_path\}/g, context.storyPath || '')
-      .replace(/\$\{epic_path\}/g, context.epicPath || '')
-      .replace(/\$\{doc_path\}/g, context.docPath || '')
-      .replace(/\$\{file_path\}/g, context.filePath || '')
-      .replace(/\$\{feature_name\}/g, context.featureName || '')
-      .replace(/\$\{topic\}/g, context.topic || '')
-      .replace(/\$\{branch\}/g, context.branch || '')
+      .replace(/\$\{story_path\}/g, context.storyPath || "")
+      .replace(/\$\{epic_path\}/g, context.epicPath || "")
+      .replace(/\$\{doc_path\}/g, context.docPath || "")
+      .replace(/\$\{file_path\}/g, context.filePath || "")
+      .replace(/\$\{feature_name\}/g, context.featureName || "")
+      .replace(/\$\{topic\}/g, context.topic || "")
+      .replace(/\$\{branch\}/g, context.branch || "")
       .trim();
   }
 
@@ -487,13 +501,13 @@ class SuggestionEngine {
    */
   _generateCacheKey(context) {
     const keyParts = [
-      context.agentId || '',
-      context.lastCommand || '',
-      (context.lastCommands || []).slice(-3).join(','),
-      context.storyPath || '',
-      context.branch || '',
+      context.agentId || "",
+      context.lastCommand || "",
+      (context.lastCommands || []).slice(-3).join(","),
+      context.storyPath || "",
+      context.branch || "",
     ];
-    return keyParts.join('|');
+    return keyParts.join("|");
   }
 
   /**
@@ -579,14 +593,14 @@ class SuggestionEngine {
 
       // Apply boosts to suggestions
       return suggestions.map((suggestion) => {
-        const cmdNormalized = suggestion.command.replace(/^\*/, '').toLowerCase();
+        const cmdNormalized = suggestion.command.replace(/^\*/, "").toLowerCase();
         const boost = boostMap.get(cmdNormalized) || 0;
 
         if (boost > 0) {
           return {
             ...suggestion,
             confidence: Math.min(1.0, suggestion.confidence + boost),
-            source: 'learned_pattern',
+            source: "learned_pattern",
             learnedBoost: Math.round(boost * 100) / 100,
           };
         }
@@ -594,7 +608,7 @@ class SuggestionEngine {
         return suggestion;
       });
     } catch (error) {
-      console.warn('[SuggestionEngine] Failed to apply learned pattern boost:', error.message);
+      console.warn("[SuggestionEngine] Failed to apply learned pattern boost:", error.message);
       return suggestions;
     }
   }
@@ -612,8 +626,8 @@ class SuggestionEngine {
     }
 
     // Normalize for comparison
-    const normalizedSubseq = subseq.map((c) => c.toLowerCase().replace(/^\*/, ''));
-    const normalizedPattern = pattern.map((c) => c.toLowerCase().replace(/^\*/, ''));
+    const normalizedSubseq = subseq.map((c) => c.toLowerCase().replace(/^\*/, ""));
+    const normalizedPattern = pattern.map((c) => c.toLowerCase().replace(/^\*/, ""));
 
     // Find where the subsequence ends in the pattern
     for (let i = 0; i <= normalizedPattern.length - normalizedSubseq.length; i++) {
@@ -655,114 +669,114 @@ class SuggestionEngine {
    * @returns {Object} Fallback suggestions
    */
   getFallbackSuggestions(context) {
-    const agent = context.agentId || 'dev';
+    const agent = context.agentId || "dev";
 
     // Agent-specific fallback suggestions
     const fallbacks = {
       dev: [
         {
-          command: '*help',
-          args: '',
-          description: 'Show available commands',
+          command: "*help",
+          args: "",
+          description: "Show available commands",
           confidence: 0.3,
           priority: 1,
         },
         {
-          command: '*run-tests',
-          args: '',
-          description: 'Run test suite',
+          command: "*run-tests",
+          args: "",
+          description: "Run test suite",
           confidence: 0.25,
           priority: 2,
         },
         {
-          command: '*develop',
-          args: '',
-          description: 'Start development mode',
+          command: "*develop",
+          args: "",
+          description: "Start development mode",
           confidence: 0.2,
           priority: 3,
         },
       ],
       po: [
         {
-          command: '*help',
-          args: '',
-          description: 'Show available commands',
+          command: "*help",
+          args: "",
+          description: "Show available commands",
           confidence: 0.3,
           priority: 1,
         },
         {
-          command: '*backlog-review',
-          args: '',
-          description: 'Review backlog',
+          command: "*backlog-review",
+          args: "",
+          description: "Review backlog",
           confidence: 0.25,
           priority: 2,
         },
         {
-          command: '*create-story',
-          args: '',
-          description: 'Create new story',
+          command: "*create-story",
+          args: "",
+          description: "Create new story",
           confidence: 0.2,
           priority: 3,
         },
       ],
       qa: [
         {
-          command: '*help',
-          args: '',
-          description: 'Show available commands',
+          command: "*help",
+          args: "",
+          description: "Show available commands",
           confidence: 0.3,
           priority: 1,
         },
         {
-          command: '*run-tests',
-          args: '',
-          description: 'Run test suite',
+          command: "*run-tests",
+          args: "",
+          description: "Run test suite",
           confidence: 0.25,
           priority: 2,
         },
         {
-          command: '*review-qa',
-          args: '',
-          description: 'Start QA review',
+          command: "*review-qa",
+          args: "",
+          description: "Start QA review",
           confidence: 0.2,
           priority: 3,
         },
       ],
       sm: [
         {
-          command: '*help',
-          args: '',
-          description: 'Show available commands',
+          command: "*help",
+          args: "",
+          description: "Show available commands",
           confidence: 0.3,
           priority: 1,
         },
         {
-          command: '*create-next-story',
-          args: '',
-          description: 'Create next story',
+          command: "*create-next-story",
+          args: "",
+          description: "Create next story",
           confidence: 0.25,
           priority: 2,
         },
         {
-          command: '*validate-story-draft',
-          args: '',
-          description: 'Validate story',
+          command: "*validate-story-draft",
+          args: "",
+          description: "Validate story",
           confidence: 0.2,
           priority: 3,
         },
       ],
       default: [
         {
-          command: '*help',
-          args: '',
-          description: 'Show available commands',
+          command: "*help",
+          args: "",
+          description: "Show available commands",
           confidence: 0.3,
           priority: 1,
         },
         {
-          command: '*status',
-          args: '',
-          description: 'Show project status',
+          command: "*status",
+          args: "",
+          description: "Show project status",
           confidence: 0.2,
           priority: 2,
         },
@@ -775,7 +789,7 @@ class SuggestionEngine {
       confidence: 0.25,
       suggestions: fallbacks[agent] || fallbacks.default,
       isUncertain: true,
-      message: 'Using fallback suggestions - context unclear',
+      message: "Using fallback suggestions - context unclear",
     };
   }
 }

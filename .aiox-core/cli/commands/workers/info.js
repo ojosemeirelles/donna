@@ -9,24 +9,26 @@
  * @story 2.8-2.9 - Discovery CLI Info & List
  */
 
-const { Command } = require('commander');
-const { getRegistry } = require('../../../core/registry/registry-loader');
-const { formatInfo, formatNotFoundError } = require('./formatters/info-formatter');
-const { levenshteinDistance } = require('./search-keyword');
+const { Command } = require("commander");
+const { getRegistry } = require("../../../core/registry/registry-loader");
+const { formatInfo, formatNotFoundError } = require("./formatters/info-formatter");
+const { levenshteinDistance } = require("./search-keyword");
 
 /**
  * Create the info command
  * @returns {Command} Commander command instance
  */
 function createInfoCommand() {
-  const info = new Command('info');
+  const info = new Command("info");
 
   info
-    .description('Show detailed information about a worker')
-    .argument('<id>', 'Worker ID to display')
-    .option('-f, --format <format>', 'Output format: pretty, json, yaml', 'pretty')
-    .option('-v, --verbose', 'Show verbose/debug output')
-    .addHelpText('after', `
+    .description("Show detailed information about a worker")
+    .argument("<id>", "Worker ID to display")
+    .option("-f, --format <format>", "Output format: pretty, json, yaml", "pretty")
+    .option("-v, --verbose", "Show verbose/debug output")
+    .addHelpText(
+      "after",
+      `
 Examples:
   $ aiox workers info json-csv-transformer
   $ aiox workers info architect-checklist --format=json
@@ -37,7 +39,8 @@ Output Formats:
   pretty   Formatted text with sections and boxes (default)
   json     JSON object with all metadata
   yaml     YAML document with all metadata
-`)
+`,
+    )
     .action(executeInfo);
 
   return info;
@@ -54,7 +57,7 @@ async function executeInfo(id, options) {
   try {
     // Validate ID
     if (!id || id.trim().length === 0) {
-      console.error('Error: Worker ID cannot be empty');
+      console.error("Error: Worker ID cannot be empty");
       process.exit(1);
     }
 
@@ -64,7 +67,7 @@ async function executeInfo(id, options) {
     if (options.verbose) {
       console.log(`Looking up worker: "${trimmedId}"`);
       console.log(`Output format: ${options.format}`);
-      console.log('');
+      console.log("");
     }
 
     // Try to get worker by exact ID
@@ -99,7 +102,6 @@ async function executeInfo(id, options) {
     if (duration > 500) {
       console.warn(`\nWarning: Info command took ${duration}ms (target: < 500ms)`);
     }
-
   } catch (error) {
     console.error(`Error: ${error.message}`);
     if (options.verbose) {
@@ -131,7 +133,7 @@ async function findSuggestions(registry, invalidId) {
     // Check Levenshtein distance for similar IDs
     const distance = levenshteinDistance(invalidId, idLower);
     const maxLen = Math.max(invalidId.length, idLower.length);
-    const similarity = 1 - (distance / maxLen);
+    const similarity = 1 - distance / maxLen;
 
     if (similarity >= 0.5) {
       suggestions.push({ worker, score: Math.round(similarity * 100) });
@@ -140,7 +142,7 @@ async function findSuggestions(registry, invalidId) {
 
   // Sort by score descending and return top 5
   suggestions.sort((a, b) => b.score - a.score);
-  return suggestions.slice(0, 5).map(s => s.worker);
+  return suggestions.slice(0, 5).map((s) => s.worker);
 }
 
 /**
@@ -156,7 +158,9 @@ async function findRelatedWorkers(registry, worker) {
   const categoryWorkers = await registry.getByCategory(worker.category);
 
   for (const catWorker of categoryWorkers) {
-    if (catWorker.id === worker.id) continue;
+    if (catWorker.id === worker.id) {
+      continue;
+    }
 
     // Higher priority for same subcategory
     const score = catWorker.subcategory === worker.subcategory ? 10 : 5;
@@ -168,7 +172,9 @@ async function findRelatedWorkers(registry, worker) {
     const tagWorkers = await registry.getByTag(tag);
 
     for (const tagWorker of tagWorkers) {
-      if (tagWorker.id === worker.id) continue;
+      if (tagWorker.id === worker.id) {
+        continue;
+      }
 
       if (related.has(tagWorker.id)) {
         // Increment score for shared tag
@@ -180,10 +186,9 @@ async function findRelatedWorkers(registry, worker) {
   }
 
   // Sort by score descending
-  const sorted = Array.from(related.values())
-    .sort((a, b) => b.score - a.score);
+  const sorted = Array.from(related.values()).toSorted((a, b) => b.score - a.score);
 
-  return sorted.slice(0, 5).map(r => r.worker);
+  return sorted.slice(0, 5).map((r) => r.worker);
 }
 
 module.exports = {

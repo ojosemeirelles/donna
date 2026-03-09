@@ -1,9 +1,9 @@
-const execa = require('execa');
-const fs = require('fs').promises;
-const fsSync = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
-const WorktreeManager = require('./worktree-manager');
+const execa = require("execa");
+const fs = require("fs").promises;
+const fsSync = require("fs");
+const path = require("path");
+const yaml = require("js-yaml");
+const WorktreeManager = require("./worktree-manager");
 
 /**
  * ProjectStatusLoader - Dynamic project status for agent activation context
@@ -71,7 +71,7 @@ class ProjectStatusLoader {
     // ACT-3: Determine cache file path (worktree-aware)
     // ACT-11: _resolveCacheFilePath now also caches _resolvedGitDir and _isGitRepo
     this.cacheFile = this._resolveCacheFilePath();
-    this.lockFile = this.cacheFile + '.lock';
+    this.lockFile = this.cacheFile + ".lock";
 
     // ACT-3: Smart TTLs - active session vs idle
     this.activeSessionTTL = ACTIVE_SESSION_TTL;
@@ -93,8 +93,8 @@ class ProjectStatusLoader {
    */
   loadConfig() {
     try {
-      const configPath = path.join(this.rootPath, '.aiox-core', 'core-config.yaml');
-      const configContent = fsSync.readFileSync(configPath, 'utf8');
+      const configPath = path.join(this.rootPath, ".aiox-core", "core-config.yaml");
+      const configContent = fsSync.readFileSync(configPath, "utf8");
       return yaml.load(configContent);
     } catch (error) {
       // Config not found - use defaults
@@ -117,22 +117,22 @@ class ProjectStatusLoader {
    */
   _resolveCacheFilePath() {
     try {
-      const { execSync } = require('child_process');
+      const { execSync } = require("child_process");
 
       // Get the git directory for the current worktree
-      const gitDir = execSync('git rev-parse --git-dir', {
+      const gitDir = execSync("git rev-parse --git-dir", {
         cwd: this.rootPath,
-        encoding: 'utf8',
+        encoding: "utf8",
         timeout: 2000,
-        stdio: ['pipe', 'pipe', 'ignore'],
+        stdio: ["pipe", "pipe", "ignore"],
       }).trim();
 
       // Get the common git directory (shared across worktrees)
-      const gitCommonDir = execSync('git rev-parse --git-common-dir', {
+      const gitCommonDir = execSync("git rev-parse --git-common-dir", {
         cwd: this.rootPath,
-        encoding: 'utf8',
+        encoding: "utf8",
         timeout: 2000,
-        stdio: ['pipe', 'pipe', 'ignore'],
+        stdio: ["pipe", "pipe", "ignore"],
       }).trim();
 
       // ACT-11: Cache the resolved git dir for getGitStateFingerprint()
@@ -147,13 +147,13 @@ class ProjectStatusLoader {
       if (normalizedGitDir !== normalizedCommonDir) {
         // Create a short hash from the worktree path for a unique cache filename
         const worktreeHash = this._hashString(this.rootPath).substring(0, 8);
-        return path.join(this.rootPath, '.aiox', `project-status-${worktreeHash}.yaml`);
+        return path.join(this.rootPath, ".aiox", `project-status-${worktreeHash}.yaml`);
       }
     } catch (error) {
       // Not a git repo or git not available - use default path
     }
 
-    return path.join(this.rootPath, '.aiox', 'project-status.yaml');
+    return path.join(this.rootPath, ".aiox", "project-status.yaml");
   }
 
   /**
@@ -167,10 +167,10 @@ class ProjectStatusLoader {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    return Math.abs(hash).toString(16).padStart(8, '0');
+    return Math.abs(hash).toString(16).padStart(8, "0");
   }
 
   /**
@@ -188,22 +188,28 @@ class ProjectStatusLoader {
 
       if (!resolvedGitDir) {
         // Fallback if constructor didn't resolve (shouldn't happen in normal flow)
-        const { execSync } = require('child_process');
-        const gitDir = execSync('git rev-parse --git-dir', {
+        const { execSync } = require("child_process");
+        const gitDir = execSync("git rev-parse --git-dir", {
           cwd: this.rootPath,
-          encoding: 'utf8',
+          encoding: "utf8",
           timeout: 2000,
-          stdio: ['pipe', 'pipe', 'ignore'],
+          stdio: ["pipe", "pipe", "ignore"],
         }).trim();
         resolvedGitDir = path.resolve(this.rootPath, gitDir);
       }
 
-      const headPath = path.join(resolvedGitDir, 'HEAD');
-      const indexPath = path.join(resolvedGitDir, 'index');
+      const headPath = path.join(resolvedGitDir, "HEAD");
+      const indexPath = path.join(resolvedGitDir, "index");
 
       const mtimes = await Promise.all([
-        fs.stat(headPath).then(s => s.mtimeMs).catch(() => 0),
-        fs.stat(indexPath).then(s => s.mtimeMs).catch(() => 0),
+        fs
+          .stat(headPath)
+          .then((s) => s.mtimeMs)
+          .catch(() => 0),
+        fs
+          .stat(indexPath)
+          .then((s) => s.mtimeMs)
+          .catch(() => 0),
       ]);
 
       return `${mtimes[0]}:${mtimes[1]}`;
@@ -240,7 +246,7 @@ class ProjectStatusLoader {
 
       return status;
     } catch (error) {
-      console.warn('Project status loading failed, using defaults:', error.message);
+      console.warn("Project status loading failed, using defaults:", error.message);
       return this.getDefaultStatus();
     }
   }
@@ -299,9 +305,9 @@ class ProjectStatusLoader {
    */
   async isGitRepository() {
     try {
-      await execa('git', ['rev-parse', '--is-inside-work-tree'], {
+      await execa("git", ["rev-parse", "--is-inside-work-tree"], {
         cwd: this.rootPath,
-        stderr: 'ignore',
+        stderr: "ignore",
       });
       return true;
     } catch (error) {
@@ -317,19 +323,19 @@ class ProjectStatusLoader {
   async getGitBranch() {
     try {
       // Try modern git command first (git >= 2.22)
-      const { stdout } = await execa('git', ['branch', '--show-current'], {
+      const { stdout } = await execa("git", ["branch", "--show-current"], {
         cwd: this.rootPath,
       });
       return stdout.trim();
     } catch (error) {
       // Fallback for older git versions
       try {
-        const { stdout } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+        const { stdout } = await execa("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
           cwd: this.rootPath,
         });
         return stdout.trim();
       } catch (fallbackError) {
-        return 'unknown';
+        return "unknown";
       }
     }
   }
@@ -341,15 +347,17 @@ class ProjectStatusLoader {
    */
   async getModifiedFiles() {
     try {
-      const { stdout } = await execa('git', ['status', '--porcelain'], {
+      const { stdout } = await execa("git", ["status", "--porcelain"], {
         cwd: this.rootPath,
       });
 
-      if (!stdout) return { files: [], totalCount: 0 };
+      if (!stdout) {
+        return { files: [], totalCount: 0 };
+      }
 
       // Parse porcelain output
       const allFiles = stdout
-        .split('\n')
+        .split("\n")
         .filter((line) => line.trim())
         .map((line) => {
           // Remove status prefix (e.g., " M ", "A  ", "?? ")
@@ -373,18 +381,20 @@ class ProjectStatusLoader {
   async getRecentCommits() {
     try {
       const { stdout } = await execa(
-        'git',
-        ['log', `-${this.maxRecentCommits}`, '--oneline', '--no-decorate'],
+        "git",
+        ["log", `-${this.maxRecentCommits}`, "--oneline", "--no-decorate"],
         {
           cwd: this.rootPath,
-        }
+        },
       );
 
-      if (!stdout) return [];
+      if (!stdout) {
+        return [];
+      }
 
       // Parse commit lines (remove hash, keep message)
       const commits = stdout
-        .split('\n')
+        .split("\n")
         .filter((line) => line.trim())
         .map((line) => {
           // Remove commit hash (first 7-8 characters)
@@ -443,7 +453,7 @@ class ProjectStatusLoader {
    */
   async getCurrentStoryInfo() {
     try {
-      const storiesDir = path.join(this.rootPath, 'docs', 'stories');
+      const storiesDir = path.join(this.rootPath, "docs", "stories");
 
       // Check if stories directory exists
       try {
@@ -456,11 +466,11 @@ class ProjectStatusLoader {
       const storyFiles = await this.findMarkdownFiles(storiesDir);
 
       for (const file of storyFiles) {
-        const content = await fs.readFile(file, 'utf8');
+        const content = await fs.readFile(file, "utf8");
 
         // Check for InProgress status
         const statusMatch = content.match(
-          /\*\*Status:\*\*\s*(InProgress|In Progress|🔄\s*InProgress|🔄\s*In Progress)/i
+          /\*\*Status:\*\*\s*(InProgress|In Progress|🔄\s*InProgress|🔄\s*In Progress)/i,
         );
 
         if (statusMatch) {
@@ -469,7 +479,7 @@ class ProjectStatusLoader {
           const epicMatch = content.match(/\*\*Epic:\*\*\s*([^\n]+)/);
 
           return {
-            story: storyIdMatch ? storyIdMatch[1] : path.basename(file, '.md'),
+            story: storyIdMatch ? storyIdMatch[1] : path.basename(file, ".md"),
             epic: epicMatch ? epicMatch[1].trim() : null,
           };
         }
@@ -499,7 +509,7 @@ class ProjectStatusLoader {
         if (entry.isDirectory()) {
           const subFiles = await this.findMarkdownFiles(fullPath);
           files.push(...subFiles);
-        } else if (entry.isFile() && entry.name.endsWith('.md')) {
+        } else if (entry.isFile() && entry.name.endsWith(".md")) {
           files.push(fullPath);
         }
       }
@@ -520,11 +530,11 @@ class ProjectStatusLoader {
    */
   async loadCache() {
     try {
-      const content = await fs.readFile(this.cacheFile, 'utf8');
+      const content = await fs.readFile(this.cacheFile, "utf8");
       const parsed = yaml.load(content);
 
       // ACT-3: Validate cache structure (corrupted cache recovery)
-      if (!parsed || typeof parsed !== 'object' || !parsed.status) {
+      if (!parsed || typeof parsed !== "object" || !parsed.status) {
         // Cache is corrupted - delete and regenerate
         await this.clearCache();
         return null;
@@ -532,7 +542,7 @@ class ProjectStatusLoader {
 
       return parsed;
     } catch (error) {
-      if (error.name === 'YAMLException') {
+      if (error.name === "YAMLException") {
         // Corrupted YAML - delete the file
         await this.clearCache();
       }
@@ -553,7 +563,9 @@ class ProjectStatusLoader {
    * @returns {boolean}
    */
   isCacheValid(cache, currentFingerprint) {
-    if (!cache || !cache.timestamp) return false;
+    if (!cache || !cache.timestamp) {
+      return false;
+    }
 
     const age = Date.now() - cache.timestamp;
 
@@ -589,10 +601,10 @@ class ProjectStatusLoader {
         // Try exclusive create - fails if file exists
         // Write lock data (PID + timestamp) directly to the lock file path
         const lockData = JSON.stringify({ pid: process.pid, timestamp: Date.now() });
-        await fs.writeFile(this.lockFile, lockData, { flag: 'wx' });
+        await fs.writeFile(this.lockFile, lockData, { flag: "wx" });
         return true;
       } catch (error) {
-        if (error.code === 'EEXIST') {
+        if (error.code === "EEXIST") {
           // Lock exists - check if stale
           const isStale = await this._isLockStale();
           if (isStale) {
@@ -601,7 +613,7 @@ class ProjectStatusLoader {
             continue;
           }
           // Wait briefly and retry
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise((resolve) => setTimeout(resolve, 50));
           continue;
         }
         // Other error (e.g., ENOENT for missing directory) - skip locking
@@ -621,9 +633,9 @@ class ProjectStatusLoader {
    */
   async _isLockStale() {
     try {
-      const content = await fs.readFile(this.lockFile, 'utf8');
+      const content = await fs.readFile(this.lockFile, "utf8");
       const lockData = JSON.parse(content);
-      return (Date.now() - lockData.timestamp) > LOCK_STALE_MS;
+      return Date.now() - lockData.timestamp > LOCK_STALE_MS;
     } catch (error) {
       // Cannot read lock file - consider it stale
       return true;
@@ -671,20 +683,24 @@ class ProjectStatusLoader {
       const content = yaml.dump(cache);
 
       // Atomic write: write to temp file, then rename
-      const tempFile = this.cacheFile + '.tmp.' + process.pid;
-      await fs.writeFile(tempFile, content, 'utf8');
+      const tempFile = this.cacheFile + ".tmp." + process.pid;
+      await fs.writeFile(tempFile, content, "utf8");
 
       try {
         await fs.rename(tempFile, this.cacheFile);
       } catch (renameError) {
         // On Windows, rename can fail if target exists - fall back to direct write
-        await fs.writeFile(this.cacheFile, content, 'utf8');
+        await fs.writeFile(this.cacheFile, content, "utf8");
         // Clean up temp file
-        try { await fs.unlink(tempFile); } catch { /* ignore */ }
+        try {
+          await fs.unlink(tempFile);
+        } catch {
+          /* ignore */
+        }
       }
     } catch (error) {
       // Cache write failure is non-critical, just log
-      console.warn('Failed to write status cache:', error.message);
+      console.warn("Failed to write status cache:", error.message);
     } finally {
       if (lockAcquired) {
         await this._releaseLock();
@@ -737,7 +753,7 @@ class ProjectStatusLoader {
    */
   getDefaultStatus() {
     return {
-      branch: 'unknown',
+      branch: "unknown",
       modifiedFiles: [],
       recentCommits: [],
       currentEpic: null,
@@ -755,7 +771,7 @@ class ProjectStatusLoader {
    */
   formatStatusDisplay(status) {
     if (!status.isGitRepo) {
-      return '  (Not a git repository)';
+      return "  (Not a git repository)";
     }
 
     const lines = [];
@@ -765,7 +781,7 @@ class ProjectStatusLoader {
     }
 
     if (status.modifiedFiles && status.modifiedFiles.length > 0) {
-      let filesDisplay = status.modifiedFiles.join(', ');
+      let filesDisplay = status.modifiedFiles.join(", ");
 
       // QA Fix: Issue 6.1.2.4-I3 - Add truncation message
       const totalCount = status.modifiedFilesTotalCount || status.modifiedFiles.length;
@@ -778,7 +794,7 @@ class ProjectStatusLoader {
     }
 
     if (status.recentCommits && status.recentCommits.length > 0) {
-      lines.push(`  - Recent: ${status.recentCommits.join(', ')}`);
+      lines.push(`  - Recent: ${status.recentCommits.join(", ")}`);
     }
 
     if (status.currentStory) {
@@ -789,10 +805,10 @@ class ProjectStatusLoader {
     if (status.worktrees && Object.keys(status.worktrees).length > 0) {
       const worktreeCount = Object.keys(status.worktrees).length;
       const activeCount = Object.values(status.worktrees).filter(
-        (w) => w.status === 'active'
+        (w) => w.status === "active",
       ).length;
       const withChanges = Object.values(status.worktrees).filter(
-        (w) => w.uncommittedChanges > 0
+        (w) => w.uncommittedChanges > 0,
       ).length;
 
       let worktreeInfo = `${activeCount}/${worktreeCount} active`;
@@ -803,10 +819,10 @@ class ProjectStatusLoader {
     }
 
     if (lines.length === 0) {
-      return '  (No recent activity)';
+      return "  (No recent activity)";
     }
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 }
 

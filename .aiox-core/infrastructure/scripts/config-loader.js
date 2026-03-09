@@ -1,13 +1,13 @@
 /**
  * @deprecated Use agent-config-loader.js instead
  * This file will be removed in a future version.
- * 
+ *
  * Migration guide:
  * - Old: const { loadAgentConfig } = require('./config-loader');
  * - New: const { AgentConfigLoader } = require('./agent-config-loader');
  *        const loader = new AgentConfigLoader(agentId);
  *        const config = await loader.load(coreConfig);
- * 
+ *
  * AIOX Config Loader with Lazy Loading
  *
  * Intelligent configuration loader that only loads what each agent needs,
@@ -19,9 +19,9 @@
  * @deprecated Since Story 6.1.4 - Use agent-config-loader.js instead
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
 /**
  * Config cache with TTL
@@ -30,36 +30,116 @@ const configCache = {
   full: null,
   sections: {},
   lastLoad: null,
-  TTL: 5 * 60 * 1000,  // 5 minutes
+  TTL: 5 * 60 * 1000, // 5 minutes
 };
 
 /**
  * Agent requirements mapping (from agent-config-requirements.yaml)
  */
 const agentRequirements = {
-  dev: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations', 'pvMindContext', 'hybridOpsConfig'],
-  qa: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations'],
-  po: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations'],
-  pm: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading'],
-  sm: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations'],
-  architect: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations'],
-  analyst: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations'],
-  'data-engineer': ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations', 'pvMindContext', 'hybridOpsConfig'],
-  devops: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations'],
-  'aiox-master': ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'registry', 'expansionPacks', 'toolConfigurations'],
-  'ux-expert': ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations'],
-  'db-sage': ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations', 'pvMindContext', 'hybridOpsConfig'],
-  security: ['frameworkDocsLocation', 'projectDocsLocation', 'devLoadAlwaysFiles', 'lazyLoading', 'toolConfigurations'],
+  dev: [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+    "pvMindContext",
+    "hybridOpsConfig",
+  ],
+  qa: [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+  ],
+  po: [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+  ],
+  pm: ["frameworkDocsLocation", "projectDocsLocation", "devLoadAlwaysFiles", "lazyLoading"],
+  sm: [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+  ],
+  architect: [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+  ],
+  analyst: [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+  ],
+  "data-engineer": [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+    "pvMindContext",
+    "hybridOpsConfig",
+  ],
+  devops: [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+  ],
+  "aiox-master": [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "registry",
+    "expansionPacks",
+    "toolConfigurations",
+  ],
+  "ux-expert": [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+  ],
+  "db-sage": [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+    "pvMindContext",
+    "hybridOpsConfig",
+  ],
+  security: [
+    "frameworkDocsLocation",
+    "projectDocsLocation",
+    "devLoadAlwaysFiles",
+    "lazyLoading",
+    "toolConfigurations",
+  ],
 };
 
 /**
  * Always-loaded sections (lightweight, needed by all)
  */
 const ALWAYS_LOADED = [
-  'frameworkDocsLocation',
-  'projectDocsLocation',
-  'devLoadAlwaysFiles',
-  'lazyLoading',
+  "frameworkDocsLocation",
+  "projectDocsLocation",
+  "devLoadAlwaysFiles",
+  "lazyLoading",
 ];
 
 /**
@@ -77,7 +157,9 @@ const performanceMetrics = {
  * Checks if cache is still valid
  */
 function isCacheValid() {
-  if (!configCache.lastLoad) return false;
+  if (!configCache.lastLoad) {
+    return false;
+  }
 
   const now = Date.now();
   const age = now - configCache.lastLoad;
@@ -89,12 +171,12 @@ function isCacheValid() {
  * Loads full config file (used for initial load or cache refresh)
  */
 async function loadFullConfig() {
-  const configPath = path.join('.aiox-core', 'core-config.yaml');
+  const configPath = path.join(".aiox-core", "core-config.yaml");
 
   const startTime = Date.now();
 
   try {
-    const content = await fs.readFile(configPath, 'utf8');
+    const content = await fs.readFile(configPath, "utf8");
     const config = yaml.load(content);
 
     const loadTime = Date.now() - startTime;
@@ -110,8 +192,8 @@ async function loadFullConfig() {
 
     return config;
   } catch (error) {
-    console.error('Failed to load core-config.yaml:', error.message);
-    throw new Error(`Config load failed: ${error.message}`);
+    console.error("Failed to load core-config.yaml:", error.message);
+    throw new Error(`Config load failed: ${error.message}`, { cause: error });
   }
 }
 
@@ -129,7 +211,7 @@ async function loadConfigSections(sections) {
     performanceMetrics.cacheHits++;
 
     const config = {};
-    sections.forEach(section => {
+    sections.forEach((section) => {
       if (configCache.full[section] !== undefined) {
         config[section] = configCache.full[section];
       }
@@ -144,7 +226,7 @@ async function loadConfigSections(sections) {
 
   // Extract requested sections
   const config = {};
-  sections.forEach(section => {
+  sections.forEach((section) => {
     if (fullConfig[section] !== undefined) {
       config[section] = fullConfig[section];
     }
@@ -195,9 +277,9 @@ async function loadMinimalConfig() {
  * Preloads config into cache (useful for startup optimization)
  */
 async function preloadConfig() {
-  console.log('🔄 Preloading config into cache...');
+  console.log("🔄 Preloading config into cache...");
   await loadFullConfig();
-  console.log('✅ Config preloaded');
+  console.log("✅ Config preloaded");
 }
 
 /**
@@ -207,7 +289,7 @@ function clearCache() {
   configCache.full = null;
   configCache.sections = {};
   configCache.lastLoad = null;
-  console.log('🗑️ Config cache cleared');
+  console.log("🗑️ Config cache cleared");
 }
 
 /**
@@ -218,9 +300,10 @@ function clearCache() {
 function getPerformanceMetrics() {
   return {
     ...performanceMetrics,
-    cacheHitRate: performanceMetrics.loads > 0
-      ? ((performanceMetrics.cacheHits / performanceMetrics.loads) * 100).toFixed(1) + '%'
-      : '0%',
+    cacheHitRate:
+      performanceMetrics.loads > 0
+        ? ((performanceMetrics.cacheHits / performanceMetrics.loads) * 100).toFixed(1) + "%"
+        : "0%",
     avgLoadTimeMs: Math.round(performanceMetrics.avgLoadTime),
   };
 }
@@ -236,9 +319,7 @@ async function validateAgentConfig(agentId) {
 
   const config = await loadFullConfig();
 
-  const missingSections = requiredSections.filter(
-    section => config[section] === undefined,
-  );
+  const missingSections = requiredSections.filter((section) => config[section] === undefined);
 
   return {
     valid: missingSections.length === 0,
@@ -283,52 +364,52 @@ if (require.main === module) {
   (async () => {
     try {
       switch (command) {
-        case 'load':
-          const config = await loadAgentConfig(arg || 'dev');
+        case "load":
+          const config = await loadAgentConfig(arg || "dev");
           console.log(JSON.stringify(config, null, 2));
           break;
 
-        case 'preload':
+        case "preload":
           await preloadConfig();
           break;
 
-        case 'validate':
-          const validation = await validateAgentConfig(arg || 'dev');
+        case "validate":
+          const validation = await validateAgentConfig(arg || "dev");
           console.log(JSON.stringify(validation, null, 2));
           break;
 
-        case 'metrics':
+        case "metrics":
           const metrics = getPerformanceMetrics();
           console.log(JSON.stringify(metrics, null, 2));
           break;
 
-        case 'test':
-          console.log('\n🧪 Testing config loader...\n');
+        case "test":
+          console.log("\n🧪 Testing config loader...\n");
 
           // Test 1: Load minimal
-          console.log('Test 1: Load minimal config');
+          console.log("Test 1: Load minimal config");
           const minimal = await loadMinimalConfig();
           console.log(`  ✅ Loaded ${Object.keys(minimal).length} sections\n`);
 
           // Test 2: Load agent config
-          console.log('Test 2: Load agent config (@dev)');
-          const devConfig = await loadAgentConfig('dev');
+          console.log("Test 2: Load agent config (@dev)");
+          const devConfig = await loadAgentConfig("dev");
           console.log(`  ✅ Loaded ${Object.keys(devConfig).length} sections\n`);
 
           // Test 3: Cache hit
-          console.log('Test 3: Load again (should hit cache)');
-          const devConfig2 = await loadAgentConfig('dev');
+          console.log("Test 3: Load again (should hit cache)");
+          const devConfig2 = await loadAgentConfig("dev");
           console.log(`  ✅ Loaded ${Object.keys(devConfig2).length} sections\n`);
 
           // Test 4: Metrics
-          console.log('Test 4: Performance metrics');
+          console.log("Test 4: Performance metrics");
           const testMetrics = getPerformanceMetrics();
           console.log(`  Loads: ${testMetrics.loads}`);
           console.log(`  Cache hits: ${testMetrics.cacheHits}`);
           console.log(`  Cache hit rate: ${testMetrics.cacheHitRate}`);
           console.log(`  Avg load time: ${testMetrics.avgLoadTimeMs}ms\n`);
 
-          console.log('✅ All tests passed!\n');
+          console.log("✅ All tests passed!\n");
           break;
 
         default:
@@ -342,7 +423,7 @@ Usage:
           `);
       }
     } catch (error) {
-      console.error('Error:', error.message);
+      console.error("Error:", error.message);
       process.exit(1);
     }
   })();

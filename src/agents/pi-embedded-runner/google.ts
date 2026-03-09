@@ -313,7 +313,9 @@ export function checkGeminiSafetyPreflight(params: {
 
   for (let i = 0; i < params.messages.length; i++) {
     const msg = params.messages[i] as { role?: unknown; content?: unknown };
-    if (!msg) continue;
+    if (!msg) {
+      continue;
+    }
 
     const texts: string[] = [];
     if (typeof msg.content === "string") {

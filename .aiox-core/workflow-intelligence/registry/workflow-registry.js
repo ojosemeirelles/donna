@@ -5,11 +5,11 @@
  * @version 1.0.0
  */
 
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs");
+const path = require("path");
+const yaml = require("js-yaml");
 
 /**
  * Default cache TTL in milliseconds (5 minutes)
@@ -21,7 +21,7 @@ const DEFAULT_CACHE_TTL = 5 * 60 * 1000;
  * Default path to workflow patterns file
  * @type {string}
  */
-const DEFAULT_PATTERNS_PATH = path.join(__dirname, '../../data/workflow-patterns.yaml');
+const DEFAULT_PATTERNS_PATH = path.join(__dirname, "../../data/workflow-patterns.yaml");
 
 /**
  * WorkflowRegistry class for managing workflow patterns
@@ -52,11 +52,11 @@ class WorkflowRegistry {
     }
 
     try {
-      const content = fs.readFileSync(this.patternsPath, 'utf8');
+      const content = fs.readFileSync(this.patternsPath, "utf8");
       const parsed = yaml.load(content);
 
       if (!parsed || !parsed.workflows) {
-        throw new Error('Invalid workflow patterns file: missing workflows key');
+        throw new Error("Invalid workflow patterns file: missing workflows key");
       }
 
       this.cache = parsed.workflows;
@@ -64,10 +64,10 @@ class WorkflowRegistry {
 
       return this.cache;
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`Workflow patterns file not found: ${this.patternsPath}`);
+      if (error.code === "ENOENT") {
+        throw new Error(`Workflow patterns file not found: ${this.patternsPath}`, { cause: error });
       }
-      throw new Error(`Failed to load workflow patterns: ${error.message}`);
+      throw new Error(`Failed to load workflow patterns: ${error.message}`, { cause: error });
     }
   }
 
@@ -238,7 +238,7 @@ class WorkflowRegistry {
       return [];
     }
 
-    return transition.next_steps.sort((a, b) => (a.priority || 99) - (b.priority || 99));
+    return transition.next_steps.toSorted((a, b) => (a.priority || 99) - (b.priority || 99));
   }
 
   /**
@@ -278,7 +278,7 @@ class WorkflowRegistry {
    */
   getWorkflowsByAgent(agentId) {
     const workflows = this.loadWorkflows();
-    const normalizedAgent = agentId.replace('@', '').toLowerCase();
+    const normalizedAgent = agentId.replace("@", "").toLowerCase();
     const results = [];
 
     for (const [name, workflow] of Object.entries(workflows)) {
@@ -301,14 +301,16 @@ class WorkflowRegistry {
    * @returns {string} Normalized command
    */
   normalizeCommand(command) {
-    if (!command) return '';
+    if (!command) {
+      return "";
+    }
 
     return command
       .toLowerCase()
-      .replace(/\s+completed\s*$/i, '')
-      .replace(/\s+successfully\s*$/i, '')
-      .replace(/^\*/, '')
-      .replace(/['"]/g, '')
+      .replace(/\s+completed\s*$/i, "")
+      .replace(/\s+successfully\s*$/i, "")
+      .replace(/^\*/, "")
+      .replace(/['"]/g, "")
       .trim();
   }
 

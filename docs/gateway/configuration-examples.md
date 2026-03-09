@@ -29,9 +29,9 @@ Save to `~/.donna/donna.json` and you can DM the bot from that number.
 ```json5
 {
   identity: {
-    name: "Clawd",
+    name: "Donna",
     theme: "helpful assistant",
-    emoji: "🦞",
+    emoji: "🌙",
   },
   agent: {
     workspace: "~/.donna/workspace",

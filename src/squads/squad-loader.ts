@@ -6,8 +6,8 @@
  */
 
 import fs from "node:fs";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 import { getLogger } from "../logging/logger.js";
 
 const log = getLogger();
@@ -61,7 +61,7 @@ function parseSimpleYaml(content: string): Record<string, unknown> {
   const lines = content.split("\n");
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]!;
+    const line = lines[i];
 
     // Skip comments and blank lines (but not in multiline mode)
     if (!inMultiline && (line.trim().startsWith("#") || line.trim() === "")) {
@@ -107,10 +107,12 @@ function parseSimpleYaml(content: string): Record<string, unknown> {
     const kvMatch = line.match(/^(\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:\s*(.*)/);
     if (kvMatch) {
       const [, indent, key, rawValue] = kvMatch;
-      const trimmedValue = rawValue!.trim();
+      const trimmedValue = rawValue.trim();
 
       // Skip nested keys (indented) — we only parse top-level
-      if (indent && indent.length > 0) continue;
+      if (indent && indent.length > 0) {
+        continue;
+      }
 
       currentKey = key!;
 
@@ -158,13 +160,9 @@ function parseAgentFile(content: string, filename: string): AgentDefinition {
   return {
     name: String(parsed.name ?? path.basename(filename, ".md")),
     role: String(parsed.role ?? parsed.description ?? ""),
-    expertise: Array.isArray(parsed.expertise)
-      ? parsed.expertise.map(String)
-      : [],
+    expertise: Array.isArray(parsed.expertise) ? parsed.expertise.map(String) : [],
     systemPrompt: String(parsed.system_prompt ?? ""),
-    preferredModel: parsed.preferredModel
-      ? String(parsed.preferredModel)
-      : undefined,
+    preferredModel: parsed.preferredModel ? String(parsed.preferredModel) : undefined,
   };
 }
 
@@ -226,8 +224,12 @@ export class SquadLoader {
     const squads: SquadManifest[] = [];
 
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
-      if (entry.name.startsWith(".")) continue;
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      if (entry.name.startsWith(".")) {
+        continue;
+      }
 
       try {
         const manifest = await this.loadSquad(entry.name);
@@ -243,7 +245,9 @@ export class SquadLoader {
   async loadSquad(name: string): Promise<SquadManifest> {
     // Check cache
     const cached = this.cache.get(name);
-    if (cached) return cached;
+    if (cached) {
+      return cached;
+    }
 
     const squadDir = path.join(this.squadsPath, name);
 
@@ -257,11 +261,7 @@ export class SquadLoader {
 
     const yamlPath = path.join(squadDir, "squad.yaml");
     if (!fs.existsSync(yamlPath)) {
-      throw new SquadLoadError(
-        `Squad "${name}" missing squad.yaml`,
-        "MISSING_MANIFEST",
-        squadDir,
-      );
+      throw new SquadLoadError(`Squad "${name}" missing squad.yaml`, "MISSING_MANIFEST", squadDir);
     }
 
     const content = fs.readFileSync(yamlPath, "utf-8");
@@ -298,7 +298,9 @@ export class SquadLoader {
     }
 
     this.watcher = fs.watch(this.squadsPath, { recursive: false }, (_event, filename) => {
-      if (!filename || filename.startsWith(".")) return;
+      if (!filename || filename.startsWith(".")) {
+        return;
+      }
 
       const squadDir = path.join(this.squadsPath, filename);
       const yamlPath = path.join(squadDir, "squad.yaml");

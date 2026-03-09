@@ -19,20 +19,20 @@
  * @version 1.0.0
  */
 
-const fs = require('fs').promises;
-const path = require('path');
+const fs = require("fs").promises;
+const path = require("path");
 
 // Optional dependencies with graceful fallback
 let yaml;
 try {
-  yaml = require('js-yaml');
+  yaml = require("js-yaml");
 } catch {
   yaml = null;
 }
 
 let chalk;
 try {
-  chalk = require('chalk');
+  chalk = require("chalk");
 } catch {
   chalk = {
     blue: (s) => s,
@@ -112,59 +112,59 @@ const ERROR_PATTERNS = {
 // Suggestions mapped to error categories
 const SUGGESTIONS = {
   dependency: [
-    'Run npm install to ensure all dependencies are installed',
-    'Check package.json for correct dependency versions',
-    'Try npm cache clean --force and reinstall',
-    'Verify the import path is correct',
+    "Run npm install to ensure all dependencies are installed",
+    "Check package.json for correct dependency versions",
+    "Try npm cache clean --force and reinstall",
+    "Verify the import path is correct",
   ],
   type: [
-    'Review TypeScript types and interfaces',
-    'Check for undefined or null values',
-    'Verify object shapes match expected types',
-    'Consider using type guards or assertions',
+    "Review TypeScript types and interfaces",
+    "Check for undefined or null values",
+    "Verify object shapes match expected types",
+    "Consider using type guards or assertions",
   ],
   config: [
-    'Verify all required environment variables are set',
-    'Check config file syntax and structure',
-    'Compare with example/template config files',
-    'Ensure config paths are correct for the environment',
+    "Verify all required environment variables are set",
+    "Check config file syntax and structure",
+    "Compare with example/template config files",
+    "Ensure config paths are correct for the environment",
   ],
   test: [
-    'Review test assertions and expected values',
-    'Check for async/await issues in tests',
-    'Increase test timeout if needed',
-    'Isolate failing test with .only()',
+    "Review test assertions and expected values",
+    "Check for async/await issues in tests",
+    "Increase test timeout if needed",
+    "Isolate failing test with .only()",
   ],
   syntax: [
-    'Review recent code changes for typos',
-    'Check for missing brackets, quotes, or semicolons',
-    'Validate JSON/YAML files separately',
-    'Use a linter to identify syntax issues',
+    "Review recent code changes for typos",
+    "Check for missing brackets, quotes, or semicolons",
+    "Validate JSON/YAML files separately",
+    "Use a linter to identify syntax issues",
   ],
   permission: [
-    'Check file/directory permissions',
-    'Verify user has required access rights',
-    'Check if file is locked by another process',
-    'Try running with elevated permissions if appropriate',
+    "Check file/directory permissions",
+    "Verify user has required access rights",
+    "Check if file is locked by another process",
+    "Try running with elevated permissions if appropriate",
   ],
   network: [
-    'Verify network connectivity',
-    'Check if target service is running',
-    'Review firewall/proxy settings',
-    'Implement retry logic with backoff',
+    "Verify network connectivity",
+    "Check if target service is running",
+    "Review firewall/proxy settings",
+    "Implement retry logic with backoff",
   ],
   filesystem: [
-    'Verify the file/directory path exists',
-    'Check for typos in path names',
-    'Ensure parent directories exist',
-    'Check relative vs absolute path usage',
+    "Verify the file/directory path exists",
+    "Check for typos in path names",
+    "Ensure parent directories exist",
+    "Check relative vs absolute path usage",
   ],
   general: [
-    'Break the task into smaller subtasks',
-    'Try a different implementation approach',
-    'Review similar working implementations for patterns',
-    'Consider simplifying the solution',
-    'Consult documentation for the APIs/libraries in use',
+    "Break the task into smaller subtasks",
+    "Try a different implementation approach",
+    "Review similar working implementations for patterns",
+    "Consider simplifying the solution",
+    "Consult documentation for the APIs/libraries in use",
   ],
 };
 
@@ -192,7 +192,7 @@ class StuckDetector {
 
     // Verify required dependencies
     if (!yaml) {
-      throw new Error('js-yaml module not available - install with: npm install js-yaml');
+      throw new Error("js-yaml module not available - install with: npm install js-yaml");
     }
   }
 
@@ -200,7 +200,7 @@ class StuckDetector {
    * Log message with timestamp
    * @private
    */
-  _log(message, level = 'info') {
+  _log(message, level = "info") {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
     this.logs.push(logEntry);
@@ -257,9 +257,9 @@ class StuckDetector {
 
     if (consecutiveFailures >= this.config.maxAttempts) {
       result.stuck = true;
-      result.reason = 'consecutive_failures';
+      result.reason = "consecutive_failures";
       result.confidence = Math.min(consecutiveFailures / this.config.maxAttempts, 1);
-      this._log(`Stuck detected: ${consecutiveFailures} consecutive failures`, 'warn');
+      this._log(`Stuck detected: ${consecutiveFailures} consecutive failures`, "warn");
     }
 
     // AC2: Check circular approach
@@ -272,13 +272,13 @@ class StuckDetector {
 
       if (circularResult.isCircular) {
         result.stuck = true;
-        result.reason = result.reason ? `${result.reason},circular_approach` : 'circular_approach';
+        result.reason = result.reason ? `${result.reason},circular_approach` : "circular_approach";
         result.confidence = Math.max(result.confidence, circularResult.similarity);
         result.context.similarApproach = circularResult.mostSimilar;
         result.context.similarityScore = circularResult.similarity;
         this._log(
           `Circular approach detected: ${circularResult.similarity.toFixed(2)} similarity`,
-          'warn'
+          "warn",
         );
       }
     }
@@ -286,7 +286,7 @@ class StuckDetector {
     // Collect error messages
     result.context.errors = failures
       .filter((a) => a.error)
-      .map((a) => (typeof a.error === 'string' ? a.error : a.error.message || String(a.error)));
+      .map((a) => (typeof a.error === "string" ? a.error : a.error.message || String(a.error)));
 
     // AC6: Generate suggestions based on errors
     if (result.stuck) {
@@ -351,85 +351,85 @@ class StuckDetector {
    * @private
    */
   _normalizeApproach(approach) {
-    if (typeof approach !== 'string') {
+    if (typeof approach !== "string") {
       approach = JSON.stringify(approach);
     }
 
     // Common stop words to filter out
     const stopWords = new Set([
-      'the',
-      'a',
-      'an',
-      'and',
-      'or',
-      'but',
-      'is',
-      'are',
-      'was',
-      'were',
-      'be',
-      'been',
-      'being',
-      'have',
-      'has',
-      'had',
-      'do',
-      'does',
-      'did',
-      'will',
-      'would',
-      'could',
-      'should',
-      'may',
-      'might',
-      'must',
-      'shall',
-      'to',
-      'of',
-      'in',
-      'for',
-      'on',
-      'with',
-      'at',
-      'by',
-      'from',
-      'as',
-      'into',
-      'through',
-      'during',
-      'before',
-      'after',
-      'above',
-      'below',
-      'this',
-      'that',
-      'these',
-      'those',
-      'it',
-      'its',
-      'we',
-      'our',
-      'you',
-      'they',
-      'them',
-      'their',
-      'i',
-      'me',
-      'my',
-      'he',
-      'she',
-      'him',
-      'her',
+      "the",
+      "a",
+      "an",
+      "and",
+      "or",
+      "but",
+      "is",
+      "are",
+      "was",
+      "were",
+      "be",
+      "been",
+      "being",
+      "have",
+      "has",
+      "had",
+      "do",
+      "does",
+      "did",
+      "will",
+      "would",
+      "could",
+      "should",
+      "may",
+      "might",
+      "must",
+      "shall",
+      "to",
+      "of",
+      "in",
+      "for",
+      "on",
+      "with",
+      "at",
+      "by",
+      "from",
+      "as",
+      "into",
+      "through",
+      "during",
+      "before",
+      "after",
+      "above",
+      "below",
+      "this",
+      "that",
+      "these",
+      "those",
+      "it",
+      "its",
+      "we",
+      "our",
+      "you",
+      "they",
+      "them",
+      "their",
+      "i",
+      "me",
+      "my",
+      "he",
+      "she",
+      "him",
+      "her",
     ]);
 
     return approach
       .toLowerCase()
-      .replace(/[^\w\s]/g, ' ') // Remove special chars
-      .replace(/\s+/g, ' ') // Normalize whitespace
+      .replace(/[^\w\s]/g, " ") // Remove special chars
+      .replace(/\s+/g, " ") // Normalize whitespace
       .trim()
-      .split(' ')
+      .split(" ")
       .filter((word) => word.length > 0 && !stopWords.has(word)) // Remove stop words
-      .sort(); // Sort for order-independent comparison
+      .toSorted(); // Sort for order-independent comparison
   }
 
   /**
@@ -456,8 +456,8 @@ class StuckDetector {
     const jaccardSimilarity = intersection.size / union.size;
 
     // Also compute string-level similarity for short approaches
-    const str1 = words1.join(' ');
-    const str2 = words2.join(' ');
+    const str1 = words1.join(" ");
+    const str2 = words2.join(" ");
 
     // If strings are short, use Levenshtein-based similarity
     if (str1.length < 100 && str2.length < 100) {
@@ -475,7 +475,9 @@ class StuckDetector {
    */
   _levenshteinSimilarity(str1, str2) {
     const maxLen = Math.max(str1.length, str2.length);
-    if (maxLen === 0) return 1;
+    if (maxLen === 0) {
+      return 1;
+    }
 
     const distance = this._levenshteinDistance(str1, str2);
     return 1 - distance / maxLen;
@@ -495,8 +497,12 @@ class StuckDetector {
       .map(() => Array(n + 1).fill(0));
 
     // Initialize base cases
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
+    for (let i = 0; i <= m; i++) {
+      dp[i][0] = i;
+    }
+    for (let j = 0; j <= n; j++) {
+      dp[0][j] = j;
+    }
 
     // Fill in the rest of the matrix
     for (let i = 1; i <= m; i++) {
@@ -509,7 +515,7 @@ class StuckDetector {
             Math.min(
               dp[i - 1][j], // deletion
               dp[i][j - 1], // insertion
-              dp[i - 1][j - 1] // substitution
+              dp[i - 1][j - 1], // substitution
             );
         }
       }
@@ -528,7 +534,9 @@ class StuckDetector {
 
     // Analyze errors to find matching categories
     for (const error of errors) {
-      if (!error) continue;
+      if (!error) {
+        continue;
+      }
 
       for (const [category, patterns] of Object.entries(ERROR_PATTERNS)) {
         for (const pattern of patterns) {
@@ -575,17 +583,17 @@ class StuckDetector {
    * @returns {Promise<void>}
    */
   async markStuck(implementationPath, subtaskId, stuckResult) {
-    this._log(`Marking subtask ${subtaskId} as stuck`, 'info');
+    this._log(`Marking subtask ${subtaskId} as stuck`, "info");
 
     try {
-      const content = await fs.readFile(implementationPath, 'utf8');
+      const content = await fs.readFile(implementationPath, "utf8");
       const implementation = yaml.load(content);
 
       let found = false;
       for (const phase of implementation.phases || []) {
         for (const subtask of phase.subtasks || []) {
           if (subtask.id === subtaskId) {
-            subtask.status = 'stuck';
+            subtask.status = "stuck";
             subtask.stuckAt = new Date().toISOString();
             subtask.stuckReason = stuckResult.reason;
             subtask.stuckContext = {
@@ -598,7 +606,9 @@ class StuckDetector {
             break;
           }
         }
-        if (found) break;
+        if (found) {
+          break;
+        }
       }
 
       if (!found) {
@@ -612,10 +622,10 @@ class StuckDetector {
         noRefs: true,
       });
 
-      await fs.writeFile(implementationPath, yamlContent, 'utf8');
-      this._log(`Successfully marked ${subtaskId} as stuck`, 'success');
+      await fs.writeFile(implementationPath, yamlContent, "utf8");
+      this._log(`Successfully marked ${subtaskId} as stuck`, "success");
     } catch (error) {
-      this._log(`Failed to mark subtask as stuck: ${error.message}`, 'error');
+      this._log(`Failed to mark subtask as stuck: ${error.message}`, "error");
       throw error;
     }
   }
@@ -652,7 +662,7 @@ class StuckDetector {
         success: attempt.success,
         approach: attempt.approach,
         error: attempt.error
-          ? typeof attempt.error === 'string'
+          ? typeof attempt.error === "string"
             ? attempt.error
             : attempt.error.message
           : null,
@@ -664,7 +674,7 @@ class StuckDetector {
       analysis: {
         failedApproaches: checkResult.context.failedApproaches,
         errorPatterns: this._analyzeErrorPatterns(checkResult.context.errors),
-        circularDetected: checkResult.reason?.includes('circular') || false,
+        circularDetected: checkResult.reason?.includes("circular") || false,
         similarityScore: checkResult.context.similarityScore,
       },
 
@@ -687,20 +697,22 @@ class StuckDetector {
    * @private
    */
   _calculateSeverity(result) {
-    if (!result.stuck) return 'low';
+    if (!result.stuck) {
+      return "low";
+    }
 
     if (
       result.context.consecutiveFailures >= 5 ||
-      (result.reason?.includes('circular') && result.confidence > 0.9)
+      (result.reason?.includes("circular") && result.confidence > 0.9)
     ) {
-      return 'critical';
+      return "critical";
     }
 
-    if (result.context.consecutiveFailures >= 3 || result.reason?.includes('circular')) {
-      return 'high';
+    if (result.context.consecutiveFailures >= 3 || result.reason?.includes("circular")) {
+      return "high";
     }
 
-    return 'medium';
+    return "medium";
   }
 
   /**
@@ -711,7 +723,9 @@ class StuckDetector {
     const patterns = {};
 
     for (const error of errors) {
-      if (!error) continue;
+      if (!error) {
+        continue;
+      }
 
       for (const [category, categoryPatterns] of Object.entries(ERROR_PATTERNS)) {
         for (const pattern of categoryPatterns) {
@@ -723,7 +737,7 @@ class StuckDetector {
     }
 
     return Object.entries(patterns)
-      .sort((a, b) => b[1] - a[1])
+      .toSorted((a, b) => b[1] - a[1])
       .map(([category, count]) => ({ category, count }));
   }
 
@@ -734,18 +748,18 @@ class StuckDetector {
   _generateNextSteps(result) {
     const steps = [];
 
-    if (result.reason?.includes('consecutive_failures')) {
-      steps.push('Review the error logs for the last 3 attempts');
-      steps.push('Verify all prerequisites are met');
+    if (result.reason?.includes("consecutive_failures")) {
+      steps.push("Review the error logs for the last 3 attempts");
+      steps.push("Verify all prerequisites are met");
     }
 
-    if (result.reason?.includes('circular')) {
-      steps.push('Identify why the same approach keeps being tried');
-      steps.push('Consider a fundamentally different implementation strategy');
+    if (result.reason?.includes("circular")) {
+      steps.push("Identify why the same approach keeps being tried");
+      steps.push("Consider a fundamentally different implementation strategy");
     }
 
-    steps.push('Break the task into smaller, verifiable subtasks');
-    steps.push('Consider manual intervention or pair programming');
+    steps.push("Break the task into smaller, verifiable subtasks");
+    steps.push("Consider manual intervention or pair programming");
 
     return steps;
   }
@@ -758,28 +772,28 @@ class StuckDetector {
     const severity = this._calculateSeverity(result);
 
     switch (severity) {
-      case 'critical':
+      case "critical":
         return {
-          level: 'immediate',
-          action: 'Stop execution and notify human immediately',
+          level: "immediate",
+          action: "Stop execution and notify human immediately",
           timeout: 0,
         };
-      case 'high':
+      case "high":
         return {
-          level: 'urgent',
-          action: 'Pause execution and request human review',
+          level: "urgent",
+          action: "Pause execution and request human review",
           timeout: 300, // 5 minutes
         };
-      case 'medium':
+      case "medium":
         return {
-          level: 'standard',
-          action: 'Flag for review at next checkpoint',
+          level: "standard",
+          action: "Flag for review at next checkpoint",
           timeout: 1800, // 30 minutes
         };
       default:
         return {
-          level: 'low',
-          action: 'Continue with monitoring',
+          level: "low",
+          action: "Continue with monitoring",
           timeout: 3600, // 1 hour
         };
     }
@@ -798,16 +812,16 @@ class StuckDetector {
 
     // Block if circular approach detected with high confidence
     if (
-      checkResult.reason?.includes('circular') &&
+      checkResult.reason?.includes("circular") &&
       checkResult.confidence >= this.config.similarityThreshold
     ) {
-      this._log('Blocking execution: circular approach detected', 'warn');
+      this._log("Blocking execution: circular approach detected", "warn");
       return true;
     }
 
     // Block if too many consecutive failures
     if (checkResult.context.consecutiveFailures >= this.config.maxAttempts) {
-      this._log('Blocking execution: too many consecutive failures', 'warn');
+      this._log("Blocking execution: too many consecutive failures", "warn");
       return true;
     }
 
@@ -822,85 +836,85 @@ class StuckDetector {
    */
   formatReport(report) {
     const lines = [];
-    const divider = '='.repeat(70);
-    const subDivider = '-'.repeat(70);
+    const divider = "=".repeat(70);
+    const subDivider = "-".repeat(70);
 
-    lines.push('');
+    lines.push("");
     lines.push(chalk.bold(chalk.red(divider)));
-    lines.push(chalk.bold(chalk.red(' STUCK DETECTION - ESCALATION REPORT')));
+    lines.push(chalk.bold(chalk.red(" STUCK DETECTION - ESCALATION REPORT")));
     lines.push(chalk.bold(chalk.red(divider)));
-    lines.push('');
+    lines.push("");
 
     // Summary
-    lines.push(chalk.bold('SUMMARY'));
+    lines.push(chalk.bold("SUMMARY"));
     lines.push(subDivider);
     lines.push(`Subtask ID:           ${report.subtaskId}`);
     lines.push(`Generated:            ${report.generatedAt}`);
     lines.push(`Severity:             ${chalk.bold(this._colorSeverity(report.severity))}`);
     lines.push(
-      `Status:               ${report.summary.isStuck ? chalk.red('STUCK') : chalk.green('OK')}`
+      `Status:               ${report.summary.isStuck ? chalk.red("STUCK") : chalk.green("OK")}`,
     );
-    lines.push(`Reason:               ${report.summary.reason || 'N/A'}`);
+    lines.push(`Reason:               ${report.summary.reason || "N/A"}`);
     lines.push(`Confidence:           ${(report.summary.confidence * 100).toFixed(1)}%`);
     lines.push(`Total Attempts:       ${report.summary.totalAttempts}`);
     lines.push(`Consecutive Failures: ${report.summary.consecutiveFailures}`);
-    lines.push('');
+    lines.push("");
 
     // Attempt History
-    lines.push(chalk.bold('ATTEMPT HISTORY'));
+    lines.push(chalk.bold("ATTEMPT HISTORY"));
     lines.push(subDivider);
     for (const attempt of report.attemptHistory) {
-      const status = attempt.success ? chalk.green('PASS') : chalk.red('FAIL');
+      const status = attempt.success ? chalk.green("PASS") : chalk.red("FAIL");
       lines.push(`  #${attempt.attemptNumber} [${status}]`);
       if (attempt.approach) {
         const approachPreview =
-          attempt.approach.substring(0, 60) + (attempt.approach.length > 60 ? '...' : '');
+          attempt.approach.substring(0, 60) + (attempt.approach.length > 60 ? "..." : "");
         lines.push(`     Approach: ${chalk.dim(approachPreview)}`);
       }
       if (attempt.error) {
         const errorPreview =
-          attempt.error.substring(0, 60) + (attempt.error.length > 60 ? '...' : '');
+          attempt.error.substring(0, 60) + (attempt.error.length > 60 ? "..." : "");
         lines.push(`     Error: ${chalk.yellow(errorPreview)}`);
       }
     }
-    lines.push('');
+    lines.push("");
 
     // Error Patterns
     if (report.analysis.errorPatterns.length > 0) {
-      lines.push(chalk.bold('ERROR PATTERN ANALYSIS'));
+      lines.push(chalk.bold("ERROR PATTERN ANALYSIS"));
       lines.push(subDivider);
       for (const pattern of report.analysis.errorPatterns) {
         lines.push(`  ${pattern.category}: ${pattern.count} occurrence(s)`);
       }
-      lines.push('');
+      lines.push("");
     }
 
     // Recommendations
-    lines.push(chalk.bold('RECOMMENDATIONS'));
+    lines.push(chalk.bold("RECOMMENDATIONS"));
     lines.push(subDivider);
-    lines.push(chalk.cyan('Suggestions:'));
+    lines.push(chalk.cyan("Suggestions:"));
     for (let i = 0; i < report.recommendations.suggestions.length; i++) {
       lines.push(`  ${i + 1}. ${report.recommendations.suggestions[i]}`);
     }
-    lines.push('');
-    lines.push(chalk.cyan('Next Steps:'));
+    lines.push("");
+    lines.push(chalk.cyan("Next Steps:"));
     for (const step of report.recommendations.nextSteps) {
       lines.push(`  - ${step}`);
     }
-    lines.push('');
+    lines.push("");
 
     // Escalation Level
-    lines.push(chalk.bold('ESCALATION'));
+    lines.push(chalk.bold("ESCALATION"));
     lines.push(subDivider);
     const escLevel = report.recommendations.escalationLevel;
     lines.push(`Level:   ${chalk.bold(escLevel.level.toUpperCase())}`);
     lines.push(`Action:  ${escLevel.action}`);
-    lines.push('');
+    lines.push("");
 
     lines.push(divider);
-    lines.push('');
+    lines.push("");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -909,11 +923,11 @@ class StuckDetector {
    */
   _colorSeverity(severity) {
     switch (severity) {
-      case 'critical':
+      case "critical":
         return chalk.red(severity.toUpperCase());
-      case 'high':
+      case "high":
         return chalk.yellow(severity.toUpperCase());
-      case 'medium':
+      case "medium":
         return chalk.cyan(severity.toUpperCase());
       default:
         return chalk.green(severity.toUpperCase());
@@ -947,11 +961,11 @@ class StuckDetector {
  * @returns {Promise<Object>} Configuration object
  */
 async function loadConfig(configPath) {
-  const defaultPath = path.join(process.cwd(), '.aiox-core', 'core-config.yaml');
+  const defaultPath = path.join(process.cwd(), ".aiox-core", "core-config.yaml");
   const filePath = configPath || defaultPath;
 
   try {
-    const content = await fs.readFile(filePath, 'utf8');
+    const content = await fs.readFile(filePath, "utf8");
     const config = yaml.load(content);
 
     // Extract stuck detector config from autoClaude section
@@ -991,25 +1005,25 @@ function quickCheck(attempts, currentApproach = null, options = {}) {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length === 0 || args.includes('--help') || args.includes('-h')) {
+  if (args.length === 0 || args.includes("--help") || args.includes("-h")) {
     console.log(`
-${chalk.bold('Stuck Detector')} - AIOX Auto-Claude Recovery System (Story 5.2)
+${chalk.bold("Stuck Detector")} - AIOX Auto-Claude Recovery System (Story 5.2)
 
-${chalk.cyan('Usage:')}
+${chalk.cyan("Usage:")}
   stuck-detector check <attempts-json> [--approach <current>]
   stuck-detector analyze <implementation-path> <subtask-id>
   stuck-detector mark <implementation-path> <subtask-id> <attempts-json>
   stuck-detector report <subtask-id> <attempts-json> [--output <file>]
   stuck-detector test
 
-${chalk.cyan('Commands:')}
+${chalk.cyan("Commands:")}
   check      Check if execution is stuck based on attempts
   analyze    Analyze a subtask from implementation.yaml
   mark       Mark a subtask as stuck in implementation.yaml (AC4)
   report     Generate escalation report for human review (AC5)
   test       Run test suite
 
-${chalk.cyan('Options:')}
+${chalk.cyan("Options:")}
   --approach, -a <string>    Current approach being tried
   --max-attempts <n>         Override maxAttempts config (default: 3)
   --threshold <n>            Override similarity threshold (default: 0.7)
@@ -1017,7 +1031,7 @@ ${chalk.cyan('Options:')}
   --output, -o <file>        Output file for report
   --help, -h                 Show this help
 
-${chalk.cyan('Acceptance Criteria:')}
+${chalk.cyan("Acceptance Criteria:")}
   AC1: Detects stuck - 3+ consecutive failures
   AC2: Detects circular - approach similar to failed approach
   AC3: Blocks execution if circular detected
@@ -1026,13 +1040,13 @@ ${chalk.cyan('Acceptance Criteria:')}
   AC6: Suggests alternative approaches based on errors
   AC7: Configurable via autoClaude.recovery.maxAttempts
 
-${chalk.cyan('Examples:')}
+${chalk.cyan("Examples:")}
   stuck-detector check '[{"success":false,"error":"Module not found"}]'
   stuck-detector check '[{"success":false,"approach":"try A"}]' -a "try A again"
   stuck-detector report 1.1 '[{"success":false,"error":"timeout"}]'
   stuck-detector mark path/to/implementation.yaml 1.1 '[...]'
 `);
-    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
+    process.exit(args.includes("--help") || args.includes("-h") ? 0 : 1);
   }
 
   // Parse arguments
@@ -1047,17 +1061,17 @@ ${chalk.cyan('Examples:')}
   for (let i = 1; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--verbose' || arg === '-v') {
+    if (arg === "--verbose" || arg === "-v") {
       verbose = true;
-    } else if (arg === '--approach' || arg === '-a') {
+    } else if (arg === "--approach" || arg === "-a") {
       approach = args[++i];
-    } else if (arg === '--max-attempts') {
+    } else if (arg === "--max-attempts") {
       maxAttempts = parseInt(args[++i], 10);
-    } else if (arg === '--threshold') {
+    } else if (arg === "--threshold") {
       threshold = parseFloat(args[++i]);
-    } else if (arg === '--output' || arg === '-o') {
+    } else if (arg === "--output" || arg === "-o") {
       outputFile = args[++i];
-    } else if (!arg.startsWith('-')) {
+    } else if (!arg.startsWith("-")) {
       positionalArgs.push(arg);
     }
   }
@@ -1070,9 +1084,9 @@ ${chalk.cyan('Examples:')}
     });
 
     switch (command) {
-      case 'check': {
+      case "check": {
         if (positionalArgs.length < 1) {
-          console.error(chalk.red('Error: attempts JSON required'));
+          console.error(chalk.red("Error: attempts JSON required"));
           process.exit(1);
         }
 
@@ -1082,14 +1096,14 @@ ${chalk.cyan('Examples:')}
         console.log(JSON.stringify(result, null, 2));
 
         if (result.stuck) {
-          console.log('');
-          console.log(chalk.yellow('Execution is STUCK'));
+          console.log("");
+          console.log(chalk.yellow("Execution is STUCK"));
           console.log(`Reason: ${result.reason}`);
           console.log(`Confidence: ${(result.confidence * 100).toFixed(1)}%`);
 
           if (result.suggestions.length > 0) {
-            console.log('');
-            console.log(chalk.cyan('Suggestions:'));
+            console.log("");
+            console.log(chalk.cyan("Suggestions:"));
             result.suggestions.forEach((s, i) => console.log(`  ${i + 1}. ${s}`));
           }
 
@@ -1099,9 +1113,9 @@ ${chalk.cyan('Examples:')}
         break;
       }
 
-      case 'report': {
+      case "report": {
         if (positionalArgs.length < 2) {
-          console.error(chalk.red('Error: subtaskId and attempts JSON required'));
+          console.error(chalk.red("Error: subtaskId and attempts JSON required"));
           process.exit(1);
         }
 
@@ -1112,7 +1126,7 @@ ${chalk.cyan('Examples:')}
         });
 
         if (outputFile) {
-          await fs.writeFile(outputFile, JSON.stringify(report, null, 2), 'utf8');
+          await fs.writeFile(outputFile, JSON.stringify(report, null, 2), "utf8");
           console.log(chalk.green(`Report saved to: ${outputFile}`));
         } else {
           console.log(detector.formatReport(report));
@@ -1121,10 +1135,10 @@ ${chalk.cyan('Examples:')}
         break;
       }
 
-      case 'mark': {
+      case "mark": {
         if (positionalArgs.length < 3) {
           console.error(
-            chalk.red('Error: implementation path, subtaskId, and attempts JSON required')
+            chalk.red("Error: implementation path, subtaskId, and attempts JSON required"),
           );
           process.exit(1);
         }
@@ -1136,8 +1150,8 @@ ${chalk.cyan('Examples:')}
         const result = detector.check(attempts, approach);
 
         if (!result.stuck) {
-          console.log(chalk.yellow('Warning: Execution is not detected as stuck'));
-          console.log('Use --force to mark anyway');
+          console.log(chalk.yellow("Warning: Execution is not detected as stuck"));
+          console.log("Use --force to mark anyway");
           process.exit(0);
         }
 
@@ -1147,78 +1161,78 @@ ${chalk.cyan('Examples:')}
         break;
       }
 
-      case 'test': {
-        console.log(chalk.bold('\nRunning Stuck Detector tests...\n'));
+      case "test": {
+        console.log(chalk.bold("\nRunning Stuck Detector tests...\n"));
 
         // Test 1: Consecutive failures
-        console.log('Test 1: Consecutive failures detection');
+        console.log("Test 1: Consecutive failures detection");
         const attempts1 = [
-          { success: false, error: 'Error 1' },
-          { success: false, error: 'Error 2' },
-          { success: false, error: 'Error 3' },
+          { success: false, error: "Error 1" },
+          { success: false, error: "Error 2" },
+          { success: false, error: "Error 3" },
         ];
         const result1 = detector.check(attempts1);
         console.log(`  Stuck: ${result1.stuck}, Reason: ${result1.reason}`);
         console.log(
-          `  ${result1.stuck && result1.reason === 'consecutive_failures' ? chalk.green('PASS') : chalk.red('FAIL')}`
+          `  ${result1.stuck && result1.reason === "consecutive_failures" ? chalk.green("PASS") : chalk.red("FAIL")}`,
         );
 
         // Test 2: Circular approach detection
-        console.log('\nTest 2: Circular approach detection');
+        console.log("\nTest 2: Circular approach detection");
         const attempts2 = [
-          { success: false, approach: 'install lodash and use map function', error: 'Failed' },
-          { success: false, approach: 'npm install lodash then use map', error: 'Failed' },
+          { success: false, approach: "install lodash and use map function", error: "Failed" },
+          { success: false, approach: "npm install lodash then use map", error: "Failed" },
         ];
-        const result2 = detector.check(attempts2, 'install lodash then use map function');
+        const result2 = detector.check(attempts2, "install lodash then use map function");
         console.log(
-          `  Stuck: ${result2.stuck}, Similarity: ${(result2.context.similarityScore || 0).toFixed(2)}`
+          `  Stuck: ${result2.stuck}, Similarity: ${(result2.context.similarityScore || 0).toFixed(2)}`,
         );
         console.log(
-          `  ${result2.stuck && result2.reason.includes('circular') ? chalk.green('PASS') : chalk.red('FAIL')}`
+          `  ${result2.stuck && result2.reason.includes("circular") ? chalk.green("PASS") : chalk.red("FAIL")}`,
         );
 
         // Test 3: Not stuck
-        console.log('\nTest 3: Not stuck scenario');
+        console.log("\nTest 3: Not stuck scenario");
         const attempts3 = [
           { success: true },
-          { success: false, error: 'Minor error' },
+          { success: false, error: "Minor error" },
           { success: true },
         ];
         const result3 = detector.check(attempts3);
         console.log(`  Stuck: ${result3.stuck}`);
-        console.log(`  ${!result3.stuck ? chalk.green('PASS') : chalk.red('FAIL')}`);
+        console.log(`  ${!result3.stuck ? chalk.green("PASS") : chalk.red("FAIL")}`);
 
         // Test 4: Suggestions generation
-        console.log('\nTest 4: Suggestions generation');
+        console.log("\nTest 4: Suggestions generation");
         const attempts4 = [
-          { success: false, error: 'Cannot find module lodash' },
-          { success: false, error: 'Module not found: lodash' },
-          { success: false, error: 'require failed for lodash' },
+          { success: false, error: "Cannot find module lodash" },
+          { success: false, error: "Module not found: lodash" },
+          { success: false, error: "require failed for lodash" },
         ];
         const result4 = detector.check(attempts4);
         console.log(`  Suggestions count: ${result4.suggestions.length}`);
         console.log(`  First suggestion: ${result4.suggestions[0]?.substring(0, 50)}...`);
         console.log(
-          `  ${result4.suggestions.length > 0 ? chalk.green('PASS') : chalk.red('FAIL')}`
+          `  ${result4.suggestions.length > 0 ? chalk.green("PASS") : chalk.red("FAIL")}`,
         );
 
         // Test 5: Report generation
-        console.log('\nTest 5: Report generation');
-        const report = detector.generateEscalationReport('1.1', attempts4);
+        console.log("\nTest 5: Report generation");
+        const report = detector.generateEscalationReport("1.1", attempts4);
         console.log(`  Report sections: summary, attemptHistory, analysis, recommendations`);
         console.log(`  Severity: ${report.severity}`);
         console.log(
-          `  ${report.severity && report.recommendations ? chalk.green('PASS') : chalk.red('FAIL')}`
+          `  ${report.severity && report.recommendations ? chalk.green("PASS") : chalk.red("FAIL")}`,
         );
 
-        console.log(chalk.bold('\nAll tests completed!\n'));
+        console.log(chalk.bold("\nAll tests completed!\n"));
 
         break;
       }
 
       default:
         console.error(chalk.red(`Unknown command: ${command}`));
-        console.log('Use --help for usage information');
+        console.log("Use --help for usage information");
         process.exit(1);
     }
   } catch (error) {

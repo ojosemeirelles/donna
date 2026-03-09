@@ -6,127 +6,127 @@
  * intelligent test execution capabilities.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { EventEmitter } = require('events');
-const { execSync, spawn } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { EventEmitter } = require("events");
+const { execSync, spawn } = require("child_process");
 
 /**
  * Test framework configurations
  */
 const FRAMEWORKS = {
   jest: {
-    name: 'Jest',
-    configFiles: ['jest.config.js', 'jest.config.ts', 'jest.config.json', 'jest.config.mjs'],
-    packageKey: 'jest',
+    name: "Jest",
+    configFiles: ["jest.config.js", "jest.config.ts", "jest.config.json", "jest.config.mjs"],
+    packageKey: "jest",
     testPatterns: [
-      '**/*.test.js',
-      '**/*.test.ts',
-      '**/*.test.jsx',
-      '**/*.test.tsx',
-      '**/*.spec.js',
-      '**/*.spec.ts',
+      "**/*.test.js",
+      "**/*.test.ts",
+      "**/*.test.jsx",
+      "**/*.test.tsx",
+      "**/*.spec.js",
+      "**/*.spec.ts",
     ],
-    runCommand: 'npx jest',
-    coverageFlag: '--coverage',
-    watchFlag: '--watch',
-    selectiveFlag: '--findRelatedTests',
+    runCommand: "npx jest",
+    coverageFlag: "--coverage",
+    watchFlag: "--watch",
+    selectiveFlag: "--findRelatedTests",
   },
   vitest: {
-    name: 'Vitest',
-    configFiles: ['vitest.config.js', 'vitest.config.ts', 'vite.config.js', 'vite.config.ts'],
-    packageKey: 'vitest',
-    testPatterns: ['**/*.test.js', '**/*.test.ts', '**/*.spec.js', '**/*.spec.ts'],
-    runCommand: 'npx vitest run',
-    coverageFlag: '--coverage',
-    watchFlag: '--watch',
-    selectiveFlag: '--related',
+    name: "Vitest",
+    configFiles: ["vitest.config.js", "vitest.config.ts", "vite.config.js", "vite.config.ts"],
+    packageKey: "vitest",
+    testPatterns: ["**/*.test.js", "**/*.test.ts", "**/*.spec.js", "**/*.spec.ts"],
+    runCommand: "npx vitest run",
+    coverageFlag: "--coverage",
+    watchFlag: "--watch",
+    selectiveFlag: "--related",
   },
   mocha: {
-    name: 'Mocha',
-    configFiles: ['.mocharc.js', '.mocharc.json', '.mocharc.yaml', 'mocha.opts'],
-    packageKey: 'mocha',
-    testPatterns: ['test/**/*.js', 'test/**/*.ts', '**/*.test.js', '**/*.spec.js'],
-    runCommand: 'npx mocha',
-    coverageFlag: '', // Uses nyc separately
-    watchFlag: '--watch',
-    selectiveFlag: '--grep',
+    name: "Mocha",
+    configFiles: [".mocharc.js", ".mocharc.json", ".mocharc.yaml", "mocha.opts"],
+    packageKey: "mocha",
+    testPatterns: ["test/**/*.js", "test/**/*.ts", "**/*.test.js", "**/*.spec.js"],
+    runCommand: "npx mocha",
+    coverageFlag: "", // Uses nyc separately
+    watchFlag: "--watch",
+    selectiveFlag: "--grep",
   },
   pytest: {
-    name: 'Pytest',
-    configFiles: ['pytest.ini', 'pyproject.toml', 'setup.cfg', 'conftest.py'],
-    packageKey: 'pytest',
-    testPatterns: ['test_*.py', '*_test.py', 'tests/**/*.py'],
-    runCommand: 'pytest',
-    coverageFlag: '--cov',
-    watchFlag: '', // Uses pytest-watch
-    selectiveFlag: '-k',
+    name: "Pytest",
+    configFiles: ["pytest.ini", "pyproject.toml", "setup.cfg", "conftest.py"],
+    packageKey: "pytest",
+    testPatterns: ["test_*.py", "*_test.py", "tests/**/*.py"],
+    runCommand: "pytest",
+    coverageFlag: "--cov",
+    watchFlag: "", // Uses pytest-watch
+    selectiveFlag: "-k",
   },
   rspec: {
-    name: 'RSpec',
-    configFiles: ['.rspec', 'spec/spec_helper.rb'],
-    packageKey: 'rspec',
-    testPatterns: ['spec/**/*_spec.rb'],
-    runCommand: 'bundle exec rspec',
-    coverageFlag: '', // Uses simplecov
-    watchFlag: '', // Uses guard
-    selectiveFlag: '--example',
+    name: "RSpec",
+    configFiles: [".rspec", "spec/spec_helper.rb"],
+    packageKey: "rspec",
+    testPatterns: ["spec/**/*_spec.rb"],
+    runCommand: "bundle exec rspec",
+    coverageFlag: "", // Uses simplecov
+    watchFlag: "", // Uses guard
+    selectiveFlag: "--example",
   },
   go: {
-    name: 'Go Test',
-    configFiles: ['go.mod'],
+    name: "Go Test",
+    configFiles: ["go.mod"],
     packageKey: null, // Built-in
-    testPatterns: ['**/*_test.go'],
-    runCommand: 'go test',
-    coverageFlag: '-cover',
-    watchFlag: '', // Uses gowatch
-    selectiveFlag: '-run',
+    testPatterns: ["**/*_test.go"],
+    runCommand: "go test",
+    coverageFlag: "-cover",
+    watchFlag: "", // Uses gowatch
+    selectiveFlag: "-run",
   },
   phpunit: {
-    name: 'PHPUnit',
-    configFiles: ['phpunit.xml', 'phpunit.xml.dist'],
-    packageKey: 'phpunit',
-    testPatterns: ['tests/**/*Test.php', '**/*Test.php'],
-    runCommand: 'vendor/bin/phpunit',
-    coverageFlag: '--coverage-text',
-    watchFlag: '', // Uses phpunit-watcher
-    selectiveFlag: '--filter',
+    name: "PHPUnit",
+    configFiles: ["phpunit.xml", "phpunit.xml.dist"],
+    packageKey: "phpunit",
+    testPatterns: ["tests/**/*Test.php", "**/*Test.php"],
+    runCommand: "vendor/bin/phpunit",
+    coverageFlag: "--coverage-text",
+    watchFlag: "", // Uses phpunit-watcher
+    selectiveFlag: "--filter",
   },
   junit: {
-    name: 'JUnit',
-    configFiles: ['pom.xml', 'build.gradle', 'build.gradle.kts'],
-    packageKey: 'junit',
-    testPatterns: ['**/Test*.java', '**/*Test.java', '**/*Tests.java'],
-    runCommand: 'mvn test',
-    coverageFlag: '', // Uses jacoco
-    watchFlag: '',
-    selectiveFlag: '-Dtest=',
+    name: "JUnit",
+    configFiles: ["pom.xml", "build.gradle", "build.gradle.kts"],
+    packageKey: "junit",
+    testPatterns: ["**/Test*.java", "**/*Test.java", "**/*Tests.java"],
+    runCommand: "mvn test",
+    coverageFlag: "", // Uses jacoco
+    watchFlag: "",
+    selectiveFlag: "-Dtest=",
   },
   playwright: {
-    name: 'Playwright',
-    configFiles: ['playwright.config.js', 'playwright.config.ts'],
-    packageKey: '@playwright/test',
-    testPatterns: ['**/*.spec.js', '**/*.spec.ts', 'e2e/**/*.js', 'e2e/**/*.ts'],
-    runCommand: 'npx playwright test',
-    coverageFlag: '',
-    watchFlag: '',
-    selectiveFlag: '--grep',
-    type: 'e2e',
+    name: "Playwright",
+    configFiles: ["playwright.config.js", "playwright.config.ts"],
+    packageKey: "@playwright/test",
+    testPatterns: ["**/*.spec.js", "**/*.spec.ts", "e2e/**/*.js", "e2e/**/*.ts"],
+    runCommand: "npx playwright test",
+    coverageFlag: "",
+    watchFlag: "",
+    selectiveFlag: "--grep",
+    type: "e2e",
   },
   cypress: {
-    name: 'Cypress',
-    configFiles: ['cypress.config.js', 'cypress.config.ts', 'cypress.json'],
-    packageKey: 'cypress',
+    name: "Cypress",
+    configFiles: ["cypress.config.js", "cypress.config.ts", "cypress.json"],
+    packageKey: "cypress",
     testPatterns: [
-      'cypress/e2e/**/*.cy.js',
-      'cypress/e2e/**/*.cy.ts',
-      'cypress/integration/**/*.js',
+      "cypress/e2e/**/*.cy.js",
+      "cypress/e2e/**/*.cy.ts",
+      "cypress/integration/**/*.js",
     ],
-    runCommand: 'npx cypress run',
-    coverageFlag: '',
-    watchFlag: '',
-    selectiveFlag: '--spec',
-    type: 'e2e',
+    runCommand: "npx cypress run",
+    coverageFlag: "",
+    watchFlag: "",
+    selectiveFlag: "--spec",
+    type: "e2e",
   },
 };
 
@@ -154,7 +154,7 @@ class FrameworkDetector {
         confidence: 0,
         configFile: null,
         inPackageJson: false,
-        type: config.type || 'unit',
+        type: config.type || "unit",
       };
 
       // Check config files
@@ -188,9 +188,9 @@ class FrameworkDetector {
       }
 
       // Special case for Go
-      if (frameworkId === 'go' && fs.existsSync(path.join(this.rootPath, 'go.mod'))) {
+      if (frameworkId === "go" && fs.existsSync(path.join(this.rootPath, "go.mod"))) {
         detection.confidence = 90;
-        detection.configFile = 'go.mod';
+        detection.configFile = "go.mod";
       }
 
       if (detection.confidence > 0) {
@@ -208,11 +208,13 @@ class FrameworkDetector {
    * Read package.json if it exists
    */
   readPackageJson() {
-    const packagePath = path.join(this.rootPath, 'package.json');
-    if (!fs.existsSync(packagePath)) return null;
+    const packagePath = path.join(this.rootPath, "package.json");
+    if (!fs.existsSync(packagePath)) {
+      return null;
+    }
 
     try {
-      return JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+      return JSON.parse(fs.readFileSync(packagePath, "utf8"));
     } catch {
       return null;
     }
@@ -234,13 +236,13 @@ class TestFileFinder {
   constructor(rootPath) {
     this.rootPath = rootPath;
     this.ignorePatterns = [
-      'node_modules',
-      'dist',
-      'build',
-      '.git',
-      'coverage',
-      'vendor',
-      '__pycache__',
+      "node_modules",
+      "dist",
+      "build",
+      ".git",
+      "coverage",
+      "vendor",
+      "__pycache__",
     ];
   }
 
@@ -249,7 +251,9 @@ class TestFileFinder {
    */
   async findTests(frameworkId) {
     const config = FRAMEWORKS[frameworkId];
-    if (!config) return [];
+    if (!config) {
+      return [];
+    }
 
     const testFiles = [];
 
@@ -288,10 +292,12 @@ class TestFileFinder {
    */
   async glob(pattern) {
     const files = [];
-    const parts = pattern.split('/');
+    const parts = pattern.split("/");
 
     const walk = (dir, patternParts, depth = 0) => {
-      if (depth > 10) return; // Prevent infinite recursion
+      if (depth > 10) {
+        return;
+      } // Prevent infinite recursion
 
       try {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -307,7 +313,7 @@ class TestFileFinder {
 
           if (entry.isDirectory()) {
             // Handle ** pattern
-            if (patternParts[0] === '**') {
+            if (patternParts[0] === "**") {
               walk(fullPath, patternParts, depth + 1);
               walk(fullPath, patternParts.slice(1), depth + 1);
             } else if (this.matchPart(entry.name, patternParts[0])) {
@@ -315,7 +321,7 @@ class TestFileFinder {
             }
           } else if (entry.isFile()) {
             // Check if file matches remaining pattern
-            const remainingPattern = patternParts.join('/');
+            const remainingPattern = patternParts.join("/");
             if (
               this.matchFile(entry.name, remainingPattern) ||
               this.matchFile(entry.name, patternParts[patternParts.length - 1])
@@ -330,7 +336,7 @@ class TestFileFinder {
     };
 
     // Handle patterns starting with **
-    if (parts[0] === '**') {
+    if (parts[0] === "**") {
       walk(this.rootPath, parts, 0);
     } else {
       walk(this.rootPath, parts, 0);
@@ -343,9 +349,11 @@ class TestFileFinder {
    * Match a single path part against a pattern part
    */
   matchPart(name, pattern) {
-    if (pattern === '**' || pattern === '*') return true;
-    if (pattern.includes('*')) {
-      const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+    if (pattern === "**" || pattern === "*") {
+      return true;
+    }
+    if (pattern.includes("*")) {
+      const regex = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
       return regex.test(name);
     }
     return name === pattern;
@@ -356,8 +364,8 @@ class TestFileFinder {
    */
   matchFile(filename, pattern) {
     // Handle simple wildcard patterns
-    if (pattern.includes('*')) {
-      const regex = new RegExp('^' + pattern.replace(/\./g, '\\.').replace(/\*/g, '.*') + '$');
+    if (pattern.includes("*")) {
+      const regex = new RegExp("^" + pattern.replace(/\./g, "\\.").replace(/\*/g, ".*") + "$");
       return regex.test(filename);
     }
     return filename === pattern;
@@ -383,7 +391,7 @@ class TestFileFinder {
 
         // Check if test is in same directory or __tests__ subdirectory
         const testDir = path.dirname(testFile);
-        if (testDir === dirName || testDir === path.join(dirName, '__tests__')) {
+        if (testDir === dirName || testDir === path.join(dirName, "__tests__")) {
           relatedTests.add(testFile);
         }
       }
@@ -414,26 +422,26 @@ class TestAnalyzer {
     };
 
     switch (ext) {
-      case '.js':
-      case '.jsx':
-      case '.ts':
-      case '.tsx':
-      case '.mjs':
+      case ".js":
+      case ".jsx":
+      case ".ts":
+      case ".tsx":
+      case ".mjs":
         this.analyzeJavaScript(content, analysis);
         break;
-      case '.py':
+      case ".py":
         this.analyzePython(content, analysis);
         break;
-      case '.rb':
+      case ".rb":
         this.analyzeRuby(content, analysis);
         break;
-      case '.go':
+      case ".go":
         this.analyzeGo(content, analysis);
         break;
-      case '.php':
+      case ".php":
         this.analyzePHP(content, analysis);
         break;
-      case '.java':
+      case ".java":
         this.analyzeJava(content, analysis);
         break;
       default:
@@ -482,10 +490,18 @@ class TestAnalyzer {
     analysis.focused = [...focusMatches].length;
 
     // Extract hooks
-    if (content.includes('beforeEach')) analysis.hooks.push('beforeEach');
-    if (content.includes('afterEach')) analysis.hooks.push('afterEach');
-    if (content.includes('beforeAll')) analysis.hooks.push('beforeAll');
-    if (content.includes('afterAll')) analysis.hooks.push('afterAll');
+    if (content.includes("beforeEach")) {
+      analysis.hooks.push("beforeEach");
+    }
+    if (content.includes("afterEach")) {
+      analysis.hooks.push("afterEach");
+    }
+    if (content.includes("beforeAll")) {
+      analysis.hooks.push("beforeAll");
+    }
+    if (content.includes("afterAll")) {
+      analysis.hooks.push("afterAll");
+    }
   }
 
   /**
@@ -515,9 +531,15 @@ class TestAnalyzer {
     analysis.skipped = [...skipMatches].length;
 
     // Check for fixtures
-    if (content.includes('@pytest.fixture')) analysis.hooks.push('fixture');
-    if (content.includes('setUp')) analysis.hooks.push('setUp');
-    if (content.includes('tearDown')) analysis.hooks.push('tearDown');
+    if (content.includes("@pytest.fixture")) {
+      analysis.hooks.push("fixture");
+    }
+    if (content.includes("setUp")) {
+      analysis.hooks.push("setUp");
+    }
+    if (content.includes("tearDown")) {
+      analysis.hooks.push("tearDown");
+    }
   }
 
   /**
@@ -541,11 +563,11 @@ class TestAnalyzer {
     analysis.skipped = [...skipMatches].length;
 
     // Check for hooks
-    if (content.includes('before(:each)') || content.includes('before do')) {
-      analysis.hooks.push('before');
+    if (content.includes("before(:each)") || content.includes("before do")) {
+      analysis.hooks.push("before");
     }
-    if (content.includes('after(:each)') || content.includes('after do')) {
-      analysis.hooks.push('after');
+    if (content.includes("after(:each)") || content.includes("after do")) {
+      analysis.hooks.push("after");
     }
   }
 
@@ -620,11 +642,11 @@ class TestAnalyzer {
     analysis.skipped = [...skipMatches].length;
 
     // Check for lifecycle methods
-    if (content.includes('@BeforeEach') || content.includes('@Before')) {
-      analysis.hooks.push('beforeEach');
+    if (content.includes("@BeforeEach") || content.includes("@Before")) {
+      analysis.hooks.push("beforeEach");
     }
-    if (content.includes('@AfterEach') || content.includes('@After')) {
-      analysis.hooks.push('afterEach');
+    if (content.includes("@AfterEach") || content.includes("@After")) {
+      analysis.hooks.push("afterEach");
     }
   }
 }
@@ -651,49 +673,51 @@ class CoverageAnalyzer {
     };
 
     // Check Jest coverage config
-    const jestConfig = this.readConfig(['jest.config.js', 'jest.config.ts', 'jest.config.json']);
+    const jestConfig = this.readConfig(["jest.config.js", "jest.config.ts", "jest.config.json"]);
     if (jestConfig) {
       if (jestConfig.collectCoverage || jestConfig.coverageThreshold) {
         result.enabled = true;
-        result.tool = 'jest';
+        result.tool = "jest";
         result.threshold =
           jestConfig.coverageThreshold?.global?.branches ||
           jestConfig.coverageThreshold?.global?.lines;
         result.include = jestConfig.collectCoverageFrom || [];
         result.exclude = jestConfig.coveragePathIgnorePatterns || [];
-        result.reportFormats = jestConfig.coverageReporters || ['text', 'lcov'];
+        result.reportFormats = jestConfig.coverageReporters || ["text", "lcov"];
       }
     }
 
     // Check nyc config (for Mocha)
-    const nycConfig = this.readConfig(['.nycrc', '.nycrc.json', 'nyc.config.js']);
+    const nycConfig = this.readConfig([".nycrc", ".nycrc.json", "nyc.config.js"]);
     if (nycConfig) {
       result.enabled = true;
-      result.tool = 'nyc';
+      result.tool = "nyc";
       result.threshold = nycConfig.branches || nycConfig.lines;
       result.include = nycConfig.include || [];
       result.exclude = nycConfig.exclude || [];
-      result.reportFormats = nycConfig.reporter || ['text', 'lcov'];
+      result.reportFormats = nycConfig.reporter || ["text", "lcov"];
     }
 
     // Check pytest coverage
-    const pytestConfig = this.readConfig(['pytest.ini', 'setup.cfg', 'pyproject.toml']);
+    const pytestConfig = this.readConfig(["pytest.ini", "setup.cfg", "pyproject.toml"]);
     if (
       pytestConfig &&
-      (pytestConfig.addopts?.includes('--cov') ||
-        pytestConfig.tool?.pytest?.ini_options?.addopts?.includes('--cov'))
+      (pytestConfig.addopts?.includes("--cov") ||
+        pytestConfig.tool?.pytest?.ini_options?.addopts?.includes("--cov"))
     ) {
       result.enabled = true;
-      result.tool = 'pytest-cov';
+      result.tool = "pytest-cov";
     }
 
     // Check package.json scripts
-    const packageJson = this.readConfig(['package.json']);
+    const packageJson = this.readConfig(["package.json"]);
     if (packageJson?.scripts) {
       const scriptsStr = JSON.stringify(packageJson.scripts);
-      if (scriptsStr.includes('coverage') || scriptsStr.includes('--coverage')) {
+      if (scriptsStr.includes("coverage") || scriptsStr.includes("--coverage")) {
         result.enabled = true;
-        if (!result.tool) result.tool = 'unknown';
+        if (!result.tool) {
+          result.tool = "unknown";
+        }
       }
     }
 
@@ -706,22 +730,24 @@ class CoverageAnalyzer {
   readConfig(files) {
     for (const file of files) {
       const fullPath = path.join(this.rootPath, file);
-      if (!fs.existsSync(fullPath)) continue;
+      if (!fs.existsSync(fullPath)) {
+        continue;
+      }
 
       try {
-        const content = fs.readFileSync(fullPath, 'utf8');
+        const content = fs.readFileSync(fullPath, "utf8");
 
-        if (file.endsWith('.json') || file === 'package.json') {
+        if (file.endsWith(".json") || file === "package.json") {
           return JSON.parse(content);
         }
 
-        if (file.endsWith('.js') || file.endsWith('.ts')) {
+        if (file.endsWith(".js") || file.endsWith(".ts")) {
           // Extract object from module.exports
           const match = content.match(/module\.exports\s*=\s*(\{[\s\S]*\})/);
           if (match) {
             try {
               // eslint-disable-next-line no-eval
-              return eval('(' + match[1] + ')');
+              return eval("(" + match[1] + ")");
             } catch {
               return {};
             }
@@ -764,7 +790,7 @@ class TestRunner extends EventEmitter {
     }
 
     if (options.verbose) {
-      args.push('--verbose');
+      args.push("--verbose");
     }
 
     return this.execute(args, options);
@@ -809,21 +835,21 @@ class TestRunner extends EventEmitter {
 
     // Different frameworks handle patterns differently
     switch (this.frameworkId) {
-      case 'jest':
-      case 'vitest':
-        args.push('-t', pattern);
+      case "jest":
+      case "vitest":
+        args.push("-t", pattern);
         break;
-      case 'mocha':
-        args.push('--grep', pattern);
+      case "mocha":
+        args.push("--grep", pattern);
         break;
-      case 'pytest':
-        args.push('-k', pattern);
+      case "pytest":
+        args.push("-k", pattern);
         break;
-      case 'rspec':
-        args.push('--example', pattern);
+      case "rspec":
+        args.push("--example", pattern);
         break;
-      case 'go':
-        args.push('-run', pattern);
+      case "go":
+        args.push("-run", pattern);
         break;
       default:
         args.push(pattern);
@@ -842,38 +868,38 @@ class TestRunner extends EventEmitter {
   execute(args, options = {}) {
     return new Promise((resolve, reject) => {
       const command = this.framework.runCommand;
-      const [cmd, ...cmdArgs] = command.split(' ');
+      const [cmd, ...cmdArgs] = command.split(" ");
       const fullArgs = [...cmdArgs, ...args];
 
-      this.emit('run:start', { command, args: fullArgs });
+      this.emit("run:start", { command, args: fullArgs });
 
       const startTime = Date.now();
-      let stdout = '';
-      let stderr = '';
+      let stdout = "";
+      let stderr = "";
 
       this.process = spawn(cmd, fullArgs, {
         cwd: this.rootPath,
         shell: true,
         env: {
           ...process.env,
-          FORCE_COLOR: '1',
-          CI: options.ci ? 'true' : undefined,
+          FORCE_COLOR: "1",
+          CI: options.ci ? "true" : undefined,
         },
       });
 
-      this.process.stdout.on('data', (data) => {
+      this.process.stdout.on("data", (data) => {
         const text = data.toString();
         stdout += text;
-        this.emit('output', { type: 'stdout', text });
+        this.emit("output", { type: "stdout", text });
       });
 
-      this.process.stderr.on('data', (data) => {
+      this.process.stderr.on("data", (data) => {
         const text = data.toString();
         stderr += text;
-        this.emit('output', { type: 'stderr', text });
+        this.emit("output", { type: "stderr", text });
       });
 
-      this.process.on('close', (code) => {
+      this.process.on("close", (code) => {
         const duration = Date.now() - startTime;
 
         const result = {
@@ -885,7 +911,7 @@ class TestRunner extends EventEmitter {
           summary: this.parseOutput(stdout + stderr),
         };
 
-        this.emit('run:complete', result);
+        this.emit("run:complete", result);
         this.process = null;
 
         if (code === 0 || options.allowFailure) {
@@ -895,8 +921,8 @@ class TestRunner extends EventEmitter {
         }
       });
 
-      this.process.on('error', (error) => {
-        this.emit('run:error', { error: error.message });
+      this.process.on("error", (error) => {
+        this.emit("run:error", { error: error.message });
         reject(error);
       });
     });
@@ -916,7 +942,7 @@ class TestRunner extends EventEmitter {
 
     // Jest/Vitest format
     const jestMatch = output.match(
-      /Tests:\s+(\d+)\s+passed(?:,\s+(\d+)\s+failed)?(?:,\s+(\d+)\s+skipped)?(?:,\s+(\d+)\s+total)?/
+      /Tests:\s+(\d+)\s+passed(?:,\s+(\d+)\s+failed)?(?:,\s+(\d+)\s+skipped)?(?:,\s+(\d+)\s+total)?/,
     );
     if (jestMatch) {
       summary.passed = parseInt(jestMatch[1]) || 0;
@@ -937,7 +963,7 @@ class TestRunner extends EventEmitter {
 
     // Pytest format
     const pytestMatch = output.match(
-      /(\d+)\s+passed(?:,\s+(\d+)\s+failed)?(?:,\s+(\d+)\s+skipped)?/
+      /(\d+)\s+passed(?:,\s+(\d+)\s+failed)?(?:,\s+(\d+)\s+skipped)?/,
     );
     if (pytestMatch) {
       summary.passed = parseInt(pytestMatch[1]) || 0;
@@ -964,7 +990,7 @@ class TestRunner extends EventEmitter {
    */
   stop() {
     if (this.process) {
-      this.process.kill('SIGTERM');
+      this.process.kill("SIGTERM");
       this.process = null;
     }
   }
@@ -987,7 +1013,7 @@ class TestDiscovery extends EventEmitter {
    * Full scan of test infrastructure
    */
   async scan(options = {}) {
-    this.emit('scan:start', { rootPath: this.rootPath });
+    this.emit("scan:start", { rootPath: this.rootPath });
 
     const result = {
       frameworks: [],
@@ -1002,7 +1028,7 @@ class TestDiscovery extends EventEmitter {
       // Detect frameworks
       result.frameworks = await this.detector.detect();
       result.primaryFramework = result.frameworks[0] || null;
-      this.emit('frameworks:detected', { count: result.frameworks.length });
+      this.emit("frameworks:detected", { count: result.frameworks.length });
 
       // Find test files
       if (result.primaryFramework) {
@@ -1010,13 +1036,13 @@ class TestDiscovery extends EventEmitter {
       } else {
         result.testFiles = await this.finder.findAllTests();
       }
-      this.emit('files:found', { count: result.testFiles.length });
+      this.emit("files:found", { count: result.testFiles.length });
 
       // Analyze test files (optional, can be slow)
       if (options.analyzeFiles && result.testFiles.length <= 100) {
         for (const file of result.testFiles) {
           try {
-            const content = fs.readFileSync(path.join(this.rootPath, file), 'utf8');
+            const content = fs.readFileSync(path.join(this.rootPath, file), "utf8");
             result.analysis[file] = this.analyzer.analyze(file, content);
           } catch {
             // Skip files that can't be read
@@ -1029,11 +1055,11 @@ class TestDiscovery extends EventEmitter {
 
       // Generate summary
       result.summary = this.generateSummary(result);
-      this.emit('scan:complete', result);
+      this.emit("scan:complete", result);
 
       return result;
     } catch (error) {
-      this.emit('scan:error', { error: error.message });
+      this.emit("scan:error", { error: error.message });
       throw error;
     }
   }
@@ -1044,7 +1070,7 @@ class TestDiscovery extends EventEmitter {
   generateSummary(result) {
     const summary = {
       hasTests: result.testFiles.length > 0,
-      framework: result.primaryFramework?.name || 'Unknown',
+      framework: result.primaryFramework?.name || "Unknown",
       frameworkId: result.primaryFramework?.id || null,
       testFileCount: result.testFiles.length,
       hasCoverage: result.coverage.enabled,
@@ -1058,7 +1084,7 @@ class TestDiscovery extends EventEmitter {
 
     // Count test types
     for (const framework of result.frameworks) {
-      if (framework.type === 'e2e') {
+      if (framework.type === "e2e") {
         summary.testTypes.e2e++;
       } else {
         summary.testTypes.unit++;
@@ -1115,16 +1141,16 @@ class TestDiscovery extends EventEmitter {
     const primary = await this.detector.getPrimary();
 
     if (!primary) {
-      throw new Error('No test framework detected');
+      throw new Error("No test framework detected");
     }
 
     const runner = new TestRunner(this.rootPath, primary.id);
 
     // Forward events
-    runner.on('run:start', (data) => this.emit('run:start', data));
-    runner.on('output', (data) => this.emit('output', data));
-    runner.on('run:complete', (data) => this.emit('run:complete', data));
-    runner.on('run:error', (data) => this.emit('run:error', data));
+    runner.on("run:start", (data) => this.emit("run:start", data));
+    runner.on("output", (data) => this.emit("output", data));
+    runner.on("run:complete", (data) => this.emit("run:complete", data));
+    runner.on("run:error", (data) => this.emit("run:error", data));
 
     if (options.files) {
       return runner.runFiles(options.files, options);
@@ -1144,7 +1170,7 @@ class TestDiscovery extends EventEmitter {
     const affectedTests = await this.findAffected(changedFiles);
 
     if (affectedTests.length === 0) {
-      return { success: true, message: 'No affected tests found', tests: [] };
+      return { success: true, message: "No affected tests found", tests: [] };
     }
 
     return this.run({ ...options, files: affectedTests });
@@ -1153,21 +1179,21 @@ class TestDiscovery extends EventEmitter {
   /**
    * Get changed files from git
    */
-  async getChangedFiles(baseBranch = 'main') {
+  async getChangedFiles(baseBranch = "main") {
     try {
       const output = execSync(`git diff --name-only ${baseBranch}...HEAD`, {
         cwd: this.rootPath,
-        encoding: 'utf8',
+        encoding: "utf8",
       });
-      return output.split('\n').filter((f) => f.trim());
+      return output.split("\n").filter((f) => f.trim());
     } catch {
       // Fallback to unstaged changes
       try {
-        const output = execSync('git diff --name-only', {
+        const output = execSync("git diff --name-only", {
           cwd: this.rootPath,
-          encoding: 'utf8',
+          encoding: "utf8",
         });
-        return output.split('\n').filter((f) => f.trim());
+        return output.split("\n").filter((f) => f.trim());
       } catch {
         return [];
       }
@@ -1177,41 +1203,41 @@ class TestDiscovery extends EventEmitter {
 
 // CLI interface
 if (require.main === module) {
-  const args = process.argv.slice(2);
+  const args = new Set(process.argv.slice(2));
   const discovery = new TestDiscovery();
 
-  discovery.on('frameworks:detected', ({ count }) => {
+  discovery.on("frameworks:detected", ({ count }) => {
     console.log(`Found ${count} test framework(s)`);
   });
 
-  discovery.on('files:found', ({ count }) => {
+  discovery.on("files:found", ({ count }) => {
     console.log(`Found ${count} test file(s)`);
   });
 
-  discovery.on('output', ({ text }) => {
+  discovery.on("output", ({ text }) => {
     process.stdout.write(text);
   });
 
-  if (args.includes('--quick')) {
+  if (args.has("--quick")) {
     discovery.quickCheck().then((result) => {
       console.log(JSON.stringify(result, null, 2));
     });
-  } else if (args.includes('--run')) {
+  } else if (args.has("--run")) {
     discovery
       .run({
-        coverage: args.includes('--coverage'),
-        verbose: args.includes('--verbose'),
+        coverage: args.has("--coverage"),
+        verbose: args.has("--verbose"),
       })
       .then((result) => {
-        console.log('\n--- Results ---');
+        console.log("\n--- Results ---");
         console.log(JSON.stringify(result.summary, null, 2));
         process.exit(result.success ? 0 : 1);
       })
       .catch((error) => {
-        console.error('Error:', error.message);
+        console.error("Error:", error.message);
         process.exit(1);
       });
-  } else if (args.includes('--affected')) {
+  } else if (args.has("--affected")) {
     discovery
       .getChangedFiles()
       .then((files) => discovery.runAffected(files))
@@ -1219,31 +1245,31 @@ if (require.main === module) {
         if (result.message) {
           console.log(result.message);
         } else {
-          console.log('\n--- Results ---');
+          console.log("\n--- Results ---");
           console.log(JSON.stringify(result.summary, null, 2));
         }
         process.exit(result.success ? 0 : 1);
       })
       .catch((error) => {
-        console.error('Error:', error.message);
+        console.error("Error:", error.message);
         process.exit(1);
       });
   } else {
     discovery
-      .scan({ analyzeFiles: args.includes('--analyze') })
+      .scan({ analyzeFiles: args.has("--analyze") })
       .then((result) => {
-        console.log('\n--- Summary ---');
+        console.log("\n--- Summary ---");
         console.log(JSON.stringify(result.summary, null, 2));
 
-        if (args.includes('--files')) {
-          console.log('\n--- Test Files ---');
+        if (args.has("--files")) {
+          console.log("\n--- Test Files ---");
           for (const file of result.testFiles) {
             console.log(`  ${file}`);
           }
         }
       })
       .catch((error) => {
-        console.error('Error:', error.message);
+        console.error("Error:", error.message);
         process.exit(1);
       });
   }

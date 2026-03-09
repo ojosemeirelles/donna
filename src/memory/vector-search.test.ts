@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-
 import { BruteForceSearch } from "./vector-search-brute.js";
 
 // Normalised vectors for deterministic cosine similarity tests.
@@ -42,9 +41,9 @@ describe("BruteForceSearch", () => {
 
     const results = await engine.search(normalize([1, 0, 0]), 2);
     expect(results).toHaveLength(2);
-    expect(results[0]!.id).toBe("exact");
-    expect(results[0]!.distance).toBeCloseTo(0, 5);
-    expect(results[1]!.id).toBe("close");
+    expect(results[0].id).toBe("exact");
+    expect(results[0].distance).toBeCloseTo(0, 5);
+    expect(results[1].id).toBe("close");
   });
 
   it("returns correct ordering for multiple close vectors", async () => {
@@ -57,12 +56,12 @@ describe("BruteForceSearch", () => {
     const results = await engine.search(base, 3);
     expect(results).toHaveLength(3);
     // "a" is closest, then "b", then "c"
-    expect(results[0]!.id).toBe("a");
-    expect(results[1]!.id).toBe("b");
-    expect(results[2]!.id).toBe("c");
+    expect(results[0].id).toBe("a");
+    expect(results[1].id).toBe("b");
+    expect(results[2].id).toBe("c");
     // Distances should be in ascending order
-    expect(results[0]!.distance).toBeLessThan(results[1]!.distance);
-    expect(results[1]!.distance).toBeLessThan(results[2]!.distance);
+    expect(results[0].distance).toBeLessThan(results[1].distance);
+    expect(results[1].distance).toBeLessThan(results[2].distance);
   });
 
   it("handles Float32Array input", async () => {
@@ -70,8 +69,8 @@ describe("BruteForceSearch", () => {
     await engine.insert("a", new Float32Array([1, 0, 0]));
     const results = await engine.search(new Float32Array([1, 0, 0]), 1);
     expect(results).toHaveLength(1);
-    expect(results[0]!.id).toBe("a");
-    expect(results[0]!.distance).toBeCloseTo(0, 5);
+    expect(results[0].id).toBe("a");
+    expect(results[0].distance).toBeCloseTo(0, 5);
   });
 
   it("insert replaces existing vector with same ID", async () => {
@@ -81,8 +80,8 @@ describe("BruteForceSearch", () => {
     expect(engine.size).toBe(1);
 
     const results = await engine.search(normalize([0, 1, 0]), 1);
-    expect(results[0]!.id).toBe("a");
-    expect(results[0]!.distance).toBeCloseTo(0, 5);
+    expect(results[0].id).toBe("a");
+    expect(results[0].distance).toBeCloseTo(0, 5);
   });
 
   it("delete removes a vector", async () => {
@@ -96,7 +95,7 @@ describe("BruteForceSearch", () => {
 
     const results = await engine.search([1, 0, 0], 5);
     expect(results).toHaveLength(1);
-    expect(results[0]!.id).toBe("b");
+    expect(results[0].id).toBe("b");
   });
 
   it("delete is a no-op for non-existent ID", async () => {
@@ -121,14 +120,14 @@ describe("BruteForceSearch", () => {
     const engine = new BruteForceSearch();
     await engine.insert("ortho", normalize([0, 1, 0]));
     const results = await engine.search(normalize([1, 0, 0]), 1);
-    expect(results[0]!.distance).toBeCloseTo(1, 5);
+    expect(results[0].distance).toBeCloseTo(1, 5);
   });
 
   it("cosine similarity accuracy: opposite vectors have distance ~2", async () => {
     const engine = new BruteForceSearch();
     await engine.insert("opposite", normalize([-1, 0, 0]));
     const results = await engine.search(normalize([1, 0, 0]), 1);
-    expect(results[0]!.distance).toBeCloseTo(2, 5);
+    expect(results[0].distance).toBeCloseTo(2, 5);
   });
 
   it("topK limits output length", async () => {
@@ -154,8 +153,8 @@ describe("BruteForceSearch", () => {
     await engine.insert("cos", v2);
 
     const results = await engine.search(query, 1);
-    expect(results[0]!.id).toBe("sin");
-    expect(results[0]!.distance).toBeCloseTo(0, 5);
+    expect(results[0].id).toBe("sin");
+    expect(results[0].distance).toBeCloseTo(0, 5);
   });
 });
 

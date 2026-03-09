@@ -12,7 +12,7 @@ read_when:
 Real projects from the community. See what people are building with Donna.
 
 <Info>
-**Want to be featured?** Share your project in [#showcase on Discord](https://discord.gg/clawd) or [tag @donna on X](https://x.com/donna).
+**Want to be featured?** Share your project in [#showcase on Discord](https://discord.gg/donna) or [tag @donna on X](https://x.com/donna).
 </Info>
 
 ## 🎥 Donna in Action
@@ -408,7 +408,7 @@ Have something to share? We'd love to feature it!
 
 <Steps>
   <Step title="Share It">
-    Post in [#showcase on Discord](https://discord.gg/clawd) or [tweet @donna](https://x.com/donna)
+    Post in [#showcase on Discord](https://discord.gg/donna) or [tweet @donna](https://x.com/donna)
   </Step>
   <Step title="Include Details">
     Tell us what it does, link to the repo/demo, share a screenshot if you have one

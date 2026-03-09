@@ -1,6 +1,7 @@
 import { formatCliCommand } from "../cli/command-format.js";
 import { withProgress } from "../cli/progress.js";
 import { loadConfig, resolveGatewayPort } from "../config/config.js";
+import { EvolutionTracker, getLevelDefinition } from "../evolution/index.js";
 import { buildGatewayConnectionDetails, callGateway } from "../gateway/call.js";
 import { info } from "../globals.js";
 import { formatTimeAgo } from "../infra/format-time/format-relative.ts";
@@ -18,7 +19,6 @@ import type { RuntimeEnv } from "../runtime.js";
 import { runSecurityAudit } from "../security/audit.js";
 import { renderTable } from "../terminal/table.js";
 import { theme } from "../terminal/theme.js";
-import { EvolutionTracker, getLevelDefinition } from "../evolution/index.js";
 import { formatHealthChannelLines, type HealthSummary } from "./health.js";
 import { resolveControlUiLinks } from "./onboard-helpers.js";
 import { statusAllCommand } from "./status-all.js";
@@ -416,17 +416,20 @@ export async function statusCommand(
     { Item: "Node service", Value: nodeDaemonValue },
     { Item: "Agents", Value: agentsValue },
     { Item: "Memory", Value: memoryValue },
-    { Item: "Evolution", Value: await (async () => {
-      try {
-        const tracker = new EvolutionTracker();
-        await tracker.load();
-        const state = tracker.getState();
-        const def = getLevelDefinition(state.level);
-        return `Lv${state.level} ${def.name} · ${state.stats.totalInteractions} interações · ${state.stats.daysActive} dias`;
-      } catch {
-        return muted("unavailable");
-      }
-    })() },
+    {
+      Item: "Evolution",
+      Value: await (async () => {
+        try {
+          const tracker = new EvolutionTracker();
+          await tracker.load();
+          const state = tracker.getState();
+          const def = getLevelDefinition(state.level);
+          return `Rank ${def.rank} (Lv${state.level}) ${def.title} · XP ${state.stats.xp} · ${state.stats.totalInteractions} msgs · ${state.stats.daysActive} dias`;
+        } catch {
+          return muted("unavailable");
+        }
+      })(),
+    },
     { Item: "Probes", Value: probesValue },
     { Item: "Events", Value: eventsValue },
     { Item: "Heartbeat", Value: heartbeatValue },

@@ -1,9 +1,9 @@
-const fs = require('fs-extra');
-const path = require('path');
-const chalk = require('chalk');
-const { parse } = require('@babel/parser');
-const traverse = require('@babel/traverse').default;
-const SecurityChecker = require('./security-checker');
+const fs = require("fs-extra");
+const path = require("path");
+const chalk = require("chalk");
+const { parse } = require("@babel/parser");
+const traverse = require("@babel/traverse").default;
+const SecurityChecker = require("./security-checker");
 
 /**
  * Analyzes meta-agent capabilities and identifies improvement opportunities
@@ -11,38 +11,38 @@ const SecurityChecker = require('./security-checker');
 class CapabilityAnalyzer {
   constructor(options = {}) {
     this.rootPath = options.rootPath || process.cwd();
-    this.coreDir = path.join(this.rootPath, 'aiox-core');
+    this.coreDir = path.join(this.rootPath, "aiox-core");
     this.security = new SecurityChecker();
-    
+
     // Capability categories
     this.categories = {
       error_handling: {
         weight: 0.2,
-        metrics: ['try_catch_coverage', 'error_context', 'retry_logic', 'graceful_degradation'],
+        metrics: ["try_catch_coverage", "error_context", "retry_logic", "graceful_degradation"],
       },
       performance: {
         weight: 0.15,
-        metrics: ['async_operations', 'caching', 'algorithm_efficiency', 'resource_usage'],
+        metrics: ["async_operations", "caching", "algorithm_efficiency", "resource_usage"],
       },
       modularity: {
         weight: 0.15,
-        metrics: ['function_size', 'coupling', 'cohesion', 'reusability'],
+        metrics: ["function_size", "coupling", "cohesion", "reusability"],
       },
       testing: {
         weight: 0.2,
-        metrics: ['test_coverage', 'test_quality', 'edge_cases', 'mocking_strategy'],
+        metrics: ["test_coverage", "test_quality", "edge_cases", "mocking_strategy"],
       },
       documentation: {
         weight: 0.1,
-        metrics: ['jsdoc_coverage', 'inline_comments', 'readme_quality', 'examples'],
+        metrics: ["jsdoc_coverage", "inline_comments", "readme_quality", "examples"],
       },
       security: {
         weight: 0.1,
-        metrics: ['input_validation', 'sanitization', 'auth_checks', 'audit_trail'],
+        metrics: ["input_validation", "sanitization", "auth_checks", "audit_trail"],
       },
       user_experience: {
         weight: 0.1,
-        metrics: ['feedback_quality', 'error_messages', 'progress_tracking', 'help_text'],
+        metrics: ["feedback_quality", "error_messages", "progress_tracking", "help_text"],
       },
     };
   }
@@ -54,9 +54,9 @@ class CapabilityAnalyzer {
    */
   async analyzeCapabilities(options = {}) {
     const { target_areas = Object.keys(this.categories), currentImplementation } = options;
-    
-    console.log(chalk.blue('🔍 Analyzing current capabilities...'));
-    
+
+    console.log(chalk.blue("🔍 Analyzing current capabilities..."));
+
     const analysis = {
       timestamp: new Date().toISOString(),
       overall_score: 0,
@@ -68,11 +68,13 @@ class CapabilityAnalyzer {
 
     // Analyze each category
     for (const category of target_areas) {
-      if (!this.categories[category]) continue;
-      
+      if (!this.categories[category]) {
+        continue;
+      }
+
       const categoryAnalysis = await this.analyzeCategory(category, currentImplementation);
       analysis.categories[category] = categoryAnalysis;
-      
+
       // Identify strengths and weaknesses
       if (categoryAnalysis.score >= 8) {
         analysis.strengths.push({
@@ -87,17 +89,17 @@ class CapabilityAnalyzer {
           issues: categoryAnalysis.issues,
         });
       }
-      
+
       // Add improvement opportunities
       analysis.improvement_opportunities.push(...categoryAnalysis.opportunities);
     }
 
     // Calculate overall score
     analysis.overall_score = this.calculateOverallScore(analysis.categories);
-    
+
     // Sort opportunities by impact
     analysis.improvement_opportunities.sort((a, b) => b.impact - a.impact);
-    
+
     return analysis;
   }
 
@@ -120,14 +122,14 @@ class CapabilityAnalyzer {
     for (const metric of categoryDef.metrics) {
       const metricResult = await this.analyzeMetric(category, metric, basePath);
       analysis.metrics[metric] = metricResult;
-      
+
       if (metricResult.score < 6) {
         analysis.issues.push({
           metric,
           score: metricResult.score,
           description: metricResult.description,
         });
-        
+
         // Generate improvement opportunity
         if (metricResult.improvement) {
           analysis.opportunities.push({
@@ -135,8 +137,8 @@ class CapabilityAnalyzer {
             metric,
             description: metricResult.improvement,
             impact: (10 - metricResult.score) * categoryDef.weight,
-            effort: metricResult.effort || 'medium',
-            risk: metricResult.risk || 'low',
+            effort: metricResult.effort || "medium",
+            risk: metricResult.risk || "low",
           });
         }
       } else if (metricResult.score >= 8) {
@@ -149,9 +151,9 @@ class CapabilityAnalyzer {
     }
 
     // Calculate category score
-    const metricScores = Object.values(analysis.metrics).map(m => m.score);
+    const metricScores = Object.values(analysis.metrics).map((m) => m.score);
     analysis.score = metricScores.reduce((sum, score) => sum + score, 0) / metricScores.length;
-    
+
     return analysis;
   }
 
@@ -160,13 +162,15 @@ class CapabilityAnalyzer {
    * @private
    */
   async analyzeMetric(category, metric, basePath) {
-    const methodName = `analyze_${category}_${metric}`.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
-    
+    const methodName = `analyze_${category}_${metric}`.replace(/_([a-z])/g, (g) =>
+      g[1].toUpperCase(),
+    );
+
     // Use specific analyzer if available
-    if (typeof this[methodName] === 'function') {
+    if (typeof this[methodName] === "function") {
       return await this[methodName](basePath);
     }
-    
+
     // Default metric analysis
     return this.defaultMetricAnalysis(category, metric);
   }
@@ -183,10 +187,10 @@ class CapabilityAnalyzer {
 
     for (const file of files) {
       try {
-        const content = await fs.readFile(file, 'utf-8');
+        const content = await fs.readFile(file, "utf-8");
         const ast = parse(content, {
-          sourceType: 'module',
-          plugins: ['jsx'],
+          sourceType: "module",
+          plugins: ["jsx"],
         });
 
         traverse(ast, {
@@ -222,11 +226,12 @@ class CapabilityAnalyzer {
     return {
       score,
       description: `Try-catch coverage: ${coverage.toFixed(1)}% (${functionsWithTryCatch}/${totalFunctions} functions)`,
-      improvement: asyncWithoutTryCatch.length > 0 
-        ? `Add try-catch blocks to ${asyncWithoutTryCatch.length} async functions`
-        : null,
-      effort: asyncWithoutTryCatch.length > 10 ? 'high' : 'medium',
-      risk: 'low',
+      improvement:
+        asyncWithoutTryCatch.length > 0
+          ? `Add try-catch blocks to ${asyncWithoutTryCatch.length} async functions`
+          : null,
+      effort: asyncWithoutTryCatch.length > 10 ? "high" : "medium",
+      risk: "low",
       details: { asyncWithoutTryCatch: asyncWithoutTryCatch.slice(0, 5) },
     };
   }
@@ -243,13 +248,17 @@ class CapabilityAnalyzer {
 
     for (const file of files) {
       try {
-        const content = await fs.readFile(file, 'utf-8');
+        const content = await fs.readFile(file, "utf-8");
         const errorMatches = content.match(/throw\s+new\s+Error\([^)]+\)/g) || [];
-        
-        errorMatches.forEach(match => {
+
+        errorMatches.forEach((match) => {
           totalErrors++;
           // Check if error includes context (variables, state, etc.)
-          if (match.includes('${') || match.includes('+') || match.match(/Error\([^'"]+['"]\s*\+/)) {
+          if (
+            match.includes("${") ||
+            match.includes("+") ||
+            match.match(/Error\([^'"]+['"]\s*\+/)
+          ) {
             contextualErrors++;
           } else {
             poorErrors.push({
@@ -269,11 +278,10 @@ class CapabilityAnalyzer {
     return {
       score,
       description: `Error context quality: ${contextRate.toFixed(1)}% contextual errors`,
-      improvement: poorErrors.length > 0
-        ? `Enhance ${poorErrors.length} error messages with context`
-        : null,
-      effort: 'low',
-      risk: 'low',
+      improvement:
+        poorErrors.length > 0 ? `Enhance ${poorErrors.length} error messages with context` : null,
+      effort: "low",
+      risk: "low",
       details: { poorErrors: poorErrors.slice(0, 5) },
     };
   }
@@ -290,17 +298,17 @@ class CapabilityAnalyzer {
 
     for (const file of files) {
       try {
-        const content = await fs.readFile(file, 'utf-8');
-        
+        const content = await fs.readFile(file, "utf-8");
+
         // Look for retry patterns
         if (content.match(/retry|retries|attempt|maxAttempts/i)) {
           retryPatterns++;
         }
-        
+
         // Look for network operations
         const networkOps = content.match(/fetch|axios|request|http\.|https\./g) || [];
         networkOperations += networkOps.length;
-        
+
         // Check if network operations have retry
         if (networkOps.length > 0 && !content.match(/retry|retries|attempt/i)) {
           missingRetry.push({
@@ -313,16 +321,17 @@ class CapabilityAnalyzer {
       }
     }
 
-    const score = retryPatterns > 0 ? Math.min(10, 5 + (retryPatterns * 0.5)) : 3;
+    const score = retryPatterns > 0 ? Math.min(10, 5 + retryPatterns * 0.5) : 3;
 
     return {
       score,
       description: `Retry logic found in ${retryPatterns} files`,
-      improvement: missingRetry.length > 0
-        ? `Add retry logic to ${missingRetry.length} files with network operations`
-        : null,
-      effort: 'medium',
-      risk: 'low',
+      improvement:
+        missingRetry.length > 0
+          ? `Add retry logic to ${missingRetry.length} files with network operations`
+          : null,
+      effort: "medium",
+      risk: "low",
       details: { missingRetry: missingRetry.slice(0, 5) },
     };
   }
@@ -334,9 +343,9 @@ class CapabilityAnalyzer {
    */
   async generateImprovementPlan(params) {
     const { analysis, request, constraints = {} } = params;
-    
-    console.log(chalk.blue('📋 Generating improvement plan...'));
-    
+
+    console.log(chalk.blue("📋 Generating improvement plan..."));
+
     const plan = {
       id: `self-imp-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       timestamp: new Date().toISOString(),
@@ -346,12 +355,12 @@ class CapabilityAnalyzer {
       affectedFiles: [],
       estimatedImpact: 0,
       estimatedEffort: 0,
-      riskLevel: 'low',
+      riskLevel: "low",
     };
 
     // Filter opportunities based on request and constraints
     let opportunities = analysis.improvement_opportunities;
-    
+
     if (constraints.max_files) {
       opportunities = opportunities.slice(0, constraints.max_files);
     }
@@ -370,7 +379,7 @@ class CapabilityAnalyzer {
     // Deduplicate
     plan.target_areas = [...new Set(plan.target_areas)];
     plan.affectedFiles = [...new Set(plan.affectedFiles)];
-    
+
     // Calculate effort and risk
     plan.estimatedEffort = this.calculateEffort(plan.changes);
     plan.riskLevel = this.calculateRiskLevel(plan.changes);
@@ -388,7 +397,7 @@ class CapabilityAnalyzer {
       category: opportunity.category,
       metric: opportunity.metric,
       description: opportunity.description,
-      type: 'enhancement',
+      type: "enhancement",
       files: [],
       modifications: [],
       tests: [],
@@ -398,7 +407,7 @@ class CapabilityAnalyzer {
 
     // Generate specific modifications based on metric
     switch (`${opportunity.category}_${opportunity.metric}`) {
-      case 'error_handling_try_catch_coverage':
+      case "error_handling_try_catch_coverage":
         const details = analysis.categories.error_handling.metrics.try_catch_coverage.details;
         if (details && details.asyncWithoutTryCatch) {
           for (const location of details.asyncWithoutTryCatch.slice(0, 5)) {
@@ -406,22 +415,22 @@ class CapabilityAnalyzer {
             change.modifications.push({
               file: location.file,
               line: location.line,
-              type: 'wrap_in_try_catch',
-              description: 'Add try-catch block to async function',
+              type: "wrap_in_try_catch",
+              description: "Add try-catch block to async function",
             });
           }
         }
         break;
 
-      case 'error_handling_error_context':
+      case "error_handling_error_context":
         const errorDetails = analysis.categories.error_handling.metrics.error_context.details;
         if (errorDetails && errorDetails.poorErrors) {
           for (const error of errorDetails.poorErrors.slice(0, 5)) {
             change.files.push(error.file);
             change.modifications.push({
               file: error.file,
-              type: 'enhance_error_message',
-              description: 'Add context to error message',
+              type: "enhance_error_message",
+              description: "Add context to error message",
               pattern: error.error,
             });
           }
@@ -431,16 +440,16 @@ class CapabilityAnalyzer {
       default:
         // Generic improvement
         change.modifications.push({
-          type: 'generic_improvement',
+          type: "generic_improvement",
           description: opportunity.description,
         });
     }
 
     // Add test requirements
-    change.tests = change.files.map(file => ({
-      file: file.replace('.js', '.test.js'),
-      type: 'unit',
-      coverage: 'new_functionality',
+    change.tests = change.files.map((file) => ({
+      file: file.replace(".js", ".test.js"),
+      type: "unit",
+      coverage: "new_functionality",
     }));
 
     return change;
@@ -472,10 +481,14 @@ class CapabilityAnalyzer {
     const totalEffort = changes.reduce((sum, change) => {
       return sum + (effortMap[change.risk] || 2);
     }, 0);
-    
-    if (totalEffort <= 5) return 'low';
-    if (totalEffort <= 15) return 'medium';
-    return 'high';
+
+    if (totalEffort <= 5) {
+      return "low";
+    }
+    if (totalEffort <= 15) {
+      return "medium";
+    }
+    return "high";
   }
 
   /**
@@ -483,12 +496,16 @@ class CapabilityAnalyzer {
    * @private
    */
   calculateRiskLevel(changes) {
-    const hasHighRisk = changes.some(c => c.risk === 'high');
-    const mediumRiskCount = changes.filter(c => c.risk === 'medium').length;
-    
-    if (hasHighRisk || mediumRiskCount > 3) return 'high';
-    if (mediumRiskCount > 0) return 'medium';
-    return 'low';
+    const hasHighRisk = changes.some((c) => c.risk === "high");
+    const mediumRiskCount = changes.filter((c) => c.risk === "medium").length;
+
+    if (hasHighRisk || mediumRiskCount > 3) {
+      return "high";
+    }
+    if (mediumRiskCount > 0) {
+      return "medium";
+    }
+    return "low";
   }
 
   /**
@@ -497,23 +514,23 @@ class CapabilityAnalyzer {
    */
   async getJavaScriptFiles(dir) {
     const files = [];
-    
+
     try {
       const entries = await fs.readdir(dir, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         const fullPath = path.join(dir, entry.name);
-        
-        if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
-          files.push(...await this.getJavaScriptFiles(fullPath));
-        } else if (entry.isFile() && entry.name.endsWith('.js')) {
+
+        if (entry.isDirectory() && !entry.name.startsWith(".") && entry.name !== "node_modules") {
+          files.push(...(await this.getJavaScriptFiles(fullPath)));
+        } else if (entry.isFile() && entry.name.endsWith(".js")) {
           files.push(fullPath);
         }
       }
     } catch (error) {
       console.error(`Error reading directory ${dir}: ${error.message}`);
     }
-    
+
     return files;
   }
 
@@ -526,8 +543,8 @@ class CapabilityAnalyzer {
       score: 5,
       description: `${metric} analysis not yet implemented`,
       improvement: `Implement ${metric} analysis and improvements`,
-      effort: 'medium',
-      risk: 'low',
+      effort: "medium",
+      risk: "low",
     };
   }
 }

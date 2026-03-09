@@ -7,13 +7,13 @@ title: "Credits"
 
 ## The name
 
-Donna = CLAW + TARDIS, because every space lobster needs a time and space machine.
+Donna is your self-hosted AI gateway, the smart way.
 
 ## Credits
 
-- **Peter Steinberger** ([@steipete](https://x.com/steipete)) - Creator, lobster whisperer
+- **Peter Steinberger** ([@steipete](https://x.com/steipete)) - Creator
 - **Mario Zechner** ([@badlogicc](https://x.com/badlogicgames)) - Pi creator, security pen tester
-- **Clawd** - The space lobster who demanded a better name
+- **Donna** - The AI that keeps evolving
 
 ## Core contributors
 
@@ -23,6 +23,6 @@ Donna = CLAW + TARDIS, because every space lobster needs a time and space machin
 
 ## License
 
-MIT - Free as a lobster in the ocean.
+MIT - Open source, open to everyone.
 
 > "We are all just playing with our own prompts." (An AI, probably high on tokens)

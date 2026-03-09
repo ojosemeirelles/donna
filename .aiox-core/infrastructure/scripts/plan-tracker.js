@@ -22,10 +22,10 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const fsPromises = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs");
+const fsPromises = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 //                              CONFIGURATION
@@ -33,16 +33,16 @@ const yaml = require('js-yaml');
 
 const CONFIG = {
   progressBarWidth: 10,
-  progressBarFilled: '▓',
-  progressBarEmpty: '░',
+  progressBarFilled: "▓",
+  progressBarEmpty: "░",
   // AC7: Dashboard integration path
-  dashboardStatusPath: '.aiox/dashboard/status.json',
+  dashboardStatusPath: ".aiox/dashboard/status.json",
   // Legacy status path for backwards compatibility
-  legacyStatusPath: '.aiox/status.json',
+  legacyStatusPath: ".aiox/status.json",
   // AC5: Build progress snapshot file
-  buildProgressFile: 'build-progress.txt',
+  buildProgressFile: "build-progress.txt",
   // Plan file name
-  implementationFile: 'implementation.yaml',
+  implementationFile: "implementation.yaml",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -50,21 +50,21 @@ const CONFIG = {
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 const Status = {
-  PENDING: 'pending',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  FAILED: 'failed',
-  BLOCKED: 'blocked',
-  SKIPPED: 'skipped',
+  PENDING: "pending",
+  IN_PROGRESS: "in_progress",
+  COMPLETED: "completed",
+  FAILED: "failed",
+  BLOCKED: "blocked",
+  SKIPPED: "skipped",
 };
 
 const StatusEmoji = {
-  [Status.PENDING]: '⏳',
-  [Status.IN_PROGRESS]: '🔄',
-  [Status.COMPLETED]: '✅',
-  [Status.FAILED]: '❌',
-  [Status.BLOCKED]: '🚫',
-  [Status.SKIPPED]: '⏭️',
+  [Status.PENDING]: "⏳",
+  [Status.IN_PROGRESS]: "🔄",
+  [Status.COMPLETED]: "✅",
+  [Status.FAILED]: "❌",
+  [Status.BLOCKED]: "🚫",
+  [Status.SKIPPED]: "⏭️",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -82,7 +82,7 @@ class PlanTracker {
    */
   constructor(options) {
     // Support both object and string (legacy) constructor
-    if (typeof options === 'string') {
+    if (typeof options === "string") {
       this.storyId = options;
       this.rootPath = process.cwd();
       this.planPath = null;
@@ -121,17 +121,17 @@ class PlanTracker {
         // Default paths for new plans
         this.planPath = path.join(
           this.rootPath,
-          'docs/stories',
+          "docs/stories",
           this.storyId,
-          'plan',
-          CONFIG.implementationFile
+          "plan",
+          CONFIG.implementationFile,
         );
         this.progressPath = path.join(
           this.rootPath,
-          'docs/stories',
+          "docs/stories",
           this.storyId,
-          'plan',
-          CONFIG.buildProgressFile
+          "plan",
+          CONFIG.buildProgressFile,
         );
       }
     }
@@ -145,25 +145,25 @@ class PlanTracker {
   _findPlanPath() {
     const searchPaths = [
       // Standard story plan location
-      path.join(this.rootPath, 'docs/stories', this.storyId, 'plan', CONFIG.implementationFile),
+      path.join(this.rootPath, "docs/stories", this.storyId, "plan", CONFIG.implementationFile),
       // Lowercase story ID
       path.join(
         this.rootPath,
-        'docs/stories',
+        "docs/stories",
         this.storyId.toLowerCase(),
-        'plan',
-        CONFIG.implementationFile
+        "plan",
+        CONFIG.implementationFile,
       ),
       // Story ID with hyphens
       path.join(
         this.rootPath,
-        'docs/stories',
-        this.storyId.replace(/[_]/g, '-'),
-        'plan',
-        CONFIG.implementationFile
+        "docs/stories",
+        this.storyId.replace(/[_]/g, "-"),
+        "plan",
+        CONFIG.implementationFile,
       ),
       // .aiox plans location
-      path.join(this.rootPath, '.aiox/plans', this.storyId, CONFIG.implementationFile),
+      path.join(this.rootPath, ".aiox/plans", this.storyId, CONFIG.implementationFile),
       // Epic-based location (e.g., aiox-core-ade/story-4.6)
       ...this._getEpicBasedPaths(),
     ];
@@ -184,7 +184,7 @@ class PlanTracker {
    */
   _getEpicBasedPaths() {
     const paths = [];
-    const storiesDir = path.join(this.rootPath, 'docs/stories');
+    const storiesDir = path.join(this.rootPath, "docs/stories");
 
     if (fs.existsSync(storiesDir)) {
       try {
@@ -195,14 +195,14 @@ class PlanTracker {
 
         for (const epicDir of epicDirs) {
           paths.push(
-            path.join(storiesDir, epicDir, this.storyId, 'plan', CONFIG.implementationFile),
+            path.join(storiesDir, epicDir, this.storyId, "plan", CONFIG.implementationFile),
             path.join(
               storiesDir,
               epicDir,
               this.storyId.toLowerCase(),
-              'plan',
-              CONFIG.implementationFile
-            )
+              "plan",
+              CONFIG.implementationFile,
+            ),
           );
         }
       } catch {
@@ -221,7 +221,7 @@ class PlanTracker {
       throw new Error(`Implementation plan not found: ${this.planPath}`);
     }
 
-    this.plan = yaml.load(fs.readFileSync(this.planPath, 'utf-8'));
+    this.plan = yaml.load(fs.readFileSync(this.planPath, "utf-8"));
     return this;
   }
 
@@ -346,9 +346,9 @@ class PlanTracker {
     const lines = [];
 
     // Header
-    lines.push('');
+    lines.push("");
     lines.push(`📊 Implementation Progress: ${this.storyId}`);
-    lines.push('━'.repeat(50));
+    lines.push("━".repeat(50));
 
     // Phase progress
     for (const phase of stats.phases) {
@@ -358,7 +358,7 @@ class PlanTracker {
       lines.push(`${phase.name.padEnd(18)} ${bar} ${percent} ${count}`);
     }
 
-    lines.push('━'.repeat(50));
+    lines.push("━".repeat(50));
 
     // Total progress
     const totalBar = this.progressBar(stats.percentComplete);
@@ -372,13 +372,13 @@ class PlanTracker {
 
     // Failures
     if (stats.failed > 0) {
-      lines.push('');
+      lines.push("");
       lines.push(`⚠️  ${stats.failed} subtask(s) failed - review required`);
     }
 
-    lines.push('');
+    lines.push("");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -388,17 +388,17 @@ class PlanTracker {
     const stats = this.getStats();
     const lines = [];
 
-    lines.push('');
-    lines.push('╔' + '═'.repeat(58) + '╗');
-    lines.push('║' + ` Implementation Progress: ${this.storyId}`.padEnd(58) + '║');
-    lines.push('╚' + '═'.repeat(58) + '╝');
-    lines.push('');
+    lines.push("");
+    lines.push("╔" + "═".repeat(58) + "╗");
+    lines.push("║" + ` Implementation Progress: ${this.storyId}`.padEnd(58) + "║");
+    lines.push("╚" + "═".repeat(58) + "╝");
+    lines.push("");
 
     for (const phase of stats.phases) {
       const bar = this.progressBar(phase.percentComplete);
       lines.push(`📁 ${phase.name}`);
       lines.push(`   ${bar} ${phase.percentComplete}% (${phase.completed}/${phase.total})`);
-      lines.push('');
+      lines.push("");
 
       for (const subtask of phase.subtasks) {
         const emoji = StatusEmoji[subtask.status];
@@ -406,20 +406,20 @@ class PlanTracker {
         lines.push(`   ${emoji} ${subtask.id.padEnd(5)} ${statusText} ${subtask.description}`);
       }
 
-      lines.push('');
+      lines.push("");
     }
 
     // Summary
-    lines.push('─'.repeat(60));
-    lines.push('');
+    lines.push("─".repeat(60));
+    lines.push("");
     lines.push(`📈 Overall Progress: ${stats.percentComplete}%`);
     lines.push(
-      `   Total: ${stats.total} | Completed: ${stats.completed} | In Progress: ${stats.inProgress} | Failed: ${stats.failed}`
+      `   Total: ${stats.total} | Completed: ${stats.completed} | In Progress: ${stats.inProgress} | Failed: ${stats.failed}`,
     );
     lines.push(`   Status: ${StatusEmoji[stats.status]} ${stats.status.toUpperCase()}`);
 
     if (stats.current) {
-      lines.push('');
+      lines.push("");
       lines.push(`🎯 Current: ${stats.current.subtask} - ${stats.current.description}`);
     }
 
@@ -429,9 +429,9 @@ class PlanTracker {
       lines.push(`📌 Next: ${nextPending.id} - ${nextPending.description}`);
     }
 
-    lines.push('');
+    lines.push("");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -459,7 +459,7 @@ class PlanTracker {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(this.progressPath, report, 'utf-8');
+    fs.writeFileSync(this.progressPath, report, "utf-8");
     return this.progressPath;
   }
 
@@ -496,7 +496,7 @@ class PlanTracker {
 
     if (fs.existsSync(statusPath)) {
       try {
-        status = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
+        status = JSON.parse(fs.readFileSync(statusPath, "utf-8"));
       } catch {
         // Invalid JSON, start fresh
         status = {};
@@ -504,7 +504,9 @@ class PlanTracker {
     }
 
     // Initialize structure if needed
-    if (!status.version) status.version = '1.0';
+    if (!status.version) {
+      status.version = "1.0";
+    }
     if (!status.stories) {
       status.stories = { inProgress: [], completed: [] };
     }
@@ -568,7 +570,7 @@ class PlanTracker {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(statusPath, JSON.stringify(status, null, 2), 'utf-8');
+    fs.writeFileSync(statusPath, JSON.stringify(status, null, 2), "utf-8");
   }
 
   /**
@@ -624,7 +626,9 @@ class PlanTracker {
           break;
         }
       }
-      if (found) break;
+      if (found) {
+        break;
+      }
     }
 
     if (!found) {
@@ -632,7 +636,7 @@ class PlanTracker {
     }
 
     // Save updated plan
-    fs.writeFileSync(this.planPath, yaml.dump(this.plan), 'utf-8');
+    fs.writeFileSync(this.planPath, yaml.dump(this.plan), "utf-8");
 
     // Update status.json
     this.updateStatusJson();
@@ -735,7 +739,7 @@ function updateAfterSubtask(storyId, subtaskId, status) {
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
+  if (args.length < 1 || args.includes("--help") || args.includes("-h")) {
     console.log(`
 \u{1F4CA} Plan Progress Tracker - AIOX Execution Engine (Story 4.6)
 
@@ -778,13 +782,13 @@ Acceptance Criteria Coverage:
   AC6: Auto-updates after each subtask
   AC7: Integrates with .aiox/dashboard/status.json
 `);
-    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
+    process.exit(args.includes("--help") || args.includes("-h") ? 0 : 1);
   }
 
   // Parse arguments
   let storyId = null;
   let planPath = null;
-  let command = 'status';
+  let command = "status";
   let subtaskId = null;
   let errorMessage = null;
   let quiet = false;
@@ -792,14 +796,14 @@ Acceptance Criteria Coverage:
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--plan-path' && args[i + 1]) {
+    if (arg === "--plan-path" && args[i + 1]) {
       planPath = args[++i];
-    } else if (arg === '--quiet' || arg === '-q') {
+    } else if (arg === "--quiet" || arg === "-q") {
       quiet = true;
-    } else if (!arg.startsWith('-')) {
+    } else if (!arg.startsWith("-")) {
       if (!storyId) {
         storyId = arg;
-      } else if (!command || command === 'status') {
+      } else if (!command || command === "status") {
         command = arg;
       } else if (!subtaskId) {
         subtaskId = arg;
@@ -810,7 +814,7 @@ Acceptance Criteria Coverage:
   }
 
   if (!storyId && !planPath) {
-    console.error('Error: Story ID or --plan-path required');
+    console.error("Error: Story ID or --plan-path required");
     process.exit(1);
   }
 
@@ -821,29 +825,33 @@ Acceptance Criteria Coverage:
     });
 
     switch (command) {
-      case 'status':
+      case "status":
         console.log(tracker.generateReport());
         break;
 
-      case 'detailed':
+      case "detailed":
         console.log(tracker.generateDetailedReport());
         break;
 
-      case 'json':
+      case "json":
         console.log(JSON.stringify(tracker.getProgress(), null, 2));
         break;
 
-      case 'save':
+      case "save":
         const savePath = tracker.saveProgress();
-        if (!quiet) console.log(`\u2705 Progress snapshot saved to: ${savePath}`);
+        if (!quiet) {
+          console.log(`\u2705 Progress snapshot saved to: ${savePath}`);
+        }
         break;
 
-      case 'update':
+      case "update":
         const updatePath = tracker.updateStatusJson();
-        if (!quiet) console.log(`\u2705 Dashboard status.json updated: ${updatePath}`);
+        if (!quiet) {
+          console.log(`\u2705 Dashboard status.json updated: ${updatePath}`);
+        }
         break;
 
-      case 'all':
+      case "all":
         const snapshotPath = tracker.saveProgress();
         const dashboardPath = tracker.updateStatusJson();
         if (!quiet) {
@@ -852,9 +860,9 @@ Acceptance Criteria Coverage:
         }
         break;
 
-      case 'start':
+      case "start":
         if (!subtaskId) {
-          console.error('Error: subtask ID required for start command');
+          console.error("Error: subtask ID required for start command");
           process.exit(1);
         }
         tracker.startSubtask(subtaskId);
@@ -864,9 +872,9 @@ Acceptance Criteria Coverage:
         }
         break;
 
-      case 'complete':
+      case "complete":
         if (!subtaskId) {
-          console.error('Error: subtask ID required for complete command');
+          console.error("Error: subtask ID required for complete command");
           process.exit(1);
         }
         tracker.completeSubtask(subtaskId);
@@ -878,12 +886,12 @@ Acceptance Criteria Coverage:
         }
         break;
 
-      case 'fail':
+      case "fail":
         if (!subtaskId) {
-          console.error('Error: subtask ID required for fail command');
+          console.error("Error: subtask ID required for fail command");
           process.exit(1);
         }
-        tracker.failSubtask(subtaskId, errorMessage || 'Unknown error');
+        tracker.failSubtask(subtaskId, errorMessage || "Unknown error");
         // AC6: Auto-update dashboard after subtask failure
         tracker.updateStatusJson();
         if (!quiet) {

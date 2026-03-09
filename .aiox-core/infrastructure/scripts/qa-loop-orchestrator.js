@@ -22,10 +22,10 @@
  * @version 1.0.0
  */
 
-const fs = require('fs');
-const fsPromises = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
+const fs = require("fs");
+const fsPromises = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 //                              CONFIGURATION
@@ -34,18 +34,18 @@ const yaml = require('js-yaml');
 const CONFIG = {
   // AC2: Default max iterations
   defaultMaxIterations: 5,
-  configPath: 'autoClaude.qaLoop.maxIterations',
+  configPath: "autoClaude.qaLoop.maxIterations",
 
   // AC4: Status file location
-  statusFileName: 'loop-status.json',
-  statusDir: 'qa',
+  statusFileName: "loop-status.json",
+  statusDir: "qa",
 
   // AC7: Dashboard integration paths
-  dashboardStatusPath: '.aiox/dashboard/status.json',
-  legacyStatusPath: '.aiox/status.json',
+  dashboardStatusPath: ".aiox/dashboard/status.json",
+  legacyStatusPath: ".aiox/status.json",
 
   // Workflow definition
-  workflowPath: '.aiox-core/development/workflows/qa-loop.yaml',
+  workflowPath: ".aiox-core/development/workflows/qa-loop.yaml",
 
   // Timeouts (milliseconds)
   reviewTimeout: 1800000, // 30 minutes
@@ -57,7 +57,7 @@ const CONFIG = {
 
   // Session persistence (AC4 enhancement)
   abandonedThreshold: 3600000, // 1 hour - consider loop abandoned if no update
-  persistenceIndexPath: '.aiox/qa-loops-index.json', // Track all active loops
+  persistenceIndexPath: ".aiox/qa-loops-index.json", // Track all active loops
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -65,31 +65,31 @@ const CONFIG = {
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 const LoopStatus = {
-  PENDING: 'pending',
-  IN_PROGRESS: 'in_progress',
-  COMPLETED: 'completed',
-  STOPPED: 'stopped',
-  ESCALATED: 'escalated',
+  PENDING: "pending",
+  IN_PROGRESS: "in_progress",
+  COMPLETED: "completed",
+  STOPPED: "stopped",
+  ESCALATED: "escalated",
 };
 
 const Verdict = {
-  APPROVE: 'APPROVE',
-  REJECT: 'REJECT',
-  BLOCKED: 'BLOCKED',
+  APPROVE: "APPROVE",
+  REJECT: "REJECT",
+  BLOCKED: "BLOCKED",
 };
 
 const StatusEmoji = {
-  [LoopStatus.PENDING]: '⏳',
-  [LoopStatus.IN_PROGRESS]: '🔄',
-  [LoopStatus.COMPLETED]: '✅',
-  [LoopStatus.STOPPED]: '⏹️',
-  [LoopStatus.ESCALATED]: '🚨',
+  [LoopStatus.PENDING]: "⏳",
+  [LoopStatus.IN_PROGRESS]: "🔄",
+  [LoopStatus.COMPLETED]: "✅",
+  [LoopStatus.STOPPED]: "⏹️",
+  [LoopStatus.ESCALATED]: "🚨",
 };
 
 const VerdictEmoji = {
-  [Verdict.APPROVE]: '✅',
-  [Verdict.REJECT]: '❌',
-  [Verdict.BLOCKED]: '🚫',
+  [Verdict.APPROVE]: "✅",
+  [Verdict.REJECT]: "❌",
+  [Verdict.BLOCKED]: "🚫",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -126,7 +126,7 @@ class QALoopOrchestrator {
       this.rootPath,
       CONFIG.statusDir,
       this.storyId,
-      CONFIG.statusFileName
+      CONFIG.statusFileName,
     );
 
     // Dashboard paths (AC7)
@@ -145,24 +145,24 @@ class QALoopOrchestrator {
   _loadMaxIterations() {
     // Try to load from project config
     const configPaths = [
-      path.join(this.rootPath, '.aiox/config.yaml'),
-      path.join(this.rootPath, '.aiox/config.yml'),
-      path.join(this.rootPath, 'aiox.config.js'),
+      path.join(this.rootPath, ".aiox/config.yaml"),
+      path.join(this.rootPath, ".aiox/config.yml"),
+      path.join(this.rootPath, "aiox.config.js"),
     ];
 
     for (const configPath of configPaths) {
       if (fs.existsSync(configPath)) {
         try {
           let config;
-          if (configPath.endsWith('.js')) {
+          if (configPath.endsWith(".js")) {
             config = require(configPath);
           } else {
-            config = yaml.load(fs.readFileSync(configPath, 'utf-8'));
+            config = yaml.load(fs.readFileSync(configPath, "utf-8"));
           }
 
           // Navigate to autoClaude.qaLoop.maxIterations
           const value = config?.autoClaude?.qaLoop?.maxIterations;
-          if (typeof value === 'number' && value > 0) {
+          if (typeof value === "number" && value > 0) {
             return value;
           }
         } catch {
@@ -185,7 +185,7 @@ class QALoopOrchestrator {
   loadStatus() {
     if (fs.existsSync(this.statusPath)) {
       try {
-        this.status = JSON.parse(fs.readFileSync(this.statusPath, 'utf-8'));
+        this.status = JSON.parse(fs.readFileSync(this.statusPath, "utf-8"));
         return this.status;
       } catch (error) {
         console.error(`Error loading status: ${error.message}`);
@@ -219,7 +219,7 @@ class QALoopOrchestrator {
    */
   recoverFromAbandoned() {
     if (!this.status) {
-      throw new Error('No status to recover');
+      throw new Error("No status to recover");
     }
 
     this._log(`\n⚠️  Detected abandoned QA loop for ${this.storyId}`);
@@ -235,7 +235,7 @@ class QALoopOrchestrator {
       const lastEntry = this.status.history[this.status.history.length - 1];
       if (!lastEntry.fixedAt) {
         lastEntry.interruptedAt = this.status.recoveredAt;
-        lastEntry.interruptReason = 'Session ended unexpectedly';
+        lastEntry.interruptReason = "Session ended unexpectedly";
       }
     }
 
@@ -251,15 +251,15 @@ class QALoopOrchestrator {
    */
   _updateLoopsIndex() {
     const indexPath = path.join(this.rootPath, CONFIG.persistenceIndexPath);
-    let index = { version: '1.0', loops: {}, updatedAt: null };
+    let index = { version: "1.0", loops: {}, updatedAt: null };
 
     // Load existing index
     if (fs.existsSync(indexPath)) {
       try {
-        index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+        index = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
       } catch {
         // Reset if corrupted
-        index = { version: '1.0', loops: {}, updatedAt: null };
+        index = { version: "1.0", loops: {}, updatedAt: null };
       }
     }
 
@@ -276,8 +276,8 @@ class QALoopOrchestrator {
     // Clean up completed/old loops (keep last 50)
     const loopEntries = Object.entries(index.loops);
     if (loopEntries.length > 50) {
-      const sorted = loopEntries.sort(
-        (a, b) => new Date(b[1].updatedAt) - new Date(a[1].updatedAt)
+      const sorted = loopEntries.toSorted(
+        (a, b) => new Date(b[1].updatedAt) - new Date(a[1].updatedAt),
       );
       index.loops = Object.fromEntries(sorted.slice(0, 50));
     }
@@ -290,7 +290,7 @@ class QALoopOrchestrator {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(indexPath, JSON.stringify(index, null, 2), 'utf-8');
+    fs.writeFileSync(indexPath, JSON.stringify(index, null, 2), "utf-8");
   }
 
   /**
@@ -299,7 +299,7 @@ class QALoopOrchestrator {
    */
   saveStatus() {
     if (!this.status) {
-      throw new Error('No status to save');
+      throw new Error("No status to save");
     }
 
     this.status.updatedAt = new Date().toISOString();
@@ -310,7 +310,7 @@ class QALoopOrchestrator {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(this.statusPath, JSON.stringify(this.status, null, 2), 'utf-8');
+    fs.writeFileSync(this.statusPath, JSON.stringify(this.status, null, 2), "utf-8");
 
     // AC7: Update dashboard
     this.updateStatusJson();
@@ -342,7 +342,7 @@ class QALoopOrchestrator {
    */
   incrementIteration() {
     if (!this.status) {
-      throw new Error('Status not initialized');
+      throw new Error("Status not initialized");
     }
 
     this.status.currentIteration++;
@@ -356,7 +356,7 @@ class QALoopOrchestrator {
    */
   addHistoryEntry(entry) {
     if (!this.status) {
-      throw new Error('Status not initialized');
+      throw new Error("Status not initialized");
     }
 
     this.status.history.push({
@@ -379,7 +379,7 @@ class QALoopOrchestrator {
    */
   updateLastHistoryEntry(updates) {
     if (!this.status || this.status.history.length === 0) {
-      throw new Error('No history to update');
+      throw new Error("No history to update");
     }
 
     const lastEntry = this.status.history[this.status.history.length - 1];
@@ -396,14 +396,14 @@ class QALoopOrchestrator {
    * @returns {Promise<Object>} Loop result
    */
   async runLoop() {
-    this._log('');
-    this._log('╔══════════════════════════════════════════════════════════════╗');
-    this._log('║                     QA Loop Orchestrator                      ║');
-    this._log('╚══════════════════════════════════════════════════════════════╝');
-    this._log('');
+    this._log("");
+    this._log("╔══════════════════════════════════════════════════════════════╗");
+    this._log("║                     QA Loop Orchestrator                      ║");
+    this._log("╚══════════════════════════════════════════════════════════════╝");
+    this._log("");
     this._log(`Story: ${this.storyId}`);
     this._log(`Max Iterations: ${this.maxIterations}`);
-    this._log('');
+    this._log("");
 
     // Initialize or load status with abandoned detection
     const existingStatus = this.loadStatus();
@@ -411,9 +411,9 @@ class QALoopOrchestrator {
       // Check if abandoned (AC4 enhancement - session persistence)
       if (this.isAbandoned()) {
         this.recoverFromAbandoned();
-        this._log('⚠️  Recovered from abandoned session, resuming...');
+        this._log("⚠️  Recovered from abandoned session, resuming...");
       } else {
-        this._log('⚠️  Resuming existing loop...');
+        this._log("⚠️  Resuming existing loop...");
       }
     } else {
       this._initStatus();
@@ -428,7 +428,7 @@ class QALoopOrchestrator {
       while (this.status.currentIteration < this.maxIterations) {
         // Check if stopped (AC5)
         if (this.status.status === LoopStatus.STOPPED) {
-          this._log('\n⏹️  Loop stopped by user');
+          this._log("\n⏹️  Loop stopped by user");
           break;
         }
 
@@ -443,14 +443,14 @@ class QALoopOrchestrator {
         }
 
         if (result.verdict === Verdict.BLOCKED) {
-          await this.escalateToHuman('Review verdict is BLOCKED');
+          await this.escalateToHuman("Review verdict is BLOCKED");
           break;
         }
 
         // Check max iterations (AC2, AC3)
         if (this.status.currentIteration >= this.maxIterations) {
           await this.escalateToHuman(
-            `Max iterations (${this.maxIterations}) reached without APPROVE`
+            `Max iterations (${this.maxIterations}) reached without APPROVE`,
           );
           break;
         }
@@ -482,7 +482,7 @@ class QALoopOrchestrator {
     this.incrementIteration();
     const iterationStart = Date.now();
 
-    this._log('');
+    this._log("");
     this._log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
     this._log(`  Iteration ${this.status.currentIteration}/${this.maxIterations}`);
     this._log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
@@ -504,12 +504,12 @@ class QALoopOrchestrator {
 
     // Check verdict
     if (reviewResult.verdict === Verdict.APPROVE) {
-      this._log('\n✅ Review APPROVED - loop complete');
+      this._log("\n✅ Review APPROVED - loop complete");
       return reviewResult;
     }
 
     if (reviewResult.verdict === Verdict.BLOCKED) {
-      this._log('\n🚫 Review BLOCKED - escalating');
+      this._log("\n🚫 Review BLOCKED - escalating");
       return reviewResult;
     }
 
@@ -543,9 +543,9 @@ class QALoopOrchestrator {
    * @returns {Promise<Object>} Review result with verdict and issues
    */
   async executeReview() {
-    this._log('\n📋 Phase 1: QA Review');
-    this._log('   Agent: @qa');
-    this._log('   Task: qa-review-story.md');
+    this._log("\n📋 Phase 1: QA Review");
+    this._log("   Agent: @qa");
+    this._log("   Task: qa-review-story.md");
 
     // TODO: In production, this would invoke the QA agent
     // For now, we simulate the interface
@@ -571,9 +571,9 @@ class QALoopOrchestrator {
    * @returns {Promise<Object>} Fix request
    */
   async executeFixRequest(reviewResult) {
-    this._log('\n📝 Phase 2: Create Fix Request');
-    this._log('   Agent: @qa');
-    this._log('   Task: qa-create-fix-request.md');
+    this._log("\n📝 Phase 2: Create Fix Request");
+    this._log("   Agent: @qa");
+    this._log("   Task: qa-create-fix-request.md");
 
     // TODO: In production, this would invoke the QA agent
     // For now, we return a simulated structure
@@ -590,9 +590,9 @@ class QALoopOrchestrator {
    * @returns {Promise<Object>} Fix result
    */
   async executeFix(fixRequest) {
-    this._log('\n🔧 Phase 3: Apply Fixes');
-    this._log('   Agent: @dev');
-    this._log('   Task: dev-apply-qa-fixes.md');
+    this._log("\n🔧 Phase 3: Apply Fixes");
+    this._log("   Agent: @dev");
+    this._log("   Task: dev-apply-qa-fixes.md");
 
     // TODO: In production, this would invoke the Dev agent
     // For now, we return a simulated structure
@@ -613,7 +613,7 @@ class QALoopOrchestrator {
    * @returns {Promise<void>}
    */
   async escalateToHuman(reason) {
-    this._log('\n🚨 ESCALATION TO HUMAN');
+    this._log("\n🚨 ESCALATION TO HUMAN");
     this._log(`   Reason: ${reason}`);
 
     this.status.status = LoopStatus.ESCALATED;
@@ -627,7 +627,7 @@ class QALoopOrchestrator {
 
     // Save escalation report
     const reportPath = path.join(path.dirname(this.statusPath), `escalation-${Date.now()}.md`);
-    fs.writeFileSync(reportPath, report, 'utf-8');
+    fs.writeFileSync(reportPath, report, "utf-8");
     this._log(`\n📄 Escalation report saved to: ${reportPath}`);
   }
 
@@ -640,40 +640,40 @@ class QALoopOrchestrator {
   _generateEscalationReport(reason) {
     const lines = [];
 
-    lines.push('# QA Loop Escalation Report');
-    lines.push('');
+    lines.push("# QA Loop Escalation Report");
+    lines.push("");
     lines.push(`**Story:** ${this.storyId}`);
     lines.push(`**Escalated At:** ${new Date().toISOString()}`);
     lines.push(`**Reason:** ${reason}`);
-    lines.push('');
-    lines.push('## Loop Summary');
-    lines.push('');
+    lines.push("");
+    lines.push("## Loop Summary");
+    lines.push("");
     lines.push(`- **Iterations Completed:** ${this.status.currentIteration}/${this.maxIterations}`);
     lines.push(`- **Status:** ${this.status.status}`);
-    lines.push('');
-    lines.push('## Iteration History');
-    lines.push('');
+    lines.push("");
+    lines.push("## Iteration History");
+    lines.push("");
 
     for (const entry of this.status.history) {
-      const emoji = VerdictEmoji[entry.verdict] || '❓';
+      const emoji = VerdictEmoji[entry.verdict] || "❓";
       lines.push(`### Iteration ${entry.iteration}`);
-      lines.push(`- **Verdict:** ${emoji} ${entry.verdict || 'N/A'}`);
+      lines.push(`- **Verdict:** ${emoji} ${entry.verdict || "N/A"}`);
       lines.push(`- **Issues Found:** ${entry.issuesFound}`);
-      lines.push(`- **Issues Fixed:** ${entry.issuesFixed ?? 'N/A'}`);
-      lines.push(`- **Reviewed At:** ${entry.reviewedAt || 'N/A'}`);
-      lines.push(`- **Fixed At:** ${entry.fixedAt || 'N/A'}`);
-      lines.push('');
+      lines.push(`- **Issues Fixed:** ${entry.issuesFixed ?? "N/A"}`);
+      lines.push(`- **Reviewed At:** ${entry.reviewedAt || "N/A"}`);
+      lines.push(`- **Fixed At:** ${entry.fixedAt || "N/A"}`);
+      lines.push("");
     }
 
-    lines.push('## Recommended Actions');
-    lines.push('');
-    lines.push('1. **Review the QA gate files** in `qa/{storyId}/`');
-    lines.push('2. **Manually address blocking issues** identified in reviews');
-    lines.push('3. **Resume loop** with: `*resume-qa-loop ' + this.storyId + '`');
-    lines.push('4. **Or approve manually** if issues are acceptable');
-    lines.push('');
+    lines.push("## Recommended Actions");
+    lines.push("");
+    lines.push("1. **Review the QA gate files** in `qa/{storyId}/`");
+    lines.push("2. **Manually address blocking issues** identified in reviews");
+    lines.push("3. **Resume loop** with: `*resume-qa-loop " + this.storyId + "`");
+    lines.push("4. **Or approve manually** if issues are acceptable");
+    lines.push("");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════════
@@ -704,15 +704,19 @@ class QALoopOrchestrator {
 
     if (fs.existsSync(statusPath)) {
       try {
-        dashboardStatus = JSON.parse(fs.readFileSync(statusPath, 'utf-8'));
+        dashboardStatus = JSON.parse(fs.readFileSync(statusPath, "utf-8"));
       } catch {
         dashboardStatus = {};
       }
     }
 
     // Initialize structure if needed
-    if (!dashboardStatus.version) dashboardStatus.version = '1.0';
-    if (!dashboardStatus.qaLoop) dashboardStatus.qaLoop = {};
+    if (!dashboardStatus.version) {
+      dashboardStatus.version = "1.0";
+    }
+    if (!dashboardStatus.qaLoop) {
+      dashboardStatus.qaLoop = {};
+    }
 
     // Update qaLoop section for this story
     dashboardStatus.qaLoop[this.storyId] = {
@@ -739,7 +743,7 @@ class QALoopOrchestrator {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(statusPath, JSON.stringify(dashboardStatus, null, 2), 'utf-8');
+    fs.writeFileSync(statusPath, JSON.stringify(dashboardStatus, null, 2), "utf-8");
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════════
@@ -783,7 +787,7 @@ class QALoopOrchestrator {
     if (this.status.status !== LoopStatus.STOPPED && this.status.status !== LoopStatus.ESCALATED) {
       throw new Error(
         `Cannot resume loop with status '${this.status.status}'. ` +
-          `Must be '${LoopStatus.STOPPED}' or '${LoopStatus.ESCALATED}'.`
+          `Must be '${LoopStatus.STOPPED}' or '${LoopStatus.ESCALATED}'.`,
       );
     }
 
@@ -825,32 +829,32 @@ class QALoopOrchestrator {
    */
   generateSummary() {
     if (!this.status) {
-      return 'No status available';
+      return "No status available";
     }
 
     const lines = [];
-    const emoji = StatusEmoji[this.status.status] || '❓';
+    const emoji = StatusEmoji[this.status.status] || "❓";
 
-    lines.push('');
-    lines.push('╔══════════════════════════════════════════════════════════════╗');
-    lines.push('║                      QA Loop Summary                          ║');
-    lines.push('╚══════════════════════════════════════════════════════════════╝');
-    lines.push('');
+    lines.push("");
+    lines.push("╔══════════════════════════════════════════════════════════════╗");
+    lines.push("║                      QA Loop Summary                          ║");
+    lines.push("╚══════════════════════════════════════════════════════════════╝");
+    lines.push("");
     lines.push(`Story:       ${this.storyId}`);
     lines.push(`Status:      ${emoji} ${this.status.status.toUpperCase()}`);
     lines.push(`Iterations:  ${this.status.currentIteration}/${this.status.maxIterations}`);
 
     if (this.status.history.length > 0) {
       const lastEntry = this.status.history[this.status.history.length - 1];
-      const verdictEmoji = VerdictEmoji[lastEntry.verdict] || '❓';
-      lines.push(`Last Verdict: ${verdictEmoji} ${lastEntry.verdict || 'N/A'}`);
+      const verdictEmoji = VerdictEmoji[lastEntry.verdict] || "❓";
+      lines.push(`Last Verdict: ${verdictEmoji} ${lastEntry.verdict || "N/A"}`);
     }
 
-    lines.push('');
-    lines.push('─'.repeat(60));
-    lines.push('');
-    lines.push('Iteration History:');
-    lines.push('');
+    lines.push("");
+    lines.push("─".repeat(60));
+    lines.push("");
+    lines.push("Iteration History:");
+    lines.push("");
 
     // Calculate totals
     let totalIssuesFound = 0;
@@ -858,15 +862,15 @@ class QALoopOrchestrator {
     let totalDuration = 0;
 
     for (const entry of this.status.history) {
-      const emoji = VerdictEmoji[entry.verdict] || '❓';
-      const fixed = entry.issuesFixed !== null ? entry.issuesFixed : '-';
-      const duration = entry.duration ? `${Math.round(entry.duration / 1000)}s` : '-';
+      const emoji = VerdictEmoji[entry.verdict] || "❓";
+      const fixed = entry.issuesFixed !== null ? entry.issuesFixed : "-";
+      const duration = entry.duration ? `${Math.round(entry.duration / 1000)}s` : "-";
 
       lines.push(
-        `  ${entry.iteration}. ${emoji} ${(entry.verdict || 'N/A').padEnd(8)} ` +
+        `  ${entry.iteration}. ${emoji} ${(entry.verdict || "N/A").padEnd(8)} ` +
           `| Found: ${String(entry.issuesFound).padStart(2)} | ` +
           `Fixed: ${String(fixed).padStart(2)} | ` +
-          `Duration: ${duration}`
+          `Duration: ${duration}`,
       );
 
       totalIssuesFound += entry.issuesFound || 0;
@@ -874,21 +878,21 @@ class QALoopOrchestrator {
       totalDuration += entry.duration || 0;
     }
 
-    lines.push('');
-    lines.push('─'.repeat(60));
-    lines.push('');
+    lines.push("");
+    lines.push("─".repeat(60));
+    lines.push("");
     lines.push(`Total Issues Found: ${totalIssuesFound}`);
     lines.push(`Total Issues Fixed: ${totalIssuesFixed}`);
     lines.push(`Total Duration: ${Math.round(totalDuration / 1000)}s`);
 
     if (this.status.escalationReason) {
-      lines.push('');
+      lines.push("");
       lines.push(`⚠️  Escalation Reason: ${this.status.escalationReason}`);
     }
 
-    lines.push('');
+    lines.push("");
 
-    return lines.join('\n');
+    return lines.join("\n");
   }
 
   /**
@@ -981,30 +985,32 @@ async function resumeLoop(storyId, options = {}) {
  */
 function listLoops(options = {}) {
   const rootPath = options.rootPath || process.cwd();
-  const filter = options.filter || 'all';
+  const filter = options.filter || "all";
   const indexPath = path.join(rootPath, CONFIG.persistenceIndexPath);
 
   if (!fs.existsSync(indexPath)) {
-    return { version: '1.0', loops: {}, count: 0, filtered: filter };
+    return { version: "1.0", loops: {}, count: 0, filtered: filter };
   }
 
   try {
-    const index = JSON.parse(fs.readFileSync(indexPath, 'utf-8'));
+    const index = JSON.parse(fs.readFileSync(indexPath, "utf-8"));
     let loops = index.loops;
 
     // Apply filter
-    if (filter === 'active') {
+    if (filter === "active") {
       loops = Object.fromEntries(
-        Object.entries(loops).filter(([, v]) => v.status === LoopStatus.IN_PROGRESS)
+        Object.entries(loops).filter(([, v]) => v.status === LoopStatus.IN_PROGRESS),
       );
-    } else if (filter === 'abandoned') {
+    } else if (filter === "abandoned") {
       const now = Date.now();
       loops = Object.fromEntries(
         Object.entries(loops).filter(([, v]) => {
-          if (v.status !== LoopStatus.IN_PROGRESS) return false;
+          if (v.status !== LoopStatus.IN_PROGRESS) {
+            return false;
+          }
           const lastUpdate = new Date(v.updatedAt).getTime();
           return now - lastUpdate > CONFIG.abandonedThreshold;
-        })
+        }),
       );
     }
 
@@ -1017,7 +1023,7 @@ function listLoops(options = {}) {
     };
   } catch (error) {
     console.error(`Error loading loops index: ${error.message}`);
-    return { version: '1.0', loops: {}, count: 0, filtered: filter, error: error.message };
+    return { version: "1.0", loops: {}, count: 0, filtered: filter, error: error.message };
   }
 }
 
@@ -1027,7 +1033,7 @@ function listLoops(options = {}) {
  * @returns {Array} List of abandoned loop story IDs
  */
 function checkAbandonedLoops(options = {}) {
-  const result = listLoops({ ...options, filter: 'abandoned' });
+  const result = listLoops({ ...options, filter: "abandoned" });
   return Object.keys(result.loops);
 }
 
@@ -1099,35 +1105,35 @@ Status File Schema (AC4):
 async function main() {
   const args = process.argv.slice(2);
 
-  if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
+  if (args.length < 1 || args.includes("--help") || args.includes("-h")) {
     printHelp();
-    process.exit(args.includes('--help') || args.includes('-h') ? 0 : 1);
+    process.exit(args.includes("--help") || args.includes("-h") ? 0 : 1);
   }
 
   // Parse arguments
   let storyId = null;
-  let command = 'start';
+  let command = "start";
   let maxIterations = null;
   let quiet = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--max-iterations' && args[i + 1]) {
+    if (arg === "--max-iterations" && args[i + 1]) {
       maxIterations = parseInt(args[++i], 10);
-    } else if (arg === '--quiet' || arg === '-q') {
+    } else if (arg === "--quiet" || arg === "-q") {
       quiet = true;
-    } else if (!arg.startsWith('-')) {
+    } else if (!arg.startsWith("-")) {
       if (!storyId) {
         storyId = arg;
-      } else if (command === 'start') {
+      } else if (command === "start") {
         command = arg;
       }
     }
   }
 
   if (!storyId) {
-    console.error('Error: Story ID required');
+    console.error("Error: Story ID required");
     process.exit(1);
   }
 
@@ -1143,11 +1149,11 @@ async function main() {
     const orchestrator = new QALoopOrchestrator(storyId, options);
 
     switch (command) {
-      case 'start':
+      case "start":
         await orchestrator.runLoop();
         break;
 
-      case 'status':
+      case "status":
         const status = orchestrator.getStatus();
         if (status) {
           console.log(JSON.stringify(status, null, 2));
@@ -1156,63 +1162,63 @@ async function main() {
         }
         break;
 
-      case 'stop':
+      case "stop":
         orchestrator.stop();
         console.log(`✅ Loop stopped for ${storyId}`);
         break;
 
-      case 'resume':
+      case "resume":
         await orchestrator.resume();
         break;
 
-      case 'escalate':
+      case "escalate":
         orchestrator.loadStatus();
         if (!orchestrator.status) {
           orchestrator._initStatus();
         }
-        await orchestrator.escalateToHuman('Manual escalation requested');
+        await orchestrator.escalateToHuman("Manual escalation requested");
         break;
 
-      case 'reset':
+      case "reset":
         orchestrator.reset();
         console.log(`✅ Loop reset for ${storyId}`);
         break;
 
-      case 'summary':
+      case "summary":
         orchestrator.loadStatus();
         console.log(orchestrator.generateSummary());
         break;
 
-      case 'list': {
+      case "list": {
         // Parse filter option
-        let filter = 'all';
-        const filterArg = args.find((a) => a.startsWith('--filter='));
+        let filter = "all";
+        const filterArg = args.find((a) => a.startsWith("--filter="));
         if (filterArg) {
-          filter = filterArg.split('=')[1];
+          filter = filterArg.split("=")[1];
         }
         const listResult = listLoops({ filter });
-        console.log('\n📋 QA Loops Index');
-        console.log('─'.repeat(60));
+        console.log("\n📋 QA Loops Index");
+        console.log("─".repeat(60));
         console.log(`Filter: ${listResult.filtered} | Count: ${listResult.count}`);
-        console.log('');
+        console.log("");
         for (const [id, loop] of Object.entries(listResult.loops)) {
-          const emoji = StatusEmoji[loop.status] || '❓';
-          const abandoned = loop.wasAbandoned ? ' (recovered)' : '';
+          const emoji = StatusEmoji[loop.status] || "❓";
+          const abandoned = loop.wasAbandoned ? " (recovered)" : "";
           console.log(
-            `  ${emoji} ${id}: ${loop.status} - ${loop.currentIteration}/${loop.maxIterations}${abandoned}`
+            `  ${emoji} ${id}: ${loop.status} - ${loop.currentIteration}/${loop.maxIterations}${abandoned}`,
           );
         }
         if (listResult.count === 0) {
-          console.log('  No loops found');
+          console.log("  No loops found");
         }
-        console.log('');
+        console.log("");
         break;
       }
 
-      case 'check-abandoned': {
+      case "check-abandoned": {
         const abandoned = checkAbandonedLoops();
         if (abandoned.length === 0) {
-          console.log('✅ No abandoned loops found');
+          console.log("✅ No abandoned loops found");
         } else {
           console.log(`\n⚠️  Found ${abandoned.length} abandoned loop(s):`);
           for (const id of abandoned) {

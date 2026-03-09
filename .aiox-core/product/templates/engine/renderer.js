@@ -6,9 +6,9 @@
  * @version 2.0.0
  */
 
-'use strict';
+"use strict";
 
-const Handlebars = require('handlebars');
+const Handlebars = require("handlebars");
 
 /**
  * Register default Handlebars helpers
@@ -16,21 +16,21 @@ const Handlebars = require('handlebars');
  */
 function registerDefaultHelpers(handlebars) {
   // Pad number with leading zeros
-  handlebars.registerHelper('padNumber', (num, length) => {
-    return String(num).padStart(length, '0');
+  handlebars.registerHelper("padNumber", (num, length) => {
+    return String(num).padStart(length, "0");
   });
 
   // Format date with pattern
-  handlebars.registerHelper('formatDate', (date, format) => {
+  handlebars.registerHelper("formatDate", (date, format) => {
     const d = date instanceof Date ? date : new Date(date);
 
     const patterns = {
-      'YYYY': d.getFullYear(),
-      'MM': String(d.getMonth() + 1).padStart(2, '0'),
-      'DD': String(d.getDate()).padStart(2, '0'),
-      'HH': String(d.getHours()).padStart(2, '0'),
-      'mm': String(d.getMinutes()).padStart(2, '0'),
-      'ss': String(d.getSeconds()).padStart(2, '0'),
+      YYYY: d.getFullYear(),
+      MM: String(d.getMonth() + 1).padStart(2, "0"),
+      DD: String(d.getDate()).padStart(2, "0"),
+      HH: String(d.getHours()).padStart(2, "0"),
+      mm: String(d.getMinutes()).padStart(2, "0"),
+      ss: String(d.getSeconds()).padStart(2, "0"),
     };
 
     let result = format;
@@ -41,115 +41,121 @@ function registerDefaultHelpers(handlebars) {
   });
 
   // Add numbers
-  handlebars.registerHelper('add', (a, b) => a + b);
+  handlebars.registerHelper("add", (a, b) => a + b);
 
   // Subtract numbers
-  handlebars.registerHelper('subtract', (a, b) => a - b);
+  handlebars.registerHelper("subtract", (a, b) => a - b);
 
   // Multiply numbers
-  handlebars.registerHelper('multiply', (a, b) => a * b);
+  handlebars.registerHelper("multiply", (a, b) => a * b);
 
   // Divide numbers
-  handlebars.registerHelper('divide', (a, b) => a / b);
+  handlebars.registerHelper("divide", (a, b) => a / b);
 
   // Check equality
-  handlebars.registerHelper('eq', (a, b) => a === b);
+  handlebars.registerHelper("eq", (a, b) => a === b);
 
   // Check not equal
-  handlebars.registerHelper('ne', (a, b) => a !== b);
+  handlebars.registerHelper("ne", (a, b) => a !== b);
 
   // Greater than
-  handlebars.registerHelper('gt', (a, b) => a > b);
+  handlebars.registerHelper("gt", (a, b) => a > b);
 
   // Greater than or equal
-  handlebars.registerHelper('gte', (a, b) => a >= b);
+  handlebars.registerHelper("gte", (a, b) => a >= b);
 
   // Less than
-  handlebars.registerHelper('lt', (a, b) => a < b);
+  handlebars.registerHelper("lt", (a, b) => a < b);
 
   // Less than or equal
-  handlebars.registerHelper('lte', (a, b) => a <= b);
+  handlebars.registerHelper("lte", (a, b) => a <= b);
 
   // Logical AND
-  handlebars.registerHelper('and', (...args) => {
+  handlebars.registerHelper("and", (...args) => {
     args.pop(); // Remove options object
     return args.every(Boolean);
   });
 
   // Logical OR
-  handlebars.registerHelper('or', (...args) => {
+  handlebars.registerHelper("or", (...args) => {
     args.pop(); // Remove options object
     return args.some(Boolean);
   });
 
   // Logical NOT
-  handlebars.registerHelper('not', (value) => !value);
+  handlebars.registerHelper("not", (value) => !value);
 
   // Uppercase string
-  handlebars.registerHelper('uppercase', (str) => {
-    return str ? String(str).toUpperCase() : '';
+  handlebars.registerHelper("uppercase", (str) => {
+    return str ? String(str).toUpperCase() : "";
   });
 
   // Lowercase string
-  handlebars.registerHelper('lowercase', (str) => {
-    return str ? String(str).toLowerCase() : '';
+  handlebars.registerHelper("lowercase", (str) => {
+    return str ? String(str).toLowerCase() : "";
   });
 
   // Capitalize first letter
-  handlebars.registerHelper('capitalize', (str) => {
-    if (!str) return '';
+  handlebars.registerHelper("capitalize", (str) => {
+    if (!str) {
+      return "";
+    }
     const s = String(str);
     return s.charAt(0).toUpperCase() + s.slice(1);
   });
 
   // Title case string
-  handlebars.registerHelper('titlecase', (str) => {
-    if (!str) return '';
+  handlebars.registerHelper("titlecase", (str) => {
+    if (!str) {
+      return "";
+    }
     return String(str)
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
   });
 
   // Join array with separator
-  handlebars.registerHelper('join', (array, separator) => {
-    if (!Array.isArray(array)) return '';
-    return array.join(typeof separator === 'string' ? separator : ', ');
+  handlebars.registerHelper("join", (array, separator) => {
+    if (!Array.isArray(array)) {
+      return "";
+    }
+    return array.join(typeof separator === "string" ? separator : ", ");
   });
 
   // Get array length
-  handlebars.registerHelper('length', (array) => {
+  handlebars.registerHelper("length", (array) => {
     return Array.isArray(array) ? array.length : 0;
   });
 
   // Check if array includes value
-  handlebars.registerHelper('includes', (array, value) => {
+  handlebars.registerHelper("includes", (array, value) => {
     return Array.isArray(array) && array.includes(value);
   });
 
   // First element of array
-  handlebars.registerHelper('first', (array) => {
+  handlebars.registerHelper("first", (array) => {
     return Array.isArray(array) && array.length > 0 ? array[0] : null;
   });
 
   // Last element of array
-  handlebars.registerHelper('last', (array) => {
+  handlebars.registerHelper("last", (array) => {
     return Array.isArray(array) && array.length > 0 ? array[array.length - 1] : null;
   });
 
   // Default value if undefined/null
-  handlebars.registerHelper('default', (value, defaultValue) => {
+  handlebars.registerHelper("default", (value, defaultValue) => {
     return value ?? defaultValue;
   });
 
   // JSON stringify
-  handlebars.registerHelper('json', (value, indent) => {
-    return JSON.stringify(value, null, typeof indent === 'number' ? indent : 2);
+  handlebars.registerHelper("json", (value, indent) => {
+    return JSON.stringify(value, null, typeof indent === "number" ? indent : 2);
   });
 
   // Repeat block n times (with @index, @first, @last data variables)
-  handlebars.registerHelper('times', (n, options) => {
-    let result = '';
+  handlebars.registerHelper("times", (n, options) => {
+    let result = "";
     for (let i = 0; i < n; i++) {
       // Create data frame to expose @index, @first, @last like built-in each
       const data = options.data ? Handlebars.createFrame(options.data) : {};
@@ -162,34 +168,40 @@ function registerDefaultHelpers(handlebars) {
   });
 
   // Conditional block based on equality
-  handlebars.registerHelper('ifEqual', function(a, b, options) {
+  handlebars.registerHelper("ifEqual", function (a, b, options) {
     return a === b ? options.fn(this) : options.inverse(this);
   });
 
   // Conditional block based on inequality
-  handlebars.registerHelper('unlessEqual', function(a, b, options) {
+  handlebars.registerHelper("unlessEqual", function (a, b, options) {
     return a !== b ? options.fn(this) : options.inverse(this);
   });
 
   // Slug helper (URL-safe string)
-  handlebars.registerHelper('slug', (str) => {
-    if (!str) return '';
+  handlebars.registerHelper("slug", (str) => {
+    if (!str) {
+      return "";
+    }
     return String(str)
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
   });
 
   // Truncate string
-  handlebars.registerHelper('truncate', (str, length, suffix) => {
-    if (!str) return '';
+  handlebars.registerHelper("truncate", (str, length, suffix) => {
+    if (!str) {
+      return "";
+    }
     const s = String(str);
-    if (s.length <= length) return s;
-    return s.slice(0, length) + (typeof suffix === 'string' ? suffix : '...');
+    if (s.length <= length) {
+      return s;
+    }
+    return s.slice(0, length) + (typeof suffix === "string" ? suffix : "...");
   });
 
   // Now helper for current date
-  handlebars.registerHelper('now', () => new Date());
+  handlebars.registerHelper("now", () => new Date());
 }
 
 /**
@@ -239,7 +251,7 @@ class TemplateRenderer {
    * @returns {string} Rendered content
    */
   render(template, context = {}) {
-    const templateBody = typeof template === 'string' ? template : template.body;
+    const templateBody = typeof template === "string" ? template : template.body;
 
     try {
       const compiledTemplate = this.handlebars.compile(templateBody, {
@@ -256,7 +268,7 @@ class TemplateRenderer {
 
       return compiledTemplate(fullContext);
     } catch (error) {
-      throw new Error(`Template rendering failed: ${error.message}`);
+      throw new Error(`Template rendering failed: ${error.message}`, { cause: error });
     }
   }
 
@@ -303,7 +315,7 @@ class TemplateRenderer {
     let match;
 
     while ((match = regex.exec(templateBody)) !== null) {
-      const variable = match[1].split('.')[0];
+      const variable = match[1].split(".")[0];
       // Exclude helpers and special keywords
       if (!this.isHelper(variable) && !this.isKeyword(variable)) {
         variables.add(variable);
@@ -319,12 +331,43 @@ class TemplateRenderer {
    * @returns {boolean} True if helper exists
    */
   isHelper(name) {
-    return this.customHelpers.has(name) ||
-      ['padNumber', 'formatDate', 'add', 'subtract', 'eq', 'ne', 'gt', 'lt',
-        'gte', 'lte', 'and', 'or', 'not', 'uppercase', 'lowercase', 'capitalize',
-        'titlecase', 'join', 'length', 'includes', 'first', 'last', 'default',
-        'json', 'times', 'ifEqual', 'unlessEqual', 'slug', 'truncate', 'now',
-        'multiply', 'divide'].includes(name);
+    return (
+      this.customHelpers.has(name) ||
+      [
+        "padNumber",
+        "formatDate",
+        "add",
+        "subtract",
+        "eq",
+        "ne",
+        "gt",
+        "lt",
+        "gte",
+        "lte",
+        "and",
+        "or",
+        "not",
+        "uppercase",
+        "lowercase",
+        "capitalize",
+        "titlecase",
+        "join",
+        "length",
+        "includes",
+        "first",
+        "last",
+        "default",
+        "json",
+        "times",
+        "ifEqual",
+        "unlessEqual",
+        "slug",
+        "truncate",
+        "now",
+        "multiply",
+        "divide",
+      ].includes(name)
+    );
   }
 
   /**
@@ -333,7 +376,7 @@ class TemplateRenderer {
    * @returns {boolean} True if keyword
    */
   isKeyword(name) {
-    return ['this', '@index', '@key', '@first', '@last', '@root'].includes(name);
+    return ["this", "@index", "@key", "@first", "@last", "@root"].includes(name);
   }
 }
 

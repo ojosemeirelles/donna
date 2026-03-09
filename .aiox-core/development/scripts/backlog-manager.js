@@ -9,25 +9,25 @@
  * @created 2025-01-16 (Story 6.1.2.6)
  */
 
-const fs = require('fs').promises;
-const _path = require('path');
+const fs = require("fs").promises;
+const _path = require("path");
 
 /**
  * Backlog item types
  */
 const ITEM_TYPES = {
-  F: 'Follow-up',
-  T: 'Technical Debt',
-  E: 'Enhancement',
+  F: "Follow-up",
+  T: "Technical Debt",
+  E: "Enhancement",
 };
 
 /**
  * Type emoji mapping
  */
 const TYPE_EMOJI = {
-  F: '📌',
-  T: '🔧',
-  E: '✨',
+  F: "📌",
+  T: "🔧",
+  E: "✨",
 };
 
 /**
@@ -44,10 +44,10 @@ const PRIORITIES = {
  * Priority emoji mapping
  */
 const PRIORITY_EMOJI = {
-  Critical: '🔴',
-  High: '🟠',
-  Medium: '🟡',
-  Low: '🟢',
+  Critical: "🔴",
+  High: "🟠",
+  Medium: "🟡",
+  Low: "🟢",
 };
 
 /**
@@ -58,31 +58,30 @@ class BacklogItem {
     this.id = data.id || Date.now().toString();
     this.type = data.type; // F, T, or E
     this.title = data.title;
-    this.description = data.description || '';
-    this.priority = data.priority || 'Medium';
+    this.description = data.description || "";
+    this.priority = data.priority || "Medium";
     this.relatedStory = data.relatedStory || null;
-    this.createdBy = data.createdBy || 'Unknown';
+    this.createdBy = data.createdBy || "Unknown";
     this.createdAt = data.createdAt || new Date().toISOString();
     this.tags = data.tags || [];
-    this.estimatedEffort = data.estimatedEffort || 'TBD';
-    this.status = data.status || 'Open';
+    this.estimatedEffort = data.estimatedEffort || "TBD";
+    this.status = data.status || "Open";
   }
 
   /**
    * Converts item to markdown row
    */
   toMarkdownRow() {
-    const typeEmoji = TYPE_EMOJI[this.type] || '❓';
-    const priorityEmoji = PRIORITY_EMOJI[this.priority] || '';
+    const typeEmoji = TYPE_EMOJI[this.type] || "❓";
+    const priorityEmoji = PRIORITY_EMOJI[this.priority] || "";
     const typeName = ITEM_TYPES[this.type] || this.type;
 
     const relatedStoryLink = this.relatedStory
       ? `[${this.relatedStory}](../stories/${this.relatedStory}.md)`
-      : 'N/A';
+      : "N/A";
 
-    const tagsFormatted = this.tags.length > 0
-      ? this.tags.map(tag => `\`${tag}\``).join(', ')
-      : 'None';
+    const tagsFormatted =
+      this.tags.length > 0 ? this.tags.map((tag) => `\`${tag}\``).join(", ") : "None";
 
     return `| ${this.id} | ${typeEmoji} ${typeName} | ${this.title} | ${priorityEmoji} ${this.priority} | ${relatedStoryLink} | ${this.estimatedEffort} | ${tagsFormatted} | ${this.createdBy} |`;
   }
@@ -111,9 +110,9 @@ class BacklogItem {
  * Backlog manager class
  */
 class BacklogManager {
-  constructor(backlogPath = 'docs/stories/backlog.md') {
+  constructor(backlogPath = "docs/stories/backlog.md") {
     this.backlogPath = backlogPath;
-    this.backlogDataPath = backlogPath.replace('.md', '.json');
+    this.backlogDataPath = backlogPath.replace(".md", ".json");
     this.items = [];
   }
 
@@ -122,14 +121,14 @@ class BacklogManager {
    */
   async load() {
     try {
-      const data = await fs.readFile(this.backlogDataPath, 'utf8');
+      const data = await fs.readFile(this.backlogDataPath, "utf8");
       const itemsData = JSON.parse(data);
 
-      this.items = itemsData.map(item => new BacklogItem(item));
+      this.items = itemsData.map((item) => new BacklogItem(item));
       console.log(`✅ Loaded ${this.items.length} backlog items`);
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        console.log('📝 No existing backlog found, starting fresh');
+      if (error.code === "ENOENT") {
+        console.log("📝 No existing backlog found, starting fresh");
         this.items = [];
       } else {
         throw error;
@@ -141,8 +140,12 @@ class BacklogManager {
    * Saves backlog to JSON file
    */
   async save() {
-    const data = JSON.stringify(this.items.map(item => item.toJSON()), null, 2);
-    await fs.writeFile(this.backlogDataPath, data, 'utf8');
+    const data = JSON.stringify(
+      this.items.map((item) => item.toJSON()),
+      null,
+      2,
+    );
+    await fs.writeFile(this.backlogDataPath, data, "utf8");
     console.log(`✅ Saved ${this.items.length} backlog items`);
   }
 
@@ -161,7 +164,7 @@ class BacklogManager {
    * Removes backlog item by ID
    */
   async removeItem(itemId) {
-    const index = this.items.findIndex(item => item.id === itemId);
+    const index = this.items.findIndex((item) => item.id === itemId);
     if (index === -1) {
       throw new Error(`Backlog item not found: ${itemId}`);
     }
@@ -176,7 +179,7 @@ class BacklogManager {
    * Updates backlog item
    */
   async updateItem(itemId, updates) {
-    const item = this.items.find(item => item.id === itemId);
+    const item = this.items.find((item) => item.id === itemId);
     if (!item) {
       throw new Error(`Backlog item not found: ${itemId}`);
     }
@@ -194,23 +197,23 @@ class BacklogManager {
     let filtered = [...this.items];
 
     if (filters.type) {
-      filtered = filtered.filter(item => item.type === filters.type);
+      filtered = filtered.filter((item) => item.type === filters.type);
     }
 
     if (filters.priority) {
-      filtered = filtered.filter(item => item.priority === filters.priority);
+      filtered = filtered.filter((item) => item.priority === filters.priority);
     }
 
     if (filters.status) {
-      filtered = filtered.filter(item => item.status === filters.status);
+      filtered = filtered.filter((item) => item.status === filters.status);
     }
 
     if (filters.tag) {
-      filtered = filtered.filter(item => item.tags.includes(filters.tag));
+      filtered = filtered.filter((item) => item.tags.includes(filters.tag));
     }
 
     if (filters.relatedStory) {
-      filtered = filtered.filter(item => item.relatedStory === filters.relatedStory);
+      filtered = filtered.filter((item) => item.relatedStory === filters.relatedStory);
     }
 
     return filtered;
@@ -220,7 +223,7 @@ class BacklogManager {
    * Sorts items by priority (descending)
    */
   sortByPriority(items) {
-    return items.sort((a, b) => {
+    return items.toSorted((a, b) => {
       const aPriority = PRIORITIES[a.priority] || 0;
       const bPriority = PRIORITIES[b.priority] || 0;
       return bPriority - aPriority;
@@ -237,7 +240,7 @@ class BacklogManager {
       E: [],
     };
 
-    items.forEach(item => {
+    items.forEach((item) => {
       if (grouped[item.type]) {
         grouped[item.type].push(item);
       }
@@ -270,40 +273,43 @@ class BacklogManager {
       markdown += `- ${emoji} **${name}**: ${count}\n`;
     });
 
-    markdown += '\n---\n\n';
+    markdown += "\n---\n\n";
 
     // Items by type
     Object.entries(ITEM_TYPES).forEach(([code, name]) => {
       const items = this.sortByPriority(groupedByType[code]);
-      if (items.length === 0) return;
+      if (items.length === 0) {
+        return;
+      }
 
       const emoji = TYPE_EMOJI[code];
       markdown += `## ${emoji} ${name} (${items.length} items)\n\n`;
-      markdown += '| ID | Type | Title | Priority | Related Story | Effort | Tags | Created By |\n';
-      markdown += '|----|------|-------|----------|---------------|--------|------|------------|\n';
+      markdown += "| ID | Type | Title | Priority | Related Story | Effort | Tags | Created By |\n";
+      markdown += "|----|------|-------|----------|---------------|--------|------|------------|\n";
 
-      items.forEach(item => {
-        markdown += item.toMarkdownRow() + '\n';
+      items.forEach((item) => {
+        markdown += item.toMarkdownRow() + "\n";
       });
 
-      markdown += '\n';
+      markdown += "\n";
     });
 
-    markdown += '---\n\n';
-    markdown += '## 🔍 Legend\n\n';
-    markdown += '### Types\n';
+    markdown += "---\n\n";
+    markdown += "## 🔍 Legend\n\n";
+    markdown += "### Types\n";
     Object.entries(ITEM_TYPES).forEach(([code, name]) => {
       const emoji = TYPE_EMOJI[code];
       markdown += `- ${emoji} **${name}** (${code})\n`;
     });
-    markdown += '\n### Priority\n';
+    markdown += "\n### Priority\n";
     Object.entries(PRIORITY_EMOJI).forEach(([priority, emoji]) => {
       markdown += `- ${emoji} **${priority}**\n`;
     });
 
-    markdown += '\n---\n\n';
-    markdown += '*Auto-generated by AIOX Backlog Manager (Story 6.1.2.6)*\n';
-    markdown += '*Update: Run `npm run stories:backlog` or `node .aiox-core/scripts/backlog-manager.js generate docs/stories/backlog.md`*\n';
+    markdown += "\n---\n\n";
+    markdown += "*Auto-generated by AIOX Backlog Manager (Story 6.1.2.6)*\n";
+    markdown +=
+      "*Update: Run `npm run stories:backlog` or `node .aiox-core/scripts/backlog-manager.js generate docs/stories/backlog.md`*\n";
 
     return markdown;
   }
@@ -313,7 +319,7 @@ class BacklogManager {
    */
   async generateBacklogFile() {
     const markdown = this.generateMarkdown();
-    await fs.writeFile(this.backlogPath, markdown, 'utf8');
+    await fs.writeFile(this.backlogPath, markdown, "utf8");
     console.log(`✅ Backlog file generated: ${this.backlogPath}`);
   }
 
@@ -328,7 +334,7 @@ class BacklogManager {
       byStatus: {},
     };
 
-    this.items.forEach(item => {
+    this.items.forEach((item) => {
       // By type
       const typeName = ITEM_TYPES[item.type] || item.type;
       stats.byType[typeName] = (stats.byType[typeName] || 0) + 1;
@@ -347,7 +353,7 @@ class BacklogManager {
 // CLI execution support
 if (require.main === module) {
   const command = process.argv[2];
-  const backlogPath = process.argv[3] || 'docs/stories/backlog.md';
+  const backlogPath = process.argv[3] || "docs/stories/backlog.md";
 
   const manager = new BacklogManager(backlogPath);
 
@@ -356,27 +362,27 @@ if (require.main === module) {
       await manager.load();
 
       switch (command) {
-        case 'generate':
+        case "generate":
           await manager.generateBacklogFile();
           break;
 
-        case 'add': {
-          const itemData = JSON.parse(process.argv[4] || '{}');
+        case "add": {
+          const itemData = JSON.parse(process.argv[4] || "{}");
           await manager.addItem(itemData);
           await manager.generateBacklogFile();
           break;
         }
 
-        case 'remove': {
+        case "remove": {
           const itemId = process.argv[4];
           await manager.removeItem(itemId);
           await manager.generateBacklogFile();
           break;
         }
 
-        case 'stats': {
+        case "stats": {
           const stats = manager.getStatistics();
-          console.log('\n📊 Backlog Statistics:');
+          console.log("\n📊 Backlog Statistics:");
           console.log(JSON.stringify(stats, null, 2));
           break;
         }
@@ -391,7 +397,7 @@ Usage:
           `);
       }
     } catch (error) {
-      console.error('❌ Error:', error.message);
+      console.error("❌ Error:", error.message);
       process.exit(1);
     }
   })();

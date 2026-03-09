@@ -19,11 +19,14 @@ import {
   EvolutionTracker,
   evaluateProgression,
   getLevelDefinition,
+  getRankForLevel,
 } from "../../evolution/index.js";
 import { logVerbose } from "../../globals.js";
 import { getGlobalMemoryOrchestrator } from "../../memory/memory-orchestrator-singleton.js";
 import { clearCommandLane, getQueueSize } from "../../process/command-queue.js";
 import { normalizeMainKey } from "../../routing/session-key.js";
+import { orchestrate, getShadowArmyStatus } from "../../shadows/orchestrator.js";
+import { checkShadowUnlocks, formatShadowUnlockMessage } from "../../shadows/rank-unlock.js";
 import { isReasoningTagProvider } from "../../utils/provider-utils.js";
 import { hasControlCommand } from "../command-detection.js";
 import { buildInboundMediaNote } from "../media-note.js";
@@ -512,6 +515,34 @@ export async function runPreparedReply(
       extraSystemPromptParts.push(
         `[LEVEL UP!] Donna acabou de subir para Rank ${levelDef.rank} — ${levelDef.title}! Celebre brevemente no inicio da resposta com emojis e o novo rank antes de responder normalmente. Mencione as novas skills desbloqueadas: ${levelDef.unlocks.join(", ")}.`,
       );
+      // Shadow Army: unlock shadows that match the new rank
+      try {
+        const shadowUnlocks = await checkShadowUnlocks(levelDef.rank);
+        if (shadowUnlocks.unlocked.length > 0) {
+          const unlockMsg = formatShadowUnlockMessage(shadowUnlocks);
+          if (unlockMsg) {
+            extraSystemPromptParts.push(
+              `[ARISE! Shadow Army] ${shadowUnlocks.unlocked.map((s) => `${s.name} (${s.role})`).join(", ")} se juntaram ao exercito. Mencione as novas sombras extraidas na celebracao.`,
+            );
+          }
+        }
+      } catch {
+        // Shadow unlock errors must never break a session
+      }
+    }
+    // Shadow Army: orchestrate intent for active shadows
+    try {
+      const currentRank = getRankForLevel(evoTracker.getLevel());
+      const shadowResult = await orchestrate(queuedBody ?? "", currentRank);
+      if (shadowResult.delegated && shadowResult.shadow) {
+        extraSystemPromptParts.push(
+          `[Shadow Army] A sombra ${shadowResult.shadow.name} (${shadowResult.shadow.role}) esta disponivel para esta tarefa. ` +
+            `Ferramentas: ${shadowResult.shadow.tools.join(", ")}. ` +
+            `Mencione que ${shadowResult.shadow.name} pode ajudar se relevante.`,
+        );
+      }
+    } catch {
+      // Shadow orchestration errors must never break a session
     }
     // If user asks for /status, inject full evolution card
     if (queuedBody && /^\/?status\b/i.test(queuedBody.trim())) {
@@ -536,6 +567,13 @@ export async function runPreparedReply(
           `Skills ativas: ${levelDef.unlocks.join(", ")}`,
         ].join("\n"),
       );
+      // Add Shadow Army status to /status card
+      try {
+        const armyStatus = await getShadowArmyStatus();
+        extraSystemPromptParts.push(`[Shadow Army Status]\n${armyStatus}`);
+      } catch {
+        // Non-fatal
+      }
     }
   } catch {
     // Evolution errors must never break a session

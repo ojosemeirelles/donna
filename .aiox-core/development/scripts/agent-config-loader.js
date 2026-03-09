@@ -7,11 +7,11 @@
  * @module agent-config-loader
  */
 
-const fs = require('fs').promises;
-const path = require('path');
-const yaml = require('js-yaml');
-const { globalConfigCache } = require('../../core/config/config-cache');
-const { trackConfigLoad } = require('../../infrastructure/scripts/performance-tracker');
+const fs = require("fs").promises;
+const path = require("path");
+const yaml = require("js-yaml");
+const { globalConfigCache } = require("../../core/config/config-cache");
+const { trackConfigLoad } = require("../../infrastructure/scripts/performance-tracker");
 
 /**
  * Agent configuration requirements cache
@@ -28,15 +28,20 @@ async function loadAgentRequirements() {
     return agentRequirements;
   }
 
-  const requirementsPath = path.join(process.cwd(), '.aiox-core', 'data', 'agent-config-requirements.yaml');
+  const requirementsPath = path.join(
+    process.cwd(),
+    ".aiox-core",
+    "data",
+    "agent-config-requirements.yaml",
+  );
 
   try {
-    const content = await fs.readFile(requirementsPath, 'utf8');
+    const content = await fs.readFile(requirementsPath, "utf8");
     agentRequirements = yaml.load(content);
     return agentRequirements;
   } catch (error) {
     console.warn(`⚠️ Could not load agent requirements: ${error.message}`);
-    console.warn('   Falling back to default requirements');
+    console.warn("   Falling back to default requirements");
     return { agents: {} };
   }
 }
@@ -64,7 +69,10 @@ class AgentConfigLoader {
     }
 
     const allRequirements = await loadAgentRequirements();
-    this.requirements = allRequirements.agents?.[this.agentId] || allRequirements.agents?.default || this.getDefaultRequirements();
+    this.requirements =
+      allRequirements.agents?.[this.agentId] ||
+      allRequirements.agents?.default ||
+      this.getDefaultRequirements();
 
     return this.requirements;
   }
@@ -76,10 +84,10 @@ class AgentConfigLoader {
    */
   getDefaultRequirements() {
     return {
-      config_sections: ['dataLocation'],
+      config_sections: ["dataLocation"],
       files_loaded: [],
       lazy_loading: {},
-      performance_target: '<150ms',
+      performance_target: "<150ms",
     };
   }
 
@@ -95,7 +103,7 @@ class AgentConfigLoader {
   async load(coreConfig, options = {}) {
     const startTime = Date.now();
     const skipCache = options.skipCache || false;
-    const trackPerformance = options.trackPerformance !== false;
+    const trackPerformance = options.trackPerformance;
 
     // Load requirements
     await this.loadRequirements();
@@ -170,9 +178,8 @@ class AgentConfigLoader {
 
     for (const fileEntry of filesLoaded) {
       // Parse file entry (can be string or object)
-      const fileConfig = typeof fileEntry === 'string'
-        ? { path: fileEntry, lazy: false }
-        : fileEntry;
+      const fileConfig =
+        typeof fileEntry === "string" ? { path: fileEntry, lazy: false } : fileEntry;
 
       const { path: filePath, lazy, condition } = fileConfig;
 
@@ -234,12 +241,10 @@ class AgentConfigLoader {
 
     try {
       // Resolve path relative to project root
-      const fullPath = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(process.cwd(), filePath);
+      const fullPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 
-      const content = await fs.readFile(fullPath, 'utf8');
-      const size = Buffer.byteLength(content, 'utf8');
+      const content = await fs.readFile(fullPath, "utf8");
+      const size = Buffer.byteLength(content, "utf8");
 
       // Cache the result
       this.cache.set(cacheKey, { content, size });
@@ -266,11 +271,13 @@ class AgentConfigLoader {
    * @param {number} loadTime - Load time in milliseconds
    */
   logPerformance(loadTime) {
-    const target = this.requirements.performance_target || '<150ms';
-    const targetMs = parseInt(target.replace('<', '').replace('ms', ''));
+    const target = this.requirements.performance_target || "<150ms";
+    const targetMs = parseInt(target.replace("<", "").replace("ms", ""));
 
     if (loadTime > targetMs) {
-      console.warn(`⚠️ Agent ${this.agentId} load time exceeded target: ${loadTime}ms > ${targetMs}ms`);
+      console.warn(
+        `⚠️ Agent ${this.agentId} load time exceeded target: ${loadTime}ms > ${targetMs}ms`,
+      );
     } else {
       console.log(`✅ Agent ${this.agentId} loaded in ${loadTime}ms (target: ${target})`);
     }
@@ -300,7 +307,7 @@ class AgentConfigLoader {
 
   /**
    * Load complete agent definition from markdown file
-   * 
+   *
    * @param {Object} options - Load options
    * @param {boolean} options.skipCache - Skip cache and force reload
    * @returns {Promise<Object>} Complete agent definition (agent, persona_profile, commands, etc.)
@@ -308,7 +315,7 @@ class AgentConfigLoader {
   async loadAgentDefinition(options = {}) {
     const skipCache = options.skipCache || false;
     const cacheKey = this.agentId;
-    
+
     // Check cache
     if (!skipCache && AgentConfigLoader.agentDefCache.has(cacheKey)) {
       const cached = AgentConfigLoader.agentDefCache.get(cacheKey);
@@ -316,19 +323,25 @@ class AgentConfigLoader {
         return cached.definition;
       }
     }
-    
+
     // Load from file
-    const agentPath = path.join(process.cwd(), '.aiox-core', 'development', 'agents', `${this.agentId}.md`);
-    
+    const agentPath = path.join(
+      process.cwd(),
+      ".aiox-core",
+      "development",
+      "agents",
+      `${this.agentId}.md`,
+    );
+
     try {
-      const content = await fs.readFile(agentPath, 'utf8');
-      
+      const content = await fs.readFile(agentPath, "utf8");
+
       // Extract YAML block (handle both ```yaml and ```yml)
       const yamlMatch = content.match(/```ya?ml\n([\s\S]*?)\n```/);
       if (!yamlMatch) {
         throw new Error(`No YAML block found in ${this.agentId}.md`);
       }
-      
+
       let agentDef;
       try {
         agentDef = yaml.load(yamlMatch[1]);
@@ -338,30 +351,35 @@ class AgentConfigLoader {
         try {
           agentDef = yaml.load(normalizedYaml);
         } catch (_secondError) {
-          throw new Error(`Failed to parse agent definition YAML for ${this.agentId}: ${parseError.message}`);
+          throw new Error(
+            `Failed to parse agent definition YAML for ${this.agentId}: ${parseError.message}`,
+            { cause: _secondError },
+          );
         }
       }
-      
+
       // Validate structure
       if (!agentDef.agent || !agentDef.agent.id) {
-        throw new Error('Invalid agent definition: missing agent.id');
+        throw new Error("Invalid agent definition: missing agent.id");
       }
-      
+
       // Normalize and validate
       const normalized = this._normalizeAgentDefinition(agentDef);
-      
+
       // Cache
       AgentConfigLoader.agentDefCache.set(cacheKey, {
         definition: normalized,
         timestamp: Date.now(),
       });
-      
+
       return normalized;
     } catch (error) {
-      if (error.code === 'ENOENT') {
-        throw new Error(`Agent file not found: ${this.agentId}.md`);
+      if (error.code === "ENOENT") {
+        throw new Error(`Agent file not found: ${this.agentId}.md`, { cause: error });
       }
-      throw new Error(`Failed to load agent definition for ${this.agentId}: ${error.message}`);
+      throw new Error(`Failed to load agent definition for ${this.agentId}: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
@@ -373,27 +391,27 @@ class AgentConfigLoader {
    * @returns {string} Normalized YAML content
    */
   _normalizeCompactCommands(yamlContent) {
-    const lines = yamlContent.split('\n');
+    const lines = yamlContent.split("\n");
     const normalizedLines = [];
     let inCommandsSection = false;
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       // Detect commands section start
       if (line.match(/^\s*commands:\s*$/)) {
         inCommandsSection = true;
         normalizedLines.push(line);
         continue;
       }
-      
+
       // Detect end of commands section (next top-level key without indentation)
       if (inCommandsSection && line.match(/^\w+:/) && !line.match(/^\s+/)) {
         inCommandsSection = false;
         normalizedLines.push(line);
         continue;
       }
-      
+
       // Process compact command format in commands section
       if (inCommandsSection) {
         // Match: "  - command-name {args}: Description with (parentheses)"
@@ -402,20 +420,20 @@ class AgentConfigLoader {
         if (compactMatch) {
           const [, indent, command, description] = compactMatch;
           const commandName = command.split(/\s+/)[0];
-          
+
           // Escape quotes in description
           const escapedDescription = description.trim().replace(/"/g, '\\"');
-          
+
           normalizedLines.push(`${indent}- name: ${commandName}`);
           normalizedLines.push(`${indent}  description: "${escapedDescription}"`);
           continue;
         }
       }
-      
+
       normalizedLines.push(line);
     }
-    
-    return normalizedLines.join('\n');
+
+    return normalizedLines.join("\n");
   }
 
   /**
@@ -429,14 +447,14 @@ class AgentConfigLoader {
     if (!agentDef.agent) {
       throw new Error('Agent definition missing "agent" section');
     }
-    
+
     const agent = agentDef.agent;
-    
+
     // Normalize: ensure required fields have defaults
-    agent.id = agent.id || 'unknown';
+    agent.id = agent.id || "unknown";
     agent.name = agent.name || agent.id;
-    agent.icon = agent.icon || '🤖';
-    
+    agent.icon = agent.icon || "🤖";
+
     // Ensure persona_profile exists with greeting_levels (without overwriting)
     if (!agentDef.persona_profile) {
       agentDef.persona_profile = {
@@ -454,18 +472,18 @@ class AgentConfigLoader {
       };
     }
     // Note: If greeting_levels already exists in YAML, we keep it as-is (don't overwrite)
-    
+
     // Ensure commands array exists
     if (!agentDef.commands || !Array.isArray(agentDef.commands)) {
       agentDef.commands = [];
     }
-    
+
     return agentDef;
   }
 
   /**
    * Load both config and definition (convenience method)
-   * 
+   *
    * @param {Object} coreConfig - Core configuration
    * @param {Object} options - Load options
    * @returns {Promise<Object>} Combined config and definition
@@ -475,7 +493,7 @@ class AgentConfigLoader {
       this.load(coreConfig, options),
       this.loadAgentDefinition(options),
     ]);
-    
+
     return {
       ...config,
       definition,
@@ -529,7 +547,7 @@ async function preloadAgents(agentIds, coreConfig) {
   const startTime = Date.now();
 
   await Promise.all(
-    agentIds.map(agentId => {
+    agentIds.map((agentId) => {
       const loader = new AgentConfigLoader(agentId);
       return loader.preload(coreConfig);
     }),
@@ -554,13 +572,13 @@ if (require.main === module) {
   (async () => {
     try {
       // Load config via layered resolver (PRO-4: config hierarchy)
-      const { resolveConfig } = require('../../core/config/config-resolver');
+      const { resolveConfig } = require("../../core/config/config-resolver");
       const { config: coreConfig } = resolveConfig(process.cwd());
 
       switch (command) {
-        case 'load': {
+        case "load": {
           if (!agentId) {
-            console.error('Usage: node agent-config-loader.js load <agent-id>');
+            console.error("Usage: node agent-config-loader.js load <agent-id>");
             process.exit(1);
           }
 
@@ -569,30 +587,43 @@ if (require.main === module) {
           const loader = new AgentConfigLoader(agentId);
           const result = await loader.load(coreConfig);
 
-          console.log('\n📊 Results:');
+          console.log("\n📊 Results:");
           console.log(`   Load Time: ${result.loadTime}ms`);
           console.log(`   Config Size: ${(result.configSize / 1024).toFixed(2)} KB`);
-          console.log(`   Cache Hit: ${result.cacheHit ? 'Yes' : 'No'}`);
-          console.log(`   Sections Loaded: ${result.sectionsLoaded.join(', ')}`);
+          console.log(`   Cache Hit: ${result.cacheHit ? "Yes" : "No"}`);
+          console.log(`   Sections Loaded: ${result.sectionsLoaded.join(", ")}`);
           console.log(`   Files Loaded: ${Object.keys(result.files).length}`);
           break;
         }
 
-        case 'preload': {
-          const agents = agentId ? [agentId] : [
-            'aiox-master', 'dev', 'qa', 'architect', 'po', 'pm', 'sm',
-            'analyst', 'ux-expert', 'data-engineer', 'devops', 'db-sage', 'security',
-          ];
+        case "preload": {
+          const agents = agentId
+            ? [agentId]
+            : [
+                "aiox-master",
+                "dev",
+                "qa",
+                "architect",
+                "po",
+                "pm",
+                "sm",
+                "analyst",
+                "ux-expert",
+                "data-engineer",
+                "devops",
+                "db-sage",
+                "security",
+              ];
 
           await preloadAgents(agents, coreConfig);
           break;
         }
 
-        case 'test': {
-          console.log('\n🧪 Testing agent config loader...\n');
+        case "test": {
+          console.log("\n🧪 Testing agent config loader...\n");
 
           // Test loading for a few agents
-          const testAgents = ['dev', 'qa', 'po'];
+          const testAgents = ["dev", "qa", "po"];
 
           for (const agent of testAgents) {
             const testLoader = new AgentConfigLoader(agent);
@@ -601,11 +632,11 @@ if (require.main === module) {
             console.log(`@${agent}:`);
             console.log(`  Load Time: ${testResult.loadTime}ms`);
             console.log(`  Config Size: ${(testResult.configSize / 1024).toFixed(2)} KB`);
-            console.log(`  Cache Hit: ${testResult.cacheHit ? 'Yes' : 'No'}`);
-            console.log('');
+            console.log(`  Cache Hit: ${testResult.cacheHit ? "Yes" : "No"}`);
+            console.log("");
           }
 
-          console.log('✅ All tests passed!\n');
+          console.log("✅ All tests passed!\n");
           break;
         }
 
@@ -618,7 +649,7 @@ Usage:
           `);
       }
     } catch (error) {
-      console.error('Error:', error.message);
+      console.error("Error:", error.message);
       console.error(error.stack);
       process.exit(1);
     }

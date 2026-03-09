@@ -99,7 +99,7 @@ donna agents set-identity --workspace ~/.donna/workspace --from-identity
 Override fields explicitly:
 
 ```bash
-donna agents set-identity --agent main --name "Donna" --emoji "🦞" --avatar avatars/donna.png
+donna agents set-identity --agent main --name "Donna" --emoji "🌙" --avatar avatars/donna.png
 ```
 
 Config sample:
@@ -112,8 +112,8 @@ Config sample:
         id: "main",
         identity: {
           name: "Donna",
-          theme: "space lobster",
-          emoji: "🦞",
+          theme: "AI assistant",
+          emoji: "🌙",
           avatar: "avatars/donna.png",
         },
       },

@@ -5,8 +5,8 @@
  * Integrates Gemini CLI's /deploy command for CloudRun deployments.
  */
 
-const { execSync, execFileSync } = require('child_process');
-const EventEmitter = require('events');
+const { execSync, execFileSync } = require("child_process");
+const EventEmitter = require("events");
 
 class CloudRunAdapter extends EventEmitter {
   constructor(config = {}) {
@@ -14,7 +14,7 @@ class CloudRunAdapter extends EventEmitter {
     this.enabled = false;
     this.timeout = config.timeout || 300000; // 5 min for deployments
     this.project = config.project || null;
-    this.region = config.region || 'us-central1';
+    this.region = config.region || "us-central1";
   }
 
   /**
@@ -22,12 +22,12 @@ class CloudRunAdapter extends EventEmitter {
    */
   async checkAvailability() {
     try {
-      const output = execSync('gemini extensions list --output-format json 2>/dev/null', {
-        encoding: 'utf8',
+      const output = execSync("gemini extensions list --output-format json 2>/dev/null", {
+        encoding: "utf8",
         timeout: 10000,
       });
       const extensions = JSON.parse(output);
-      this.enabled = extensions.some((e) => e.name === 'cloudrun' || e.name === 'cloud-run');
+      this.enabled = extensions.some((e) => e.name === "cloudrun" || e.name === "cloud-run");
       return this.enabled;
     } catch {
       this.enabled = false;
@@ -40,23 +40,25 @@ class CloudRunAdapter extends EventEmitter {
    * @param {Object} options - Deployment options
    */
   async deploy(options = {}) {
-    if (!this.enabled) throw new Error('CloudRun extension not available');
+    if (!this.enabled) {
+      throw new Error("CloudRun extension not available");
+    }
 
     const deployConfig = {
-      service: options.service || 'aiox-app',
+      service: options.service || "aiox-app",
       project: options.project || this.project,
       region: options.region || this.region,
-      source: options.source || '.',
+      source: options.source || ".",
       ...options,
     };
 
-    this.emit('deploy_started', deployConfig);
+    this.emit("deploy_started", deployConfig);
 
     try {
       // Use Gemini CLI's /deploy command
       const result = await this._executeDeploy(deployConfig);
 
-      this.emit('deploy_completed', {
+      this.emit("deploy_completed", {
         ...deployConfig,
         url: result.url,
         revision: result.revision,
@@ -64,7 +66,7 @@ class CloudRunAdapter extends EventEmitter {
 
       return result;
     } catch (error) {
-      this.emit('deploy_failed', {
+      this.emit("deploy_failed", {
         ...deployConfig,
         error: error.message,
       });
@@ -83,13 +85,13 @@ class CloudRunAdapter extends EventEmitter {
    * @param {string} service - Service name
    */
   async rollback(service) {
-    this.emit('rollback_started', { service });
+    this.emit("rollback_started", { service });
 
     // Execute rollback via gcloud or Gemini
     return {
       success: true,
       service,
-      message: 'Rollback initiated',
+      message: "Rollback initiated",
     };
   }
 
@@ -105,10 +107,14 @@ class CloudRunAdapter extends EventEmitter {
 
     try {
       // Use execFileSync to avoid shell injection
-      const output = execFileSync('gcloud', ['run', 'services', 'describe', service, '--format=json'], {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
+      const output = execFileSync(
+        "gcloud",
+        ["run", "services", "describe", service, "--format=json"],
+        {
+          encoding: "utf8",
+          stdio: ["pipe", "pipe", "pipe"],
+        },
+      );
       return JSON.parse(output);
     } catch {
       return null;

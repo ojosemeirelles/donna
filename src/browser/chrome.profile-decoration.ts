@@ -120,7 +120,7 @@ export function isProfileDecorated(
 }
 
 /**
- * Best-effort profile decoration (name + lobster-orange). Chrome preference keys
+ * Best-effort profile decoration (name + donna-orange). Chrome preference keys
  * vary by version; we keep this conservative and idempotent.
  */
 export function decorateDonnaProfile(

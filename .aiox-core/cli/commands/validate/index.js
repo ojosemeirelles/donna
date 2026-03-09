@@ -16,13 +16,13 @@
  *   aiox validate --json             # Output as JSON
  */
 
-'use strict';
+"use strict";
 
-const { Command } = require('commander');
-const path = require('path');
-const fs = require('fs-extra');
-const chalk = require('chalk');
-const ora = require('ora');
+const { Command } = require("commander");
+const path = require("path");
+const fs = require("fs-extra");
+const chalk = require("chalk");
+const ora = require("ora");
 
 /**
  * Exit codes for CLI consistency
@@ -35,7 +35,10 @@ const ExitCode = {
 };
 
 // Resolve validator module path
-const validatorPath = path.resolve(__dirname, '../../../../packages/installer/src/installer/post-install-validator');
+const validatorPath = path.resolve(
+  __dirname,
+  "../../../../packages/installer/src/installer/post-install-validator",
+);
 let PostInstallValidator, formatReport;
 
 let validatorLoadError = null;
@@ -54,45 +57,45 @@ try {
  * @returns {Command} Commander command instance
  */
 function createValidateCommand() {
-  const validate = new Command('validate');
+  const validate = new Command("validate");
 
   validate
-    .description('Validate AIOX-Core installation integrity')
-    .option('-r, --repair', 'Repair missing or corrupted files')
-    .option('-d, --dry-run', 'Preview repairs without applying (use with --repair)')
-    .option('--detailed', 'Show detailed file list')
-    .option('--no-hash', 'Skip hash verification (faster)')
-    .option('--extras', 'Detect extra files not in manifest')
-    .option('-v, --verbose', 'Enable verbose output')
-    .option('--json', 'Output results as JSON')
-    .option('--source <dir>', 'Source directory for repairs')
+    .description("Validate AIOX-Core installation integrity")
+    .option("-r, --repair", "Repair missing or corrupted files")
+    .option("-d, --dry-run", "Preview repairs without applying (use with --repair)")
+    .option("--detailed", "Show detailed file list")
+    .option("--no-hash", "Skip hash verification (faster)")
+    .option("--extras", "Detect extra files not in manifest")
+    .option("-v, --verbose", "Enable verbose output")
+    .option("--json", "Output results as JSON")
+    .option("--source <dir>", "Source directory for repairs")
     .addHelpText(
-      'after',
+      "after",
       `
 Examples:
-  ${chalk.dim('# Validate current installation')}
+  ${chalk.dim("# Validate current installation")}
   $ aiox validate
 
-  ${chalk.dim('# Validate with detailed file list')}
+  ${chalk.dim("# Validate with detailed file list")}
   $ aiox validate --detailed
 
-  ${chalk.dim('# Repair missing/corrupted files')}
+  ${chalk.dim("# Repair missing/corrupted files")}
   $ aiox validate --repair
 
-  ${chalk.dim('# Preview what would be repaired')}
+  ${chalk.dim("# Preview what would be repaired")}
   $ aiox validate --repair --dry-run
 
-  ${chalk.dim('# Quick validation (skip hash check)')}
+  ${chalk.dim("# Quick validation (skip hash check)")}
   $ aiox validate --no-hash
 
-  ${chalk.dim('# Output as JSON for CI/CD')}
+  ${chalk.dim("# Output as JSON for CI/CD")}
   $ aiox validate --json
 
 Exit Codes:
   0 - Validation passed
   1 - Validation failed (missing/corrupted files)
   2 - Validation error (could not complete)
-`
+`,
     )
     .action(async (options) => {
       await runValidation(options);
@@ -107,7 +110,7 @@ Exit Codes:
  */
 async function runValidation(options) {
   const projectRoot = process.cwd();
-  const aioxCoreDir = path.join(projectRoot, '.aiox-core');
+  const aioxCoreDir = path.join(projectRoot, ".aiox-core");
 
   // Check if AIOX-Core is installed
   if (!fs.existsSync(aioxCoreDir)) {
@@ -115,19 +118,19 @@ async function runValidation(options) {
       console.log(
         JSON.stringify(
           {
-            status: 'failed',
-            error: 'AIOX-Core not found in current directory',
+            status: "failed",
+            error: "AIOX-Core not found in current directory",
             // SECURITY: Sanitize path - only show relative indicator
-            location: '.aiox-core',
+            location: ".aiox-core",
           },
           null,
-          2
-        )
+          2,
+        ),
       );
     } else {
-      console.error(chalk.red('\nError: AIOX-Core not found in current directory'));
+      console.error(chalk.red("\nError: AIOX-Core not found in current directory"));
       console.error(chalk.dim(`Expected at: ${aioxCoreDir}`));
-      console.error(chalk.dim('\nRun `npx aiox-core install` to install AIOX-Core'));
+      console.error(chalk.dim("\nRun `npx aiox-core install` to install AIOX-Core"));
     }
     process.exit(ExitCode.ERROR);
   }
@@ -136,23 +139,23 @@ async function runValidation(options) {
   if (!PostInstallValidator) {
     const errorMsg = validatorLoadError
       ? `Validator module failed to load: ${validatorLoadError.message}`
-      : 'Validator module not available';
+      : "Validator module not available";
 
     if (options.json) {
       console.log(
         JSON.stringify(
           {
-            status: 'error',
+            status: "error",
             error: errorMsg,
-            hint: 'This may indicate a corrupted installation',
+            hint: "This may indicate a corrupted installation",
           },
           null,
-          2
-        )
+          2,
+        ),
       );
     } else {
       console.error(chalk.red(`\nError: ${errorMsg}`));
-      console.error(chalk.dim('This may indicate a corrupted installation'));
+      console.error(chalk.dim("This may indicate a corrupted installation"));
     }
     process.exit(ExitCode.ERROR);
   }
@@ -162,22 +165,22 @@ async function runValidation(options) {
 
   // SECURITY: Validate --source directory if provided
   if (sourceDir) {
-    const sourceManifest = path.join(sourceDir, '.aiox-core', 'install-manifest.yaml');
+    const sourceManifest = path.join(sourceDir, ".aiox-core", "install-manifest.yaml");
     if (!fs.existsSync(sourceManifest)) {
       if (options.json) {
         console.log(
           JSON.stringify(
             {
-              status: 'error',
-              error: 'Invalid source directory: manifest not found',
+              status: "error",
+              error: "Invalid source directory: manifest not found",
               path: sourceDir,
             },
             null,
-            2
-          )
+            2,
+          ),
         );
       } else {
-        console.error(chalk.red('\nError: Invalid source directory'));
+        console.error(chalk.red("\nError: Invalid source directory"));
         console.error(chalk.dim(`Expected manifest at: ${sourceManifest}`));
       }
       process.exit(ExitCode.ERROR);
@@ -187,13 +190,13 @@ async function runValidation(options) {
   if (!sourceDir && options.repair) {
     // Try to find source in common locations
     const possibleSources = [
-      path.join(__dirname, '../../../../..'), // npm package root
-      path.join(projectRoot, 'node_modules/aiox-core'),
-      path.join(projectRoot, 'node_modules/aiox-core'),
+      path.join(__dirname, "../../../../.."), // npm package root
+      path.join(projectRoot, "node_modules/aiox-core"),
+      path.join(projectRoot, "node_modules/aiox-core"),
     ];
 
     for (const src of possibleSources) {
-      if (fs.existsSync(path.join(src, '.aiox-core', 'install-manifest.yaml'))) {
+      if (fs.existsSync(path.join(src, ".aiox-core", "install-manifest.yaml"))) {
         sourceDir = src;
         break;
       }
@@ -203,10 +206,10 @@ async function runValidation(options) {
   // Show spinner for non-JSON output (must be defined before validator for closure)
   let spinner = null;
   if (!options.json) {
-    console.log('');
+    console.log("");
     spinner = ora({
-      text: 'Loading installation manifest...',
-      color: 'cyan',
+      text: "Loading installation manifest...",
+      color: "cyan",
     }).start();
   }
 
@@ -229,7 +232,7 @@ async function runValidation(options) {
     const report = await validator.validate();
 
     if (spinner) {
-      spinner.succeed('Validation complete');
+      spinner.succeed("Validation complete");
     }
 
     // Handle repair mode
@@ -240,14 +243,14 @@ async function runValidation(options) {
       repairAttempted = true;
       if (!sourceDir) {
         if (!options.json) {
-          console.error(chalk.yellow('\nWarning: Cannot repair - source directory not found'));
+          console.error(chalk.yellow("\nWarning: Cannot repair - source directory not found"));
           console.error(
-            chalk.dim('Specify source with --source <dir> or ensure package is installed')
+            chalk.dim("Specify source with --source <dir> or ensure package is installed"),
           );
         }
         repairResult = {
           success: false,
-          error: 'Source directory not found',
+          error: "Source directory not found",
           repaired: [],
           failed: [],
         };
@@ -291,7 +294,7 @@ async function runValidation(options) {
 
       // Surface repair refusal errors in human-readable output
       if (repairAttempted && !repairResult?.success && repairResult?.error) {
-        console.log('');
+        console.log("");
         console.log(chalk.red(`Repair failed: ${repairResult.error}`));
       }
     }
@@ -302,10 +305,10 @@ async function runValidation(options) {
     if (repairAttempted && !options.dryRun && repairResult?.success) {
       // Repair succeeded - exit 0
       process.exit(ExitCode.SUCCESS);
-    } else if (report.status === 'failed') {
+    } else if (report.status === "failed") {
       process.exit(ExitCode.VALIDATION_FAILED);
     } else if (
-      report.status === 'warning' &&
+      report.status === "warning" &&
       (report.stats.missingFiles > 0 || report.stats.corruptedFiles > 0)
     ) {
       process.exit(ExitCode.VALIDATION_FAILED);
@@ -314,21 +317,21 @@ async function runValidation(options) {
     }
   } catch (error) {
     if (spinner) {
-      spinner.fail('Validation failed');
+      spinner.fail("Validation failed");
     }
 
     if (options.json) {
       console.log(
         JSON.stringify(
           {
-            status: 'error',
+            status: "error",
             error: error.message,
             // SECURITY: Only include stack in verbose mode for debugging
             stack: options.verbose ? error.stack : undefined,
           },
           null,
-          2
-        )
+          2,
+        ),
       );
     } else {
       console.error(chalk.red(`\nError: ${error.message}`));
@@ -352,16 +355,16 @@ async function runRepair(validator, options, spinner) {
   const dryRun = options.dryRun === true;
 
   if (!options.json) {
-    console.log('');
+    console.log("");
     if (dryRun) {
       spinner = ora({
-        text: 'Analyzing files to repair (dry run)...',
-        color: 'yellow',
+        text: "Analyzing files to repair (dry run)...",
+        color: "yellow",
       }).start();
     } else {
       spinner = ora({
-        text: 'Repairing files...',
-        color: 'green',
+        text: "Repairing files...",
+        color: "green",
       }).start();
     }
   }
@@ -372,7 +375,7 @@ async function runRepair(validator, options, spinner) {
       ? () => {}
       : (current, total, file) => {
           if (spinner) {
-            const action = dryRun ? 'Checking' : 'Repairing';
+            const action = dryRun ? "Checking" : "Repairing";
             spinner.text = `${action} ${current}/${total}: ${truncatePath(file, 40)}`;
           }
         },
@@ -380,20 +383,20 @@ async function runRepair(validator, options, spinner) {
 
   if (spinner) {
     if (repairResult.success) {
-      const action = dryRun ? 'would be repaired' : 'repaired';
+      const action = dryRun ? "would be repaired" : "repaired";
       spinner.succeed(`${repairResult.repaired.length} file(s) ${action}`);
     } else {
-      spinner.warn('Repair completed with some failures');
+      spinner.warn("Repair completed with some failures");
     }
   }
 
   if (!options.json) {
     // Show repair summary
     if (repairResult.repaired.length > 0) {
-      console.log('');
-      console.log(chalk.bold(dryRun ? 'Files that would be repaired:' : 'Repaired files:'));
+      console.log("");
+      console.log(chalk.bold(dryRun ? "Files that would be repaired:" : "Repaired files:"));
       for (const file of repairResult.repaired.slice(0, 20)) {
-        const icon = dryRun ? chalk.yellow('○') : chalk.green('✓');
+        const icon = dryRun ? chalk.yellow("○") : chalk.green("✓");
         console.log(`  ${icon} ${file.path}`);
       }
       if (repairResult.repaired.length > 20) {
@@ -402,10 +405,10 @@ async function runRepair(validator, options, spinner) {
     }
 
     if (repairResult.failed.length > 0) {
-      console.log('');
-      console.log(chalk.bold(chalk.red('Failed to repair:')));
+      console.log("");
+      console.log(chalk.bold(chalk.red("Failed to repair:")));
       for (const file of repairResult.failed) {
-        console.log(`  ${chalk.red('✗')} ${file.path}: ${file.reason}`);
+        console.log(`  ${chalk.red("✗")} ${file.path}: ${file.reason}`);
       }
     }
   }
@@ -420,8 +423,10 @@ async function runRepair(validator, options, spinner) {
  * @returns {string} - Truncated path
  */
 function truncatePath(filePath, maxLen) {
-  if (!filePath || filePath.length <= maxLen) return filePath;
-  return '...' + filePath.slice(-(maxLen - 3));
+  if (!filePath || filePath.length <= maxLen) {
+    return filePath;
+  }
+  return "..." + filePath.slice(-(maxLen - 3));
 }
 
 module.exports = {
