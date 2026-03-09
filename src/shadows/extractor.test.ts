@@ -1,8 +1,5 @@
-import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { extractShadow, loadRegistry, getShadowByRole } from "./extractor.js";
+import { describe, it, expect } from "vitest";
+import { getShadowByRole } from "./extractor.js";
 import type { ShadowRegistry } from "./types.js";
 
 // We test loadRegistry and getShadowByRole with in-memory data
