@@ -114,8 +114,6 @@ export { normalizePluginHttpPath } from "../plugins/http-path.js";
 export { registerPluginHttpRoute } from "../plugins/http-registry.js";
 export { emptyPluginConfigSchema } from "../plugins/config-schema.js";
 export type { DonnaConfig } from "../config/config.js";
-/** @deprecated Use DonnaConfig instead */
-export type { DonnaConfig } from "../config/config.js";
 export { isDangerousNameMatchingEnabled } from "../config/dangerous-name-matching.js";
 
 export type { FileLockHandle, FileLockOptions } from "./file-lock.js";

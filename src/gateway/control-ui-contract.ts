@@ -5,4 +5,6 @@ export type ControlUiBootstrapConfig = {
   assistantName: string;
   assistantAvatar: string;
   assistantAgentId: string;
+  /** Injected only for loopback requests so the UI can auto-connect. */
+  loopbackToken?: string;
 };

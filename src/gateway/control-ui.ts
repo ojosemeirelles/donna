@@ -25,6 +25,7 @@ import {
   normalizeControlUiBasePath,
   resolveAssistantAvatarUrl,
 } from "./control-ui-shared.js";
+import { isLoopbackHost } from "./net.js";
 
 const ROOT_PREFIX = "/";
 const CONTROL_UI_ASSETS_MISSING_MESSAGE =
@@ -345,11 +346,17 @@ export function handleControlUiHttpRequest(
       res.end();
       return true;
     }
+    // Inject the auth token for loopback requests so the UI auto-connects.
+    const remoteHost = (req.socket.remoteAddress ?? "").replace(/^::ffff:/, "");
+    const loopbackToken = isLoopbackHost(remoteHost)
+      ? (config?.gateway?.auth?.token ?? undefined)
+      : undefined;
     sendJson(res, 200, {
       basePath,
       assistantName: identity.name,
       assistantAvatar: avatarValue ?? identity.avatar,
       assistantAgentId: identity.agentId,
+      ...(loopbackToken ? { loopbackToken } : {}),
     } satisfies ControlUiBootstrapConfig);
     return true;
   }

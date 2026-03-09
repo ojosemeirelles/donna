@@ -29,7 +29,7 @@ export type {
 export type { ChannelPlugin } from "../channels/plugins/types.plugin.js";
 export { createReplyPrefixContext } from "../channels/reply-prefix.js";
 export { createTypingCallbacks } from "../channels/typing.js";
-export type { DonnaConfig, DonnaConfig } from "../config/config.js";
+export type { DonnaConfig } from "../config/config.js";
 export {
   resolveAllowlistProviderRuntimeGroupPolicy,
   resolveDefaultGroupPolicy,

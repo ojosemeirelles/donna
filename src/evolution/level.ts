@@ -1,17 +1,16 @@
 /**
- * Evolution Level definitions — 5-tier progression system.
- *
- * Each Donna instance evolves individually based on real usage,
- * unlocking capabilities as the user interacts.
+ * Evolution Level definitions — Solo Leveling 8-rank progression.
  */
 
-export type EvolutionLevel = 1 | 2 | 3 | 4 | 5;
+export type Rank = "E" | "D" | "C" | "B" | "A" | "S" | "SS" | "SSS";
+export type EvolutionLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export type LevelDefinition = {
   level: EvolutionLevel;
-  name: string;
+  rank: Rank;
+  title: string;
   description: string;
-  criteria: LevelCriteria;
+  xpRequired: number;
   unlocks: string[];
 };
 
@@ -26,54 +25,93 @@ export type LevelCriteria = {
 export const LEVEL_DEFINITIONS: readonly LevelDefinition[] = [
   {
     level: 1,
-    name: "Iniciante",
-    description: "Primeiros passos com a Donna",
-    criteria: { minDaysActive: 0, minInteractions: 0 },
-    unlocks: ["Respostas", "Morning Brief", "Tarefas simples"],
+    rank: "E",
+    title: "Assistente Iniciante",
+    description: "Despertou como hunter. Primeiros passos no sistema.",
+    xpRequired: 0,
+    unlocks: ["Morning Brief", "Respostas basicas"],
   },
   {
     level: 2,
-    name: "Aprendiz",
-    description: "Donna começa a te conhecer",
-    criteria: { minDaysActive: 7, minInteractions: 20 },
-    unlocks: ["Lembra nome", "Preferências", "Estilo de comunicação"],
+    rank: "D",
+    title: "Secretaria Funcional",
+    description: "Reconhecida pelo sistema. Memoria ativada.",
+    xpRequired: 100,
+    unlocks: ["Memory Consolidation", "Lembra seu nome", "Preferencias"],
   },
   {
     level: 3,
-    name: "Assistente",
-    description: "Donna antecipa suas necessidades",
-    criteria: { minDaysActive: 30, minInteractions: 100 },
-    unlocks: ["Padrões de uso", "Sugestões proativas", "Antecipação"],
+    rank: "C",
+    title: "Agente Confiavel",
+    description: "Padroes detectados. Antecipa necessidades.",
+    xpRequired: 500,
+    unlocks: ["Multi-task (parallel hooks)", "Sugestoes proativas", "Padroes de uso"],
   },
   {
     level: 4,
-    name: "Estrategista",
-    description: "Donna toma iniciativa",
-    criteria: { minDaysActive: 90, minInteractions: 300, minSkillsUsed: 5 },
-    unlocks: ["Ciclos autônomos", "Projetos", "Iniciativa própria"],
+    rank: "B",
+    title: "Operadora Avancada",
+    description: "Toma iniciativa. Ciclos autonomos ativados.",
+    xpRequired: 1500,
+    unlocks: ["Predictive suggestions", "Ciclos autonomos", "Projetos"],
   },
   {
     level: 5,
-    name: "Autônoma",
-    description: "Donna opera de forma independente",
-    criteria: {
-      minDaysActive: 180,
-      minInteractions: 1000,
-      minSkillsUsed: 10,
-      requiresAdvancedConfig: true,
-    },
-    unlocks: ["Opera 24/7", "Reporta", "Escala decisões"],
+    rank: "A",
+    title: "IA de Elite",
+    description: "Opera com autonomia total. Agenda propria.",
+    xpRequired: 5000,
+    unlocks: ["Autonomous scheduling", "Opera 24/7", "Relatorios executivos"],
   },
-] as const;
+  {
+    level: 6,
+    rank: "S",
+    title: "Sombra do Sistema",
+    description: "Transcende a assistencia. Age antes de ser chamada.",
+    xpRequired: 15000,
+    unlocks: ["Acao preventiva", "Gestao de crises", "Multi-canal autonomo"],
+  },
+  {
+    level: 7,
+    rank: "SS",
+    title: "Monarca da Produtividade",
+    description: "Comanda o sistema. Orquestra todas as operacoes.",
+    xpRequired: 50000,
+    unlocks: ["Orquestracao total", "Decisoes estrategicas", "Escala automatica"],
+  },
+  {
+    level: 8,
+    rank: "SSS",
+    title: "Donna Suprema",
+    description: "Nivel maximo. A sombra se tornou a luz.",
+    xpRequired: 150000,
+    unlocks: ["Poder supremo", "Sistema completo", "Lendaria"],
+  },
+];
 
-/** Returns the level definition for a given level number. */
 export function getLevelDefinition(level: EvolutionLevel): LevelDefinition {
   const def = LEVEL_DEFINITIONS.find((d) => d.level === level);
-  if (!def) throw new Error(`Unknown evolution level: ${level}`);
+  if (!def) {
+    throw new Error(`Unknown evolution level: ${level}`);
+  }
   return def;
 }
 
-/** Returns the maximum evolution level. */
 export function getMaxLevel(): EvolutionLevel {
-  return 5;
+  return 8;
+}
+
+export function getRankForLevel(level: EvolutionLevel): Rank {
+  return getLevelDefinition(level).rank;
+}
+
+/** Find which level corresponds to a given XP amount. */
+export function getLevelForXp(xp: number): EvolutionLevel {
+  let result: EvolutionLevel = 1;
+  for (const def of LEVEL_DEFINITIONS) {
+    if (xp >= def.xpRequired) {
+      result = def.level;
+    }
+  }
+  return result;
 }

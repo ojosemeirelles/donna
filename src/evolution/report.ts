@@ -1,38 +1,49 @@
 /**
- * Weekly Evolution Report — generates a formatted report for Telegram delivery.
+ * Weekly Evolution Report — Solo Leveling themed.
  */
 
-import type { EvolutionLevel } from "./level.js";
-import { getLevelDefinition, LEVEL_DEFINITIONS } from "./level.js";
-import type { EvolutionStats } from "./tracker.js";
-import { generateInsights, type Insight } from "./insights.js";
 import { suggestInitiatives, type Initiative } from "./initiatives.js";
-import { evaluateProgression } from "./progression.js";
+import { generateInsights, type Insight } from "./insights.js";
+import type { EvolutionLevel } from "./level.js";
+import { getLevelDefinition } from "./level.js";
+import type { EvolutionStats } from "./tracker.js";
 
 export type WeeklyReportData = {
   weekNumber: number;
   level: EvolutionLevel;
-  levelName: string;
+  rank: string;
+  title: string;
   stats: EvolutionStats;
   weekInteractions: number;
   insights: Insight[];
   initiatives: Initiative[];
   nextLevelProgress: {
     nextLevel: EvolutionLevel | null;
-    nextLevelName: string | null;
-    remainingInteractions: number;
-    remainingDays: number;
+    nextRank: string | null;
+    nextTitle: string | null;
+    currentXp: number;
+    requiredXp: number;
+    progressPercent: number;
   };
 };
 
-/** Calculate which week we're on since first interaction. */
 export function calculateWeekNumber(firstSeenAt: string): number {
   const start = new Date(firstSeenAt).getTime();
   const now = Date.now();
   return Math.max(1, Math.ceil((now - start) / (7 * 24 * 60 * 60 * 1000)));
 }
 
-/** Build the weekly report data. */
+/** Generate XP progress bar. */
+function xpBar(current: number, required: number, width = 20): string {
+  if (required <= 0) {
+    return "X".repeat(width) + " MAX";
+  }
+  const pct = Math.min(current / required, 1);
+  const filled = Math.round(pct * width);
+  const empty = width - filled;
+  return "X".repeat(filled) + "-".repeat(empty) + ` ${Math.round(pct * 100)}%`;
+}
+
 export function buildReportData(
   level: EvolutionLevel,
   stats: EvolutionStats,
@@ -46,32 +57,36 @@ export function buildReportData(
   });
   const initiatives = suggestInitiatives(level, stats);
 
-  // Next level progress
-  const progression = evaluateProgression(level, stats);
   let nextLevelProgress: WeeklyReportData["nextLevelProgress"];
-
-  if (level >= 5) {
+  if (level >= 8) {
     nextLevelProgress = {
       nextLevel: null,
-      nextLevelName: null,
-      remainingInteractions: 0,
-      remainingDays: 0,
+      nextRank: null,
+      nextTitle: null,
+      currentXp: stats.xp,
+      requiredXp: 0,
+      progressPercent: 100,
     };
   } else {
     const nextLevel = (level + 1) as EvolutionLevel;
-    const nextDef = LEVEL_DEFINITIONS.find((d) => d.level === nextLevel)!;
+    const nextDef = getLevelDefinition(nextLevel);
+    const currentXp = stats.xp - def.xpRequired;
+    const neededXp = nextDef.xpRequired - def.xpRequired;
     nextLevelProgress = {
       nextLevel,
-      nextLevelName: nextDef.name,
-      remainingInteractions: Math.max(0, nextDef.criteria.minInteractions - stats.totalInteractions),
-      remainingDays: Math.max(0, nextDef.criteria.minDaysActive - stats.daysActive),
+      nextRank: nextDef.rank,
+      nextTitle: nextDef.title,
+      currentXp: stats.xp,
+      requiredXp: nextDef.xpRequired,
+      progressPercent: neededXp > 0 ? Math.round((currentXp / neededXp) * 100) : 0,
     };
   }
 
   return {
     weekNumber: weekNum,
     level,
-    levelName: def.name,
+    rank: def.rank,
+    title: def.title,
     stats,
     weekInteractions: weekInteractions ?? 0,
     insights,
@@ -80,57 +95,60 @@ export function buildReportData(
   };
 }
 
-/** Format the report as Telegram-compatible markdown. */
 export function formatReportTelegram(data: WeeklyReportData): string {
   const lines: string[] = [];
+  const def = getLevelDefinition(data.level);
 
-  lines.push(`⚔️ *Donna — Relatório de Evolução*`);
-  lines.push(`Semana ${data.weekNumber} | Nível ${data.level} — ${data.levelName}`);
+  lines.push(`*DONNA -- Relatorio de Evolucao*`);
+  lines.push(`Semana ${data.weekNumber} | Rank ${data.rank} -- ${data.title}`);
+  lines.push(`_${def.description}_`);
   lines.push("");
 
-  // Progress
-  lines.push(`📈 *Progresso esta semana:*`);
-  lines.push(`• ${data.weekInteractions} interações`);
-  lines.push(`• ${data.stats.totalInteractions} interações totais`);
-  lines.push(`• ${data.stats.daysActive} dias ativos`);
-  lines.push(`• ${data.stats.skillsUsed.length} habilidades usadas`);
+  // XP Progress
+  lines.push(`*XP: ${data.stats.xp.toLocaleString("pt-BR")}*`);
+  if (data.nextLevelProgress.nextRank) {
+    lines.push(xpBar(data.stats.xp, data.nextLevelProgress.requiredXp));
+    lines.push(
+      `Proximo: Rank ${data.nextLevelProgress.nextRank} (${data.nextLevelProgress.requiredXp.toLocaleString("pt-BR")} XP)`,
+    );
+  } else {
+    lines.push(`${xpBar(1, 1)} RANK MAXIMO`);
+  }
+  lines.push("");
+
+  // Stats
+  lines.push(`*Stats:*`);
+  lines.push(`- Mensagens: ${data.stats.totalInteractions}`);
+  lines.push(`- Tarefas: ${data.stats.tasksCompleted}`);
+  lines.push(`- Erros resolvidos: ${data.stats.errorsResolved}`);
+  lines.push(`- Dias ativos: ${data.stats.daysActive}`);
+  lines.push(`- Streak: ${data.stats.streakDays} dias`);
+  lines.push(`- Skills: ${data.stats.skillsUsed.length}`);
   lines.push("");
 
   // Insights
   if (data.insights.length > 0) {
-    lines.push(`🧠 *O que aprendi sobre você:*`);
+    lines.push(`*Insights:*`);
     for (const insight of data.insights.slice(0, 3)) {
-      lines.push(`• ${insight.text}`);
+      lines.push(`- ${insight.text}`);
     }
     lines.push("");
   }
 
-  // Next level
-  if (data.nextLevelProgress.nextLevel) {
-    lines.push(`🔓 *Próximo desbloqueio:*`);
-    const parts: string[] = [];
-    if (data.nextLevelProgress.remainingInteractions > 0) {
-      parts.push(`${data.nextLevelProgress.remainingInteractions} interações`);
-    }
-    if (data.nextLevelProgress.remainingDays > 0) {
-      parts.push(`${data.nextLevelProgress.remainingDays} dias`);
-    }
-    if (parts.length > 0) {
-      lines.push(`Faltam ${parts.join(" e ")} para "${data.nextLevelProgress.nextLevelName}"`);
-    } else {
-      lines.push(`Pronto para evoluir para "${data.nextLevelProgress.nextLevelName}"!`);
-    }
-    lines.push("");
-  } else {
-    lines.push(`🏆 *Nível máximo alcançado!*`);
-    lines.push("");
-  }
+  // Skills unlocked
+  lines.push(`*Skills ativas:*`);
+  lines.push(def.unlocks.map((u) => `- ${u}`).join("\n"));
+  lines.push("");
 
   // Initiative
   if (data.initiatives.length > 0) {
-    lines.push(`💡 *Iniciativa sugerida:*`);
-    lines.push(data.initiatives[0]!.text);
+    lines.push(`*Proximo passo:*`);
+    lines.push(data.initiatives[0].text);
   }
+
+  lines.push("");
+  lines.push(`---`);
+  lines.push(`_Donna Solo Leveling System v1.0_`);
 
   return lines.join("\n");
 }

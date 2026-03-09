@@ -10,6 +10,7 @@ export type ControlUiBootstrapState = {
   assistantName: string;
   assistantAvatar: string | null;
   assistantAgentId: string | null;
+  settings: { token: string };
 };
 
 export async function loadControlUiBootstrapConfig(state: ControlUiBootstrapState) {
@@ -43,6 +44,10 @@ export async function loadControlUiBootstrapConfig(state: ControlUiBootstrapStat
     state.assistantName = normalized.name;
     state.assistantAvatar = normalized.avatar;
     state.assistantAgentId = normalized.agentId ?? null;
+    // Auto-connect with loopback token injected by gateway for localhost.
+    if (parsed.loopbackToken && !state.settings.token) {
+      state.settings = { ...state.settings, token: parsed.loopbackToken };
+    }
   } catch {
     // Ignore bootstrap failures; UI will update identity after connecting.
   }

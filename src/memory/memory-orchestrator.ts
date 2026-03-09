@@ -37,6 +37,7 @@ import {
   resolvePatternConfig,
   type PatternEvent,
   type PatternMemoryConfig,
+  type PatternStore,
   type PatternSummary,
 } from "./pattern-memory.js";
 
@@ -184,8 +185,8 @@ export class MemoryOrchestrator {
         ? loadIdentity(this.memoryDir).catch(() => ({}) as UserIdentity)
         : Promise.resolve({} as UserIdentity),
       this.config.patterns.enabled
-        ? loadPatternStore(this.memoryDir).catch(() => ({ events: [] }))
-        : Promise.resolve({ events: [] }),
+        ? loadPatternStore(this.memoryDir).catch(() => ({ events: [] }) as PatternStore)
+        : Promise.resolve({ events: [] } as PatternStore),
       this.config.episodic.enabled
         ? loadEpisodeSummary(this.memoryDir, today).catch(() => null)
         : Promise.resolve(null),

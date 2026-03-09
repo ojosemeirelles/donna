@@ -1,6 +1,4 @@
 import crypto from "node:crypto";
-import { EvolutionTracker, evaluateProgression, getLevelDefinition } from "../../evolution/index.js";
-import { getGlobalMemoryOrchestrator } from "../../memory/memory-orchestrator-singleton.js";
 import { resolveSessionAuthProfileOverride } from "../../agents/auth-profiles/session-override.js";
 import type { ExecToolDefaults } from "../../agents/bash-tools.js";
 import {
@@ -17,7 +15,13 @@ import {
   type SessionEntry,
   updateSessionStore,
 } from "../../config/sessions.js";
+import {
+  EvolutionTracker,
+  evaluateProgression,
+  getLevelDefinition,
+} from "../../evolution/index.js";
 import { logVerbose } from "../../globals.js";
+import { getGlobalMemoryOrchestrator } from "../../memory/memory-orchestrator-singleton.js";
 import { clearCommandLane, getQueueSize } from "../../process/command-queue.js";
 import { normalizeMainKey } from "../../routing/session-key.js";
 import { isReasoningTagProvider } from "../../utils/provider-utils.js";
@@ -482,14 +486,57 @@ export async function runPreparedReply(
     evoTracker.recordInteraction();
     const evoState = evoTracker.getState();
     const progression = evaluateProgression(evoState.level, evoState.stats);
+    let leveledUp = false;
     if (progression.shouldLevelUp) {
       evoTracker.setLevel(progression.nextLevel, progression.currentLevel);
+      leveledUp = true;
     }
-    await evoTracker.save();
+    if (evoTracker.shouldAutoSave()) {
+      await evoTracker.save();
+    } else {
+      await evoTracker.save();
+    }
     const levelDef = getLevelDefinition(evoTracker.getLevel());
+    const stats = evoTracker.getState().stats;
+    const nextDef =
+      levelDef.level < 8
+        ? getLevelDefinition(
+            (levelDef.level + 1) as import("../../evolution/level.js").EvolutionLevel,
+          )
+        : null;
+    const xpProgress = nextDef ? `${stats.xp}/${nextDef.xpRequired} XP` : "MAX";
     extraSystemPromptParts.push(
-      `[Evolution] Nível ${levelDef.level}: ${levelDef.name} — ${levelDef.description}. Capacidades: ${levelDef.unlocks.join(", ")}.`,
+      `[Evolution] Rank ${levelDef.rank}: ${levelDef.title} | XP: ${xpProgress} | Streak: ${stats.streakDays}d | Skills: ${levelDef.unlocks.join(", ")}.`,
     );
+    if (leveledUp) {
+      extraSystemPromptParts.push(
+        `[LEVEL UP!] Donna acabou de subir para Rank ${levelDef.rank} — ${levelDef.title}! Celebre brevemente no inicio da resposta com emojis e o novo rank antes de responder normalmente. Mencione as novas skills desbloqueadas: ${levelDef.unlocks.join(", ")}.`,
+      );
+    }
+    // If user asks for /status, inject full evolution card
+    if (queuedBody && /^\/?status\b/i.test(queuedBody.trim())) {
+      const bar = (cur: number, req: number) => {
+        if (req <= 0) {
+          return "MAX";
+        }
+        const pct = Math.min(cur / req, 1);
+        const filled = Math.round(pct * 20);
+        return "X".repeat(filled) + "-".repeat(20 - filled) + ` ${Math.round(pct * 100)}%`;
+      };
+      extraSystemPromptParts.push(
+        [
+          `[Status Card — include this formatted info in your reply]`,
+          `Rank ${levelDef.rank} — ${levelDef.title}`,
+          `"${levelDef.description}"`,
+          `XP: ${stats.xp} ${nextDef ? `| Next: Rank ${nextDef.rank} at ${nextDef.xpRequired} XP` : "| RANK MAXIMO"}`,
+          nextDef ? bar(stats.xp, nextDef.xpRequired) : "XXXXXXXXXXXXXXXXXXXX 100%",
+          `Mensagens: ${stats.totalInteractions} | Tarefas: ${stats.tasksCompleted} | Erros: ${stats.errorsResolved}`,
+          `Dias ativos: ${stats.daysActive} | Streak: ${stats.streakDays}d (record: ${stats.longestStreak}d)`,
+          `Skills: ${stats.skillsUsed.length} | Uptime: ${Math.round(stats.uptimeHours)}h`,
+          `Skills ativas: ${levelDef.unlocks.join(", ")}`,
+        ].join("\n"),
+      );
+    }
   } catch {
     // Evolution errors must never break a session
   }

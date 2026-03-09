@@ -1,11 +1,9 @@
 /**
- * Progression Engine — evaluates if a Donna instance should level up.
- *
- * Pure logic: takes stats + current level, returns next level (or same).
+ * Progression Engine — XP-based level up evaluation.
  */
 
-import type { EvolutionLevel, LevelCriteria } from "./level.js";
-import { LEVEL_DEFINITIONS, getMaxLevel } from "./level.js";
+import type { EvolutionLevel } from "./level.js";
+import { getMaxLevel, getLevelForXp, getLevelDefinition } from "./level.js";
 import type { EvolutionStats } from "./tracker.js";
 
 export type ProgressionResult = {
@@ -16,27 +14,7 @@ export type ProgressionResult = {
   unmetCriteria?: string[];
 };
 
-/** Check if stats meet the criteria for a given level. */
-export function meetsCriteria(
-  stats: EvolutionStats,
-  criteria: LevelCriteria,
-): { met: boolean; unmet: string[] } {
-  const unmet: string[] = [];
-
-  if (stats.daysActive < criteria.minDaysActive) {
-    unmet.push(`daysActive: ${stats.daysActive}/${criteria.minDaysActive}`);
-  }
-  if (stats.totalInteractions < criteria.minInteractions) {
-    unmet.push(`interactions: ${stats.totalInteractions}/${criteria.minInteractions}`);
-  }
-  if (criteria.minSkillsUsed && stats.skillsUsed.length < criteria.minSkillsUsed) {
-    unmet.push(`skillsUsed: ${stats.skillsUsed.length}/${criteria.minSkillsUsed}`);
-  }
-
-  return { met: unmet.length === 0, unmet };
-}
-
-/** Evaluate if a level up should occur. */
+/** Evaluate if a level up should occur based on XP. */
 export function evaluateProgression(
   currentLevel: EvolutionLevel,
   stats: EvolutionStats,
@@ -46,52 +24,69 @@ export function evaluateProgression(
       shouldLevelUp: false,
       currentLevel,
       nextLevel: currentLevel,
-      reason: "already at max level",
+      reason: "already at max rank (SSS)",
     };
   }
 
-  const nextLevel = (currentLevel + 1) as EvolutionLevel;
-  const nextDef = LEVEL_DEFINITIONS.find((d) => d.level === nextLevel);
-  if (!nextDef) {
-    return {
-      shouldLevelUp: false,
-      currentLevel,
-      nextLevel: currentLevel,
-      reason: "next level definition not found",
-    };
-  }
-
-  const { met, unmet } = meetsCriteria(stats, nextDef.criteria);
-
-  if (met) {
+  const xpLevel = getLevelForXp(stats.xp);
+  if (xpLevel > currentLevel) {
+    // Level up one rank at a time
+    const nextLevel = (currentLevel + 1) as EvolutionLevel;
+    const nextDef = getLevelDefinition(nextLevel);
     return {
       shouldLevelUp: true,
       currentLevel,
       nextLevel,
-      reason: `all criteria met for ${nextDef.name} (Level ${nextLevel})`,
+      reason: `XP ${stats.xp} meets requirement ${nextDef.xpRequired} for Rank ${nextDef.rank}: ${nextDef.title}`,
     };
   }
 
+  const nextLevel = (currentLevel + 1) as EvolutionLevel;
+  const nextDef = getLevelDefinition(nextLevel);
   return {
     shouldLevelUp: false,
     currentLevel,
     nextLevel,
-    unmetCriteria: unmet,
+    unmetCriteria: [`xp: ${stats.xp}/${nextDef.xpRequired}`],
   };
 }
 
-/** Format a level-up message for notification. */
-export function formatLevelUpMessage(
-  fromLevel: EvolutionLevel,
-  toLevel: EvolutionLevel,
-): string {
-  const def = LEVEL_DEFINITIONS.find((d) => d.level === toLevel);
-  if (!def) return `Level up! ${fromLevel} → ${toLevel}`;
+/** Check if stats meet criteria (kept for backward compat). */
+export function meetsCriteria(
+  stats: EvolutionStats,
+  criteria: { minDaysActive: number; minInteractions: number; minSkillsUsed?: number },
+): { met: boolean; unmet: string[] } {
+  const unmet: string[] = [];
+  if (stats.daysActive < criteria.minDaysActive) {
+    unmet.push(`daysActive: ${stats.daysActive}/${criteria.minDaysActive}`);
+  }
+  if (stats.totalInteractions < criteria.minInteractions) {
+    unmet.push(`interactions: ${stats.totalInteractions}/${criteria.minInteractions}`);
+  }
+  if (criteria.minSkillsUsed && stats.skillsUsed.length < criteria.minSkillsUsed) {
+    unmet.push(`skillsUsed: ${stats.skillsUsed.length}/${criteria.minSkillsUsed}`);
+  }
+  return { met: unmet.length === 0, unmet };
+}
 
-  const unlocks = def.unlocks.join(", ");
+/** Format a level-up message for Telegram notification. */
+export function formatLevelUpMessage(fromLevel: EvolutionLevel, toLevel: EvolutionLevel): string {
+  const fromDef = getLevelDefinition(fromLevel);
+  const toDef = getLevelDefinition(toLevel);
+  const unlocks = toDef.unlocks.map((u) => `  - ${u}`).join("\n");
+
   return [
-    `Level Up! ${def.name} (Nível ${toLevel})`,
-    `${def.description}`,
-    `Desbloqueado: ${unlocks}`,
+    `LEVEL UP!`,
+    ``,
+    `Rank ${fromDef.rank} -> *Rank ${toDef.rank}*`,
+    `*${toDef.title}*`,
+    ``,
+    `_${toDef.description}_`,
+    ``,
+    `*Skills desbloqueadas:*`,
+    unlocks,
+    ``,
+    `---`,
+    `XP necessario para proximo rank: ${toLevel < 8 ? getLevelDefinition((toLevel + 1) as EvolutionLevel).xpRequired : "MAX"}`,
   ].join("\n");
 }

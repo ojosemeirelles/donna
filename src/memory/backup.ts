@@ -169,7 +169,7 @@ export function parseBackup(raw: string): MemoryBackup {
 
   return {
     meta: {
-      version: meta.version as number,
+      version: meta.version,
       exportedAt: typeof meta.exportedAt === "string" ? meta.exportedAt : "",
       agentId: typeof meta.agentId === "string" ? meta.agentId : undefined,
       memoryDir: typeof meta.memoryDir === "string" ? meta.memoryDir : "",
