@@ -6,6 +6,7 @@ import {
   isEmbeddedPiRunActive,
   isEmbeddedPiRunStreaming,
   resolveEmbeddedSessionLane,
+  runEmbeddedPiAgent,
 } from "../../agents/pi-embedded.js";
 import type { DonnaConfig } from "../../config/config.js";
 import {
@@ -27,6 +28,7 @@ import { clearCommandLane, getQueueSize } from "../../process/command-queue.js";
 import { normalizeMainKey } from "../../routing/session-key.js";
 import { orchestrate, getShadowArmyStatus } from "../../shadows/orchestrator.js";
 import { checkShadowUnlocks, formatShadowUnlockMessage } from "../../shadows/rank-unlock.js";
+import { dispatch as dispatchShadow, type DispatchDeps } from "../../shadows/session-manager.js";
 import { isReasoningTagProvider } from "../../utils/provider-utils.js";
 import { hasControlCommand } from "../command-detection.js";
 import { buildInboundMediaNote } from "../media-note.js";
@@ -530,11 +532,84 @@ export async function runPreparedReply(
         // Shadow unlock errors must never break a session
       }
     }
-    // Shadow Army: orchestrate intent for active shadows
+    // Shadow Army: orchestrate intent → dispatch to real shadow session via Pi runner
     try {
       const currentRank = getRankForLevel(evoTracker.getLevel());
       const shadowResult = await orchestrate(queuedBody ?? "", currentRank);
       if (shadowResult.delegated && shadowResult.shadow) {
+        // Attempt real delegation via Pi embedded runner
+        try {
+          const shadowDeps: DispatchDeps = {
+            runEmbeddedPiAgent: async (p) => {
+              const result = await runEmbeddedPiAgent({
+                sessionId: p.sessionId,
+                sessionKey: p.sessionKey,
+                spawnedBy: p.spawnedBy,
+                prompt: p.prompt,
+                extraSystemPrompt: p.extraSystemPrompt,
+                sessionFile: p.sessionFile,
+                workspaceDir: p.workspaceDir,
+                provider: p.provider,
+                model: p.model,
+                authProfileId: p.authProfileId,
+                timeoutMs: p.timeoutMs,
+                runId: p.runId,
+                abortSignal: p.abortSignal,
+                messageChannel: p.messageChannel,
+                messageProvider: p.messageProvider,
+                messageTo: p.messageTo,
+              });
+              return {
+                payloads: result.payloads,
+                meta: {
+                  durationMs: result.meta?.durationMs ?? 0,
+                  agentMeta: result.meta?.agentMeta,
+                },
+              };
+            },
+          };
+          const shadowResponse = await dispatchShadow(
+            queuedBody ?? "",
+            shadowResult.shadow,
+            {
+              sessionId: sessionIdFinal,
+              chatType: sessionCtx.ChatType,
+              providerOverride: provider,
+              modelOverride: model,
+              authProfileOverride: authProfileId,
+              sessionFile,
+              channel: sessionCtx.Provider,
+            },
+            shadowDeps,
+            {
+              workspaceDir,
+              messageChannel: ctx.OriginatingChannel ?? sessionCtx.Provider,
+              messageProvider: ctx.Provider ?? sessionCtx.Provider,
+              messageTo: ctx.OriginatingTo,
+            },
+          );
+          if (shadowResponse.response) {
+            // Route shadow response back to the originating channel and early-return
+            // so the parent runner doesn't produce a duplicate reply.
+            const originChannel = ctx.OriginatingChannel ?? sessionCtx.Provider;
+            const originTo = ctx.OriginatingTo ?? sessionCtx.To;
+            if (originChannel && originTo) {
+              await routeReply({
+                payload: { text: shadowResponse.response },
+                channel: originChannel,
+                to: originTo,
+                sessionKey,
+                accountId: sessionCtx.AccountId,
+                threadId: ctx.MessageThreadId,
+                cfg,
+              });
+              return { text: shadowResponse.response };
+            }
+          }
+        } catch {
+          // Shadow dispatch failed — fall through to hint injection
+        }
+        // Fallback: inject hint if dispatch didn't produce a routed response
         extraSystemPromptParts.push(
           `[Shadow Army] A sombra ${shadowResult.shadow.name} (${shadowResult.shadow.role}) esta disponivel para esta tarefa. ` +
             `Ferramentas: ${shadowResult.shadow.tools.join(", ")}. ` +

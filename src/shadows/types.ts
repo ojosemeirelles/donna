@@ -42,3 +42,40 @@ export const INTENT_TO_SHADOW: Record<ShadowIntent, string> = {
   monitor: "Jima",
   complex: "Igris",
 };
+
+// --- Shadow Sessions (DONNA-004) ---
+
+export type ShadowSessionMeta = {
+  shadowName: string;
+  shadowIntent: ShadowIntent;
+  parentSessionId: string;
+  createdAt: number;
+  lastActiveAt: number;
+  executionCount: number;
+};
+
+export type ShadowExecution = {
+  id: string;
+  shadowName: string;
+  intent: ShadowIntent;
+  parentSessionId: string;
+  startedAt: number;
+  durationMs: number;
+  tokenUsage: { input: number; output: number };
+  status: "completed" | "failed" | "aborted";
+  error?: string;
+};
+
+export type ParentContext = {
+  channel: string | undefined;
+  userId: string;
+  summary: string | null;
+};
+
+export type ShadowDispatchResult = {
+  response: string;
+  shadowName: string;
+  sessionId: string;
+  durationMs: number;
+  tokenUsage?: { input: number; output: number };
+};
