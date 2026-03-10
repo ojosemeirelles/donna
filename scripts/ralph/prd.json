@@ -8,11 +8,31 @@
       "status": "done",
       "description": "Replace all legacy branding (openclaw, OpenClaw, lobster, Molty, clawd) with Donna branding across 117+ files.",
       "tasks": [
-        { "id": "T1", "title": "Replace branding strings in src/", "status": "done" },
-        { "id": "T2", "title": "Replace branding strings in docs/", "status": "done" },
-        { "id": "T3", "title": "Replace branding strings in extensions/", "status": "done" },
-        { "id": "T4", "title": "Verify grep for remaining legacy strings", "status": "pending" },
-        { "id": "T5", "title": "Typecheck after rebranding", "status": "pending" }
+        {
+          "id": "T1",
+          "title": "Replace branding strings in src/",
+          "status": "done"
+        },
+        {
+          "id": "T2",
+          "title": "Replace branding strings in docs/",
+          "status": "done"
+        },
+        {
+          "id": "T3",
+          "title": "Replace branding strings in extensions/",
+          "status": "done"
+        },
+        {
+          "id": "T4",
+          "title": "Verify grep for remaining legacy strings",
+          "status": "pending"
+        },
+        {
+          "id": "T5",
+          "title": "Typecheck after rebranding",
+          "status": "pending"
+        }
       ]
     },
     {
@@ -21,18 +41,46 @@
       "status": "done",
       "description": "Solo Leveling themed sub-agent system with 8 shadows, rank-based unlock, intent classification, and orchestration.",
       "tasks": [
-        { "id": "T1", "title": "Create shadow types and registry", "status": "done" },
-        { "id": "T2", "title": "Implement extractor and SOUL.md generation", "status": "done" },
+        {
+          "id": "T1",
+          "title": "Create shadow types and registry",
+          "status": "done"
+        },
+        {
+          "id": "T2",
+          "title": "Implement extractor and SOUL.md generation",
+          "status": "done"
+        },
         {
           "id": "T3",
           "title": "Implement orchestrator with intent classification",
           "status": "done"
         },
-        { "id": "T4", "title": "Implement rank-unlock system", "status": "done" },
-        { "id": "T5", "title": "Integrate into get-reply-run.ts", "status": "done" },
-        { "id": "T6", "title": "Create squad directories", "status": "done" },
-        { "id": "T7", "title": "Write tests", "status": "done" },
-        { "id": "T8", "title": "Fix classifyIntent regex for Portuguese", "status": "done" }
+        {
+          "id": "T4",
+          "title": "Implement rank-unlock system",
+          "status": "done"
+        },
+        {
+          "id": "T5",
+          "title": "Integrate into get-reply-run.ts",
+          "status": "done"
+        },
+        {
+          "id": "T6",
+          "title": "Create squad directories",
+          "status": "done"
+        },
+        {
+          "id": "T7",
+          "title": "Write tests",
+          "status": "done"
+        },
+        {
+          "id": "T8",
+          "title": "Fix classifyIntent regex for Portuguese",
+          "status": "done"
+        }
       ]
     },
     {
@@ -41,23 +89,59 @@
       "status": "done",
       "description": "Fix shell-based gateway spawn, CSP stripping, wizard flow for Electron desktop app.",
       "tasks": [
-        { "id": "T1", "title": "Fix gateway spawn via shell", "status": "done" },
-        { "id": "T2", "title": "Strip CSP headers", "status": "done" },
-        { "id": "T3", "title": "Fix wizard HTML flow", "status": "done" },
-        { "id": "T4", "title": "Compile TypeScript before packaging", "status": "done" }
+        {
+          "id": "T1",
+          "title": "Fix gateway spawn via shell",
+          "status": "done"
+        },
+        {
+          "id": "T2",
+          "title": "Strip CSP headers",
+          "status": "done"
+        },
+        {
+          "id": "T3",
+          "title": "Fix wizard HTML flow",
+          "status": "done"
+        },
+        {
+          "id": "T4",
+          "title": "Compile TypeScript before packaging",
+          "status": "done"
+        }
       ]
     },
     {
       "id": "DONNA-004",
       "title": "Shadow Sessions — Real Agent Delegation",
-      "status": "backlog",
+      "status": "done",
       "description": "Extend Shadow Army to actually delegate tasks to sub-agents via Pi embedded runner or dedicated shadow sessions.",
       "tasks": [
-        { "id": "T1", "title": "Design shadow session architecture", "status": "pending" },
-        { "id": "T2", "title": "Implement shadow session manager", "status": "pending" },
-        { "id": "T3", "title": "Connect shadows to Pi embedded runner", "status": "pending" },
-        { "id": "T4", "title": "Add shadow execution history tracking", "status": "pending" },
-        { "id": "T5", "title": "Test shadow delegation end-to-end", "status": "pending" }
+        {
+          "id": "T1",
+          "title": "Design shadow session architecture",
+          "status": "done"
+        },
+        {
+          "id": "T2",
+          "title": "Implement shadow session manager",
+          "status": "done"
+        },
+        {
+          "id": "T3",
+          "title": "Connect shadows to Pi embedded runner",
+          "status": "done"
+        },
+        {
+          "id": "T4",
+          "title": "Add shadow execution history tracking",
+          "status": "done"
+        },
+        {
+          "id": "T5",
+          "title": "Test shadow delegation end-to-end",
+          "status": "done"
+        }
       ]
     }
   ]
