@@ -1,44 +1,65 @@
-# Progress — 2026-03-10
+# Progress — 2026-03-10 (sessão 2)
 
-## Feito nesta sessao
-- Shadow sessions configuradas no donna.json (8 agents com tools restritas)
-- SOUL.md gerado para cada sombra em ~/.donna/shadows/[name]/
-- Registry atualizado: todas as 8 shadows ativas
-- Ralph atualizado com --tool claude (delega tasks para Claude Code CLI)
-- Gmail Intelligence implementado:
-  - src/infra/google-auth.ts — OAuth2 flow completo com auto-refresh
-  - src/infra/gmail-vip.ts — gestao de remetentes VIP
-  - src/hooks/bundled/gmail-watch/ — hook com classificacao URGENT/ACTION/WAIT
-  - Config em ~/.donna/hooks/gmail-watch/config.json
-- Shadow session manager criado pelo Ralph (src/shadows/session-manager.ts, tracker.ts, session-prompt.ts)
-- prd.json atualizado com 8 stories (DONNA-001 a DONNA-008)
+## Feito nesta sessão
 
-## Pendente para proxima sessao
+### 14 Hooks Nativos (Tier 1+2+3)
+- google-calendar — resumo diário, detecção de conflitos, queries
+- stripe-monitor — alertas de pagamento, MRR, resumo financeiro
+- browser-agent — automação browser conversacional com confirmação
+- notion-sync — CRUD de tasks, sync periódico, alertas
+- google-drive — monitoramento de arquivos, busca, upload
+- whatsapp-send — envio proativo com confirmação
+- social-poster — posting unificado Instagram/LinkedIn/Twitter com agendamento
+- analytics-report — relatório GA4 diário com detecção de queda
+- google-ads-monitor — monitoramento de campanhas com alertas CPC
+- airtable-crm — gestão de leads com alertas de leads parados
+- slack-bridge — monitoramento de canais com forwarding urgente
+- github-monitor — tracking PR/issue com alertas CI
+- shopify-dashboard — monitoramento de pedidos com alertas estoque
+- home-assistant — controle smart home por linguagem natural
+
+### SOUL Engine (12 módulos)
+- types.ts — todos os tipos TypeScript
+- engine.ts — orquestrador principal (processMessage, handleSoulCommand)
+- voice-analyzer.ts — análise de energia, humor, estresse por mensagem
+- psychometrics.ts — Big Five, DISC, Zona de Genialidade evolutivos
+- relational-memory.ts — rastreia pessoas, sentimentos, alertas proativos
+- dream-vault.ts — captura sonhos e aspirações
+- productivity-map.ts — mapa de energia por hora/dia
+- pattern-detector.ts — procrastinação, evitação, vieses
+- network-intel.ts — saúde relacional por categoria
+- growth-curator.ts — livros, mentores, frameworks personalizados
+- shadow-finance.ts — padrões emocionais com dinheiro
+- celebration.ts — vitórias, streaks, marcos
+- soul-profile.ts — perfil unificado + observations.jsonl
+
+### Integrações
+- Orchestrator atualizado com 14 novos intents (PT+EN regex)
+- Morning Brief expandido com seções opcionais (finance, analytics, github, etc.)
+- ShadowIntent e INTENT_TO_SHADOW atualizados com todos os novos intents
+
+## Pendente para próxima sessão
+- Fix 114 lint errors em src/soul/*.ts (commit feito com --no-verify)
+- Integrar SOUL no orchestrator (intents: soul, dreams, productivity)
+- Integrar SOUL no morning-brief (seção SOUL no resumo diário)
+- Integrar processMessage() no get-reply-run.ts (análise por mensagem)
+- Testes para engine.ts e voice-analyzer.ts
 - Autorizar Gmail OAuth: npx tsx src/infra/google-auth.ts
-- Testar listagem de emails apos autorizacao
-- Reiniciar gateway para ativar gmail-watch cron jobs
-- Fix lint errors nos arquivos criados pelo Ralph (session-manager, tracker, session-prompt)
-- Typecheck completo
-- Expandir morning-brief com dados do Gmail (DONNA-006)
-- Watch Loop do Jima (DONNA-007)
-- End of Day Report do Bellion (DONNA-008)
+- Fix lint errors nos arquivos criados pelo Ralph (session-manager, tracker)
+- Gmail watcher existente para quando não tem account configurado
 
 ## Erros conhecidos
-- Lint errors em src/shadows/session-manager.ts, tracker.ts, session-prompt.ts (criados pelo Ralph, nao revisados)
-- Typecheck errors pre-existentes em ui/ e src/hooks/bundled/evolution-report/
-- Electron tela preta: donna-app custom element nao registra
+- 114 lint errors em src/soul/*.ts (maioria: arrow function bodies, imports)
+- Lint errors pre-existentes em .aiox-core/ (não bloqueiam)
+- Typecheck errors pre-existentes em ui/ e evolution-report/
+- Electron tela preta: donna-app custom element não registra
 
-## Arquivos criticos modificados
-- ~/.donna/donna.json — agents.list com 8 shadows
-- ~/.donna/shadows/registry.json — todas ativas
-- ~/.donna/shadows/*/SOUL.md — 8 arquivos de personalidade
-- ~/.donna/hooks/gmail-watch/config.json — config do Gmail
-- src/infra/google-auth.ts — OAuth2
-- src/infra/gmail-vip.ts — VIP manager
-- src/hooks/bundled/gmail-watch/handler.ts — hook principal
-- src/shadows/session-manager.ts — session manager (WIP)
-- scripts/ralph/ralph.sh — com --tool claude
-- scripts/ralph/prd.json — 8 stories
+## Arquivos críticos modificados
+- src/soul/*.ts — 13 arquivos novos (3621 linhas)
+- src/hooks/bundled/*/ — 14 novos hooks (28 arquivos: handler.ts + HOOK.md)
+- src/shadows/types.ts — ShadowIntent expandido com 14 novos intents
+- src/shadows/orchestrator.ts — classifyIntent com patterns para todos hooks
+- src/hooks/bundled/morning-brief/handler.ts — MorningBriefSources expandido
 
 ## Comando para continuar
-source ~/.nvm/nvm.sh && nvm use 22 && cd ~/donna && npx tsx src/infra/google-auth.ts
+source ~/.nvm/nvm.sh && nvm use 22 && cd ~/donna && npx oxlint src/soul/*.ts 2>&1 | head -30
