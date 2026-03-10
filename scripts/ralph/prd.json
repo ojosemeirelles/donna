@@ -143,6 +143,66 @@
           "status": "done"
         }
       ]
+    },
+    {
+      "id": "DONNA-005",
+      "title": "Gmail Intelligence — alerta automatico de emails urgentes",
+      "status": "backlog",
+      "description": "Donna recebe emails via Gmail Pub/Sub, classifica como urgente/aguardar/lixo e alerta no Telegram sem o usuario pedir. Resumo automatico com acao sugerida.",
+      "tasks": [
+        { "id": "T1", "title": "Setup Gmail Pub/Sub webhook listener", "status": "pending" },
+        {
+          "id": "T2",
+          "title": "Implement email classifier (urgent/wait/junk)",
+          "status": "pending"
+        },
+        { "id": "T3", "title": "Auto-alert on Telegram for urgent emails", "status": "pending" },
+        { "id": "T4", "title": "Email summary with suggested action", "status": "pending" },
+        { "id": "T5", "title": "Test end-to-end email → Telegram flow", "status": "pending" }
+      ]
+    },
+    {
+      "id": "DONNA-006",
+      "title": "Daily Brief completo com agenda + emails + contexto",
+      "status": "backlog",
+      "description": "Expandir morning-brief existente. Todo dia 06:50: Tank puxa agenda, Bellion analisa emails, Tusk pesquisa contexto dos participantes, Donna consolida e envia.",
+      "tasks": [
+        { "id": "T1", "title": "Tank: Google Calendar integration", "status": "pending" },
+        { "id": "T2", "title": "Bellion: unread email analysis", "status": "pending" },
+        { "id": "T3", "title": "Tusk: participant context research", "status": "pending" },
+        { "id": "T4", "title": "Consolidate and send brief at 06:50", "status": "pending" },
+        { "id": "T5", "title": "Test daily brief end-to-end", "status": "pending" }
+      ]
+    },
+    {
+      "id": "DONNA-007",
+      "title": "Proactive Watch Loop — Jima em background",
+      "status": "backlog",
+      "description": "Jima monitora condicoes configuraveis em ~/.donna/hooks/watch-loop/conditions.json e dispara acoes automaticamente.",
+      "tasks": [
+        {
+          "id": "T1",
+          "title": "Watch loop engine with configurable conditions",
+          "status": "pending"
+        },
+        { "id": "T2", "title": "Condition evaluator (email, time, webhook)", "status": "pending" },
+        { "id": "T3", "title": "Action dispatcher (Telegram alert, exec)", "status": "pending" },
+        { "id": "T4", "title": "conditions.json schema and defaults", "status": "pending" },
+        { "id": "T5", "title": "Test watch loop with sample condition", "status": "pending" }
+      ]
+    },
+    {
+      "id": "DONNA-008",
+      "title": "End of Day Report — Bellion as 18:00",
+      "status": "backlog",
+      "description": "Todo dia as 18:00, Bellion consolida: o que foi feito, pendentes, agenda de amanha.",
+      "tasks": [
+        { "id": "T1", "title": "Daily activity tracker (sessions, commands)", "status": "pending" },
+        { "id": "T2", "title": "Bellion report generator", "status": "pending" },
+        { "id": "T3", "title": "Tomorrow agenda preparation", "status": "pending" },
+        { "id": "T4", "title": "Telegram delivery at 18:00", "status": "pending" },
+        { "id": "T5", "title": "Test end-of-day report flow", "status": "pending" }
+      ]
     }
   ]
 }

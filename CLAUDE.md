@@ -1,28 +1,53 @@
 # Repository Guidelines
 
-<!-- PROJECT STATE (last updated: 2026-03-07) -->
+<!-- PROJECT STATE (last updated: 2026-03-10) -->
 ## Current Project State
 
 **What Donna is:** A rebranded, security-hardened AI gateway (forked from OpenClaw/MoltBot/ClawdBot).
 Connects AI models to messaging channels (Telegram, WhatsApp, Discord, Slack, Signal, iMessage, etc.)
 via a local daemon. TypeScript monorepo, pnpm, Node 22+.
 
-### Security Fixes Applied
-| Commit | CVE | Description |
-|--------|-----|-------------|
-| `d66ff8458` | CVE-2026-25157 | Web-fetch prompt injection detection gaps |
-| `bf7579be4` | CVE-2026-26134 | Spending limits enforcement |
-| `8d158524b` | CVE-2026-24763 | dmPolicy allowlist inheritance across all channels |
+### Stack
+TypeScript, pnpm monorepo, Node 22, Vitest, Electron desktop app
+Repo: ~/donna | Config: ~/.donna/donna.json | Gateway: porta 18789
+Telegram: @CarmeliaBybot | Chat ID: 6008067521
 
-### Rebranding
-| Commit | Description |
-|--------|-------------|
-| `8cd9673bd` | Full rename: openclaw/moltbot/clawdbot → donna (3,913 files) |
+### What's Implemented
+- 6 CVEs fixed (auth, WebSocket, keychain, prompt injection, spending limits, DM policy)
+- Evolution system: 8 ranks E→SSS in `src/evolution/`
+- Shadow Army complete in `src/shadows/`:
+  Igris (Commander), Tusk (Researcher), Jima (Monitor),
+  Iron (Writer), Tank (Scheduler), Bellion (Analyst),
+  Kaisel (Browser), Beru (Executor)
+- Morning Brief hook in `src/hooks/bundled/morning-brief/`
+- Memory system in `src/memory/` (identity, pattern, episodic)
+- Token Intelligence in `src/infra/`
+- Shadow Army integrated into `get-reply-run.ts`
+- Squads in `squads/` (8 squad dirs)
+- Ralph automation in `scripts/ralph/`
+- 8 shadow agents configured in `donna.json` with restricted tools
 
-### Next Steps
-- Test locally: `donna gateway --port 18789`, connect Telegram bot, connect WhatsApp via QR
-- Explore skills system (`extensions/`, `src/agents/`) for creating NOVA-style skills
-- Legacy cleanup dirs preserved: `.clawdbot`, `.moldbot`, `.moltbot` (backward compat)
+### Shadow Army Architecture
+- `~/.donna/shadows/registry.json` — shadow registry (all active)
+- `~/.donna/shadows/[name]/SOUL.md` — personality per shadow
+- `src/shadows/extractor.ts` — extracts shadows, generates SOUL.md
+- `src/shadows/orchestrator.ts` — classifies intent and delegates
+- `src/shadows/rank-unlock.ts` — auto-unlock shadows by rank
+
+### Known Issues
+- Electron black screen: donna-app custom element not registering
+- Rebranding incomplete: some OpenClaw strings remain in src/
+- Proactive autonomy not yet implemented (Gmail, Watch Loop, End of Day)
+
+### Quick Start
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && cd ~/donna && pnpm donna gateway --port 18789 --force &
+```
+
+### Ralph (autonomous development)
+```bash
+cd ~/donna && ./scripts/ralph/ralph.sh --tool claude 5
+```
 
 <!-- END PROJECT STATE -->
 
