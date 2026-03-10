@@ -30,7 +30,21 @@ export type ShadowIntent =
   | "analyze"
   | "browse"
   | "monitor"
-  | "complex";
+  | "complex"
+  | "calendar"
+  | "finance"
+  | "shopping"
+  | "notion"
+  | "drive"
+  | "whatsapp"
+  | "social"
+  | "analytics"
+  | "ads"
+  | "crm"
+  | "slack"
+  | "github"
+  | "shopify"
+  | "home";
 
 export const INTENT_TO_SHADOW: Record<ShadowIntent, string> = {
   research: "Tusk",
@@ -41,6 +55,20 @@ export const INTENT_TO_SHADOW: Record<ShadowIntent, string> = {
   browse: "Kaisel",
   monitor: "Jima",
   complex: "Igris",
+  calendar: "Tank",
+  finance: "Bellion",
+  shopping: "Kaisel",
+  notion: "Iron",
+  drive: "Tusk",
+  whatsapp: "Igris",
+  social: "Iron",
+  analytics: "Bellion",
+  ads: "Bellion",
+  crm: "Bellion",
+  slack: "Jima",
+  github: "Jima",
+  shopify: "Bellion",
+  home: "Beru",
 };
 
 // --- Shadow Sessions (DONNA-004) ---

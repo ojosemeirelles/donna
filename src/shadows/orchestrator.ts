@@ -10,6 +10,85 @@ import type { ShadowDefinition, ShadowIntent, ShadowRegistry } from "./types.js"
 export function classifyIntent(message: string): ShadowIntent {
   const lower = message.toLowerCase();
 
+  // Hook-specific intents (checked first for precision)
+
+  // Calendar patterns
+  if (
+    /(calend|agenda.*hoje|compromiss|reuni[aã]o|evento.*dia|tenho tempo|pr[oó]xim[oa]s? compromiss)/.test(
+      lower,
+    )
+  ) {
+    return "calendar";
+  }
+  // Finance / Stripe patterns
+  if (/(pagamento|payment|receita|revenue|mrr\b|stripe|chargeback|fatura|cobran[cç])/.test(lower)) {
+    return "finance";
+  }
+  // Shopping / Browser-agent patterns
+  if (/(compr[aeo]|buy\b|shopping|pre[cç]o|price|amazon|cart|carrinho|produto.*site)/.test(lower)) {
+    return "shopping";
+  }
+  // Notion patterns
+  if (/(notion\b|task.*notion|nota.*notion|minhas tasks|meus to.?do)/.test(lower)) {
+    return "notion";
+  }
+  // Drive patterns
+  if (
+    /(drive\b|google drive|arquivo.*drive|encontra.*arquivo|salva.*drive|contrato|documento.*drive)/.test(
+      lower,
+    )
+  ) {
+    return "drive";
+  }
+  // WhatsApp patterns
+  if (/(whatsapp|manda.*whats|envia.*whats|zap\b|mensagem.*whats)/.test(lower)) {
+    return "whatsapp";
+  }
+  // Social posting patterns
+  if (
+    /(posta\b|post.*linkedin|post.*instagram|post.*twitter|agenda.*post|publica\b|social.*media)/.test(
+      lower,
+    )
+  ) {
+    return "social";
+  }
+  // Analytics patterns
+  if (/(analytics|tr[aá]fego|traffic|pageview|visit.*site|google analytics|ga4\b)/.test(lower)) {
+    return "analytics";
+  }
+  // Google Ads patterns
+  if (/(google ads|an[uú]ncio|campanha.*ads|cpc\b|ad.*perform|meus? an[uú]ncios)/.test(lower)) {
+    return "ads";
+  }
+  // CRM / Airtable patterns
+  if (/(lead\b|crm\b|airtable|prospect|pipeline.*vend|funnel|client.*novo)/.test(lower)) {
+    return "crm";
+  }
+  // Slack patterns
+  if (/(slack\b|canal.*slack|#\w+|perdi.*slack|responde.*slack)/.test(lower)) {
+    return "slack";
+  }
+  // GitHub patterns
+  if (
+    /(github\b|pull.?request|pr.*pendente|issue.*cr[ií]tica|ci.*fail|repo\b.*status)/.test(lower)
+  ) {
+    return "github";
+  }
+  // Shopify patterns
+  if (/(shopify|pedido.*loja|estoque|vendas.*hoje|loja.*online)/.test(lower)) {
+    return "shopify";
+  }
+  // Home Assistant patterns
+  if (
+    /(luz|luzes|apaga\b|liga.*ar|temperatura.*casa|home.?assistant|\bha\b.*casa|automa[cç][aã]o.*casa)/.test(
+      lower,
+    )
+  ) {
+    return "home";
+  }
+
+  // Original generic intents
+
   // Exec patterns
   if (/(exec|run\b|execute|roda\b|terminal|shell|comando|command|abr[ae]|open\s+app)/.test(lower)) {
     return "exec";

@@ -16,6 +16,13 @@ export type MorningBriefSources = {
   email?: boolean;
   calendar?: boolean;
   tasks?: boolean;
+  finance?: boolean;
+  analytics?: boolean;
+  github?: boolean;
+  shopify?: boolean;
+  crm?: boolean;
+  slack?: boolean;
+  social?: boolean;
 };
 
 export type MorningBriefConfig = {
@@ -127,6 +134,146 @@ export function buildMorningBriefPrompt(config: MorningBriefConfig): string {
             "List the **3 most urgent pending tasks**.",
             "Use apple-reminders, things-mac, notion, trello, or whatever is available.",
             "Number them and include one line of context each.",
+            "",
+          ].join("\n"),
+    );
+  }
+
+  const includeFinance = sources.finance !== false;
+  const includeAnalytics = sources.analytics !== false;
+  const includeGithub = sources.github !== false;
+  const includeShopify = sources.shopify === true;
+  const includeCrm = sources.crm === true;
+  const includeSlack = sources.slack === true;
+  const includeSocial = sources.social === true;
+
+  if (includeFinance) {
+    sections.push(
+      lang === "pt"
+        ? [
+            "## 💳 Resumo Financeiro",
+            "Consulte o hook stripe-monitor para dados de receita.",
+            "Mostre: pagamentos recebidos nas últimas 24h, MRR atual, alertas de chargeback.",
+            "Formato: `💰 Receita 24h: €X | MRR: €Y | Alertas: N`",
+            "",
+          ].join("\n")
+        : [
+            "## 💳 Financial Summary",
+            "Check stripe-monitor hook for revenue data.",
+            "Show: payments in last 24h, current MRR, chargeback alerts.",
+            "Format: `💰 24h Revenue: €X | MRR: €Y | Alerts: N`",
+            "",
+          ].join("\n"),
+    );
+  }
+
+  if (includeAnalytics) {
+    sections.push(
+      lang === "pt"
+        ? [
+            "## 📊 Tráfego do Site",
+            "Consulte o hook analytics-report para dados de GA4.",
+            "Mostre: sessões, usuários, pageviews das últimas 24h. Alerte se queda > 30%.",
+            "Formato: `📈 Sessões: X | Usuários: Y | Views: Z`",
+            "",
+          ].join("\n")
+        : [
+            "## 📊 Website Traffic",
+            "Check analytics-report hook for GA4 data.",
+            "Show: sessions, users, pageviews from last 24h. Alert if drop > 30%.",
+            "Format: `📈 Sessions: X | Users: Y | Views: Z`",
+            "",
+          ].join("\n"),
+    );
+  }
+
+  if (includeGithub) {
+    sections.push(
+      lang === "pt"
+        ? [
+            "## 🐙 GitHub",
+            "Consulte o hook github-monitor para atividade dos repos.",
+            "Mostre: PRs abertos, issues novas, status do CI.",
+            "Formato: `🔀 PRs: X abertos | Issues: Y novas | CI: ✅/❌`",
+            "",
+          ].join("\n")
+        : [
+            "## 🐙 GitHub",
+            "Check github-monitor hook for repo activity.",
+            "Show: open PRs, new issues, CI status.",
+            "Format: `🔀 PRs: X open | Issues: Y new | CI: ✅/❌`",
+            "",
+          ].join("\n"),
+    );
+  }
+
+  if (includeShopify) {
+    sections.push(
+      lang === "pt"
+        ? [
+            "## 🛒 Loja Online",
+            "Consulte o hook shopify-dashboard.",
+            "Mostre: pedidos do dia, receita, produtos com estoque baixo.",
+            "",
+          ].join("\n")
+        : [
+            "## 🛒 Online Store",
+            "Check shopify-dashboard hook.",
+            "Show: today's orders, revenue, low stock products.",
+            "",
+          ].join("\n"),
+    );
+  }
+
+  if (includeCrm) {
+    sections.push(
+      lang === "pt"
+        ? [
+            "## 🗂️ CRM / Leads",
+            "Consulte o hook airtable-crm.",
+            "Mostre: leads não contatados há mais de 3 dias, pipeline resumido.",
+            "",
+          ].join("\n")
+        : [
+            "## 🗂️ CRM / Leads",
+            "Check airtable-crm hook.",
+            "Show: leads not contacted in 3+ days, pipeline summary.",
+            "",
+          ].join("\n"),
+    );
+  }
+
+  if (includeSlack) {
+    sections.push(
+      lang === "pt"
+        ? [
+            "## 💬 Slack",
+            "Consulte o hook slack-bridge para mensagens urgentes.",
+            "Mostre: canais com atividade relevante, mensagens urgentes pendentes.",
+            "",
+          ].join("\n")
+        : [
+            "## 💬 Slack",
+            "Check slack-bridge hook for urgent messages.",
+            "Show: channels with relevant activity, pending urgent messages.",
+            "",
+          ].join("\n"),
+    );
+  }
+
+  if (includeSocial) {
+    sections.push(
+      lang === "pt"
+        ? [
+            "## 📣 Social Media",
+            "Consulte o hook social-poster.",
+            "Mostre: posts agendados para hoje, performance dos últimos posts.",
+            "",
+          ].join("\n")
+        : [
+            "## 📣 Social Media",
+            "Check social-poster hook.",
+            "Show: posts scheduled for today, recent post performance.",
             "",
           ].join("\n"),
     );
