@@ -48,7 +48,7 @@ export async function readAllRecords(): Promise<ShadowExecution[]> {
   const records: ShadowExecution[] = [];
   for (const line of content.split("\n")) {
     const trimmed = line.trim();
-    if (!trimmed) continue;
+    if (!trimmed) {continue;}
     try {
       records.push(JSON.parse(trimmed) as ShadowExecution);
     } catch {
@@ -106,7 +106,7 @@ export async function getSummary(): Promise<ShadowExecutionSummary> {
     const s = summary.byShadow[exec.shadowName];
     s.count += 1;
     s.totalDurationMs += exec.durationMs;
-    if (exec.status === "failed") s.failures += 1;
+    if (exec.status === "failed") {s.failures += 1;}
 
     // By intent
     summary.byIntent[exec.intent] = (summary.byIntent[exec.intent] ?? 0) + 1;
