@@ -26,9 +26,15 @@ import { logVerbose } from "../../globals.js";
 import { getGlobalMemoryOrchestrator } from "../../memory/memory-orchestrator-singleton.js";
 import { clearCommandLane, getQueueSize } from "../../process/command-queue.js";
 import { normalizeMainKey } from "../../routing/session-key.js";
-import { orchestrate, getShadowArmyStatus } from "../../shadows/orchestrator.js";
+import {
+  orchestrate,
+  getShadowArmyStatus,
+  isSoulIntent,
+  classifyIntent,
+} from "../../shadows/orchestrator.js";
 import { checkShadowUnlocks, formatShadowUnlockMessage } from "../../shadows/rank-unlock.js";
 import { dispatch as dispatchShadow, type DispatchDeps } from "../../shadows/session-manager.js";
+import { processMessage as processSoulMessage, handleSoulCommand } from "../../soul/engine.js";
 import { isReasoningTagProvider } from "../../utils/provider-utils.js";
 import { hasControlCommand } from "../command-detection.js";
 import { buildInboundMediaNote } from "../media-note.js";
@@ -652,6 +658,64 @@ export async function runPreparedReply(
     }
   } catch {
     // Evolution errors must never break a session
+  }
+
+  // SOUL Engine: handle soul commands directly, and enrich all messages with emotional context
+  if (queuedBody) {
+    try {
+      const soulIntent = classifyIntent(queuedBody);
+      if (isSoulIntent(soulIntent)) {
+        // Soul command — handle directly and return response
+        try {
+          const soulResponse = await handleSoulCommand(queuedBody);
+          const originChannel = ctx.OriginatingChannel ?? sessionCtx.Provider;
+          const originTo = ctx.OriginatingTo ?? sessionCtx.To;
+          if (originChannel && originTo && soulResponse) {
+            await routeReply({
+              payload: { text: soulResponse },
+              channel: originChannel,
+              to: originTo,
+              sessionKey,
+              accountId: sessionCtx.AccountId,
+              threadId: ctx.MessageThreadId,
+              cfg,
+            });
+            return { text: soulResponse };
+          }
+        } catch {
+          // Soul command failed — fall through to normal reply
+        }
+      }
+
+      // For all messages: process through soul engine to update profile + inject context
+      const { context: soulCtx } = await processSoulMessage(queuedBody);
+      const moodLabels: Record<string, string> = {
+        focused: "focado",
+        anxious: "ansioso",
+        excited: "empolgado",
+        frustrated: "frustrado",
+        reflective: "reflexivo",
+        rushed: "apressado",
+        neutral: "neutro",
+      };
+      const energyLabels: Record<string, string> = {
+        high: "alta",
+        medium: "media",
+        low: "baixa",
+        depleted: "esgotada",
+      };
+      const soulHint = [
+        `[Soul] Energia: ${energyLabels[soulCtx.energy] ?? soulCtx.energy} | Humor: ${moodLabels[soulCtx.mood] ?? soulCtx.mood} | Estresse: ${soulCtx.stressLevel}/10`,
+        soulCtx.activePattern ? `Padrao: ${soulCtx.activePattern}` : null,
+        soulCtx.relationshipAlert ? `Alerta: ${soulCtx.relationshipAlert}` : null,
+        soulCtx.adaptationHint,
+      ]
+        .filter(Boolean)
+        .join(" | ");
+      extraSystemPromptParts.push(soulHint);
+    } catch {
+      // Soul engine errors must never break a session
+    }
   }
 
   const followupRun = {

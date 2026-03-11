@@ -8,7 +8,12 @@ import { resolveStateDir } from "../../../config/paths.js";
 import { loadCronStore, resolveCronStorePath, saveCronStore } from "../../../cron/store.js";
 import type { CronJob } from "../../../cron/types.js";
 import { loadGmailConfig, type GmailWatchConfig } from "../../../infra/gmail-vip.js";
-import { getAccessToken, fetchEmailDetail, type EmailDetail } from "../../../infra/google-auth.js";
+import {
+  getAccessToken,
+  fetchEmailDetail,
+  loadTokens,
+  type EmailDetail,
+} from "../../../infra/google-auth.js";
 import { createSubsystemLogger } from "../../../logging/subsystem.js";
 import type { HookHandler } from "../../hooks.js";
 import { isGatewayStartupEvent } from "../../internal-hooks.js";
@@ -71,9 +76,17 @@ export function classifyEmail(email: EmailDetail, config: GmailWatchConfig): Cla
   return { ...email, classification: "ACTION", reason: "Default: requires review" };
 }
 
-/** Fetch unread emails from Gmail and classify them. */
+/** Fetch unread emails from Gmail and classify them. Returns empty if not authenticated. */
 export async function checkAndClassifyEmails(config: GmailWatchConfig): Promise<ClassifiedEmail[]> {
-  const token = await getAccessToken();
+  let token: string;
+  try {
+    token = await getAccessToken();
+  } catch {
+    log.warn(
+      "gmail-watch: cannot get access token — skipping check. Run: npx tsx src/infra/google-auth.ts",
+    );
+    return [];
+  }
 
   const url =
     "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20&q=is:unread+in:inbox";
@@ -244,6 +257,15 @@ const handler: HookHandler = async (event) => {
 
     if (!config.enabled) {
       log.info("gmail-watch disabled in config — skipping registration");
+      return;
+    }
+
+    // Guard: skip if no OAuth tokens are configured (user hasn't run auth flow yet)
+    const tokens = await loadTokens();
+    if (!tokens) {
+      log.info(
+        "gmail-watch: no OAuth tokens found — skipping. Run: npx tsx src/infra/google-auth.ts",
+      );
       return;
     }
 

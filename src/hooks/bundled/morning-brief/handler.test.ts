@@ -12,6 +12,10 @@ import {
   type MorningBriefConfig,
 } from "./handler.js";
 
+vi.mock("../../../soul/engine.js", () => ({
+  getMorningBriefSoul: async () => "[Soul]\n  Ontem voce parecia focado, energia high.",
+}));
+
 // ---------------------------------------------------------------------------
 // Test helpers
 // ---------------------------------------------------------------------------
@@ -34,52 +38,63 @@ afterAll(async () => {
 // ---------------------------------------------------------------------------
 
 describe("buildMorningBriefPrompt", () => {
-  it("includes all sections by default", () => {
-    const prompt = buildMorningBriefPrompt({});
+  it("includes all sections by default", async () => {
+    const prompt = await buildMorningBriefPrompt({});
     expect(prompt).toContain("📧");
     expect(prompt).toContain("📅");
     expect(prompt).toContain("✅");
     expect(prompt).toContain("🎯");
   });
 
-  it("omits email section when sources.email is false", () => {
-    const prompt = buildMorningBriefPrompt({ sources: { email: false } });
+  it("omits email section when sources.email is false", async () => {
+    const prompt = await buildMorningBriefPrompt({ sources: { email: false } });
     expect(prompt).not.toContain("📧");
     expect(prompt).toContain("📅");
     expect(prompt).toContain("✅");
   });
 
-  it("omits calendar section when sources.calendar is false", () => {
-    const prompt = buildMorningBriefPrompt({ sources: { calendar: false } });
+  it("omits calendar section when sources.calendar is false", async () => {
+    const prompt = await buildMorningBriefPrompt({ sources: { calendar: false } });
     expect(prompt).toContain("📧");
     expect(prompt).not.toContain("📅");
     expect(prompt).toContain("✅");
   });
 
-  it("omits tasks section when sources.tasks is false", () => {
-    const prompt = buildMorningBriefPrompt({ sources: { tasks: false } });
+  it("omits tasks section when sources.tasks is false", async () => {
+    const prompt = await buildMorningBriefPrompt({ sources: { tasks: false } });
     expect(prompt).toContain("📧");
     expect(prompt).toContain("📅");
-    expect(prompt).not.toContain("✅");
+    expect(prompt).not.toContain("Top 3 Tarefas");
   });
 
-  it("uses Portuguese by default", () => {
-    const prompt = buildMorningBriefPrompt({});
+  it("uses Portuguese by default", async () => {
+    const prompt = await buildMorningBriefPrompt({});
     expect(prompt).toContain("Bom dia");
     expect(prompt).toContain("E-mails Prioritários");
   });
 
-  it("uses English when language is 'en'", () => {
-    const prompt = buildMorningBriefPrompt({ language: "en" });
+  it("uses English when language is 'en'", async () => {
+    const prompt = await buildMorningBriefPrompt({ language: "en" });
     expect(prompt).toContain("Good morning");
     expect(prompt).toContain("Priority Emails");
   });
 
-  it("includes focus section in all configurations", () => {
-    const prompt = buildMorningBriefPrompt({
+  it("includes focus section in all configurations", async () => {
+    const prompt = await buildMorningBriefPrompt({
       sources: { email: false, calendar: false, tasks: false },
     });
     expect(prompt).toContain("🎯");
+  });
+
+  it("includes soul section by default", async () => {
+    const prompt = await buildMorningBriefPrompt({});
+    expect(prompt).toContain("🧠");
+    expect(prompt).toContain("Soul");
+  });
+
+  it("omits soul section when sources.soul is false", async () => {
+    const prompt = await buildMorningBriefPrompt({ sources: { soul: false } });
+    expect(prompt).not.toContain("🧠");
   });
 });
 
@@ -128,8 +143,8 @@ describe("loadMorningBriefConfig", () => {
 // ---------------------------------------------------------------------------
 
 describe("buildMorningBriefJob", () => {
-  it("uses defaults when config is empty", () => {
-    const job = buildMorningBriefJob({});
+  it("uses defaults when config is empty", async () => {
+    const job = await buildMorningBriefJob({});
     expect(job.id).toBe(MORNING_BRIEF_JOB_ID);
     expect(job.name).toBe("Morning Brief");
     expect(job.enabled).toBe(true);
@@ -138,8 +153,8 @@ describe("buildMorningBriefJob", () => {
     expect(job.payload.kind).toBe("agentTurn");
   });
 
-  it("uses configured cron expression and timezone", () => {
-    const job = buildMorningBriefJob({
+  it("uses configured cron expression and timezone", async () => {
+    const job = await buildMorningBriefJob({
       time: "30 6 * * 1-5",
       timezone: "America/Sao_Paulo",
     });
@@ -150,8 +165,8 @@ describe("buildMorningBriefJob", () => {
     });
   });
 
-  it("sets deliver:false and no delivery when no telegramChatId", () => {
-    const job = buildMorningBriefJob({});
+  it("sets deliver:false and no delivery when no telegramChatId", async () => {
+    const job = await buildMorningBriefJob({});
     if (job.payload.kind !== "agentTurn") {
       throw new Error("expected agentTurn");
     }
@@ -159,8 +174,8 @@ describe("buildMorningBriefJob", () => {
     expect(job.delivery).toBeUndefined();
   });
 
-  it("sets deliver:true and delivery when telegramChatId is provided", () => {
-    const job = buildMorningBriefJob({ telegramChatId: "987654321" });
+  it("sets deliver:true and delivery when telegramChatId is provided", async () => {
+    const job = await buildMorningBriefJob({ telegramChatId: "987654321" });
     if (job.payload.kind !== "agentTurn") {
       throw new Error("expected agentTurn");
     }
@@ -171,21 +186,21 @@ describe("buildMorningBriefJob", () => {
     expect(job.delivery?.to).toBe("987654321");
   });
 
-  it("sets lightContext:true for low-overhead runs", () => {
-    const job = buildMorningBriefJob({});
+  it("sets lightContext:true for low-overhead runs", async () => {
+    const job = await buildMorningBriefJob({});
     if (job.payload.kind !== "agentTurn") {
       throw new Error("expected agentTurn");
     }
     expect(job.payload.lightContext).toBe(true);
   });
 
-  it("disables failure alerts", () => {
-    const job = buildMorningBriefJob({});
+  it("disables failure alerts", async () => {
+    const job = await buildMorningBriefJob({});
     expect(job.failureAlert).toBe(false);
   });
 
-  it("includes the prompt in the payload message", () => {
-    const job = buildMorningBriefJob({});
+  it("includes the prompt in the payload message", async () => {
+    const job = await buildMorningBriefJob({});
     if (job.payload.kind !== "agentTurn") {
       throw new Error("expected agentTurn");
     }
@@ -258,7 +273,7 @@ describe("handler", () => {
   });
 
   it("does not duplicate the job on subsequent startups (idempotent)", async () => {
-    cronStoreMock.setStore({ version: 1, jobs: [buildMorningBriefJob({})] });
+    cronStoreMock.setStore({ version: 1, jobs: [await buildMorningBriefJob({})] });
 
     const event = createHookEvent("gateway", "startup", "gateway:startup", { cfg: undefined });
     await handler(event);

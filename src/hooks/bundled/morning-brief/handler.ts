@@ -5,6 +5,7 @@ import { resolveStateDir } from "../../../config/paths.js";
 import { loadCronStore, resolveCronStorePath, saveCronStore } from "../../../cron/store.js";
 import type { CronJob } from "../../../cron/types.js";
 import { createSubsystemLogger } from "../../../logging/subsystem.js";
+import { getMorningBriefSoul } from "../../../soul/engine.js";
 import type { HookHandler } from "../../hooks.js";
 import { isGatewayStartupEvent } from "../../internal-hooks.js";
 
@@ -23,6 +24,7 @@ export type MorningBriefSources = {
   crm?: boolean;
   slack?: boolean;
   social?: boolean;
+  soul?: boolean;
 };
 
 export type MorningBriefConfig = {
@@ -51,7 +53,7 @@ export async function loadMorningBriefConfig(stateDir: string): Promise<MorningB
 }
 
 /** Build the agent prompt for the morning brief. */
-export function buildMorningBriefPrompt(config: MorningBriefConfig): string {
+export async function buildMorningBriefPrompt(config: MorningBriefConfig): Promise<string> {
   const lang = config.language ?? "pt";
   const sources = config.sources ?? {};
   const includeEmail = sources.email !== false;
@@ -279,6 +281,39 @@ export function buildMorningBriefPrompt(config: MorningBriefConfig): string {
     );
   }
 
+  // SOUL Engine section — live data from soul profile
+  const includeSoul = sources.soul !== false;
+  if (includeSoul) {
+    try {
+      const soulData = await getMorningBriefSoul();
+      if (soulData) {
+        sections.push(
+          lang === "pt"
+            ? [
+                "## 🧠 Soul — Seu Estado Interno",
+                "Use estes dados reais do perfil emocional para personalizar o resumo:",
+                "",
+                soulData,
+                "",
+                "Incorpore esses insights nas recomendações do dia — adapte o tom e as sugestões ao estado emocional atual.",
+                "",
+              ].join("\n")
+            : [
+                "## 🧠 Soul — Your Inner State",
+                "Use this real emotional profile data to personalize the brief:",
+                "",
+                soulData,
+                "",
+                "Weave these insights into today's recommendations — adapt tone and suggestions to current emotional state.",
+                "",
+              ].join("\n"),
+        );
+      }
+    } catch {
+      // SOUL data unavailable — skip section silently
+    }
+  }
+
   sections.push(
     lang === "pt"
       ? [
@@ -301,10 +336,10 @@ export function buildMorningBriefPrompt(config: MorningBriefConfig): string {
 }
 
 /** Build the full CronJob record to write into the cron store. */
-export function buildMorningBriefJob(config: MorningBriefConfig): CronJob {
+export async function buildMorningBriefJob(config: MorningBriefConfig): Promise<CronJob> {
   const cronExpr = config.time ?? "0 7 * * *";
   const tz = config.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const prompt = buildMorningBriefPrompt(config);
+  const prompt = await buildMorningBriefPrompt(config);
   const now = Date.now();
 
   const hasDelivery = Boolean(config.telegramChatId);
@@ -356,7 +391,7 @@ const handler: HookHandler = async (event) => {
   try {
     const stateDir = resolveStateDir(process.env, os.homedir);
     const config = await loadMorningBriefConfig(stateDir);
-    const job = buildMorningBriefJob(config);
+    const job = await buildMorningBriefJob(config);
 
     const storePath = resolveCronStorePath();
     const store = await loadCronStore(storePath);

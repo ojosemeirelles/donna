@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { classifyIntent } from "./orchestrator.js";
+import { classifyIntent, isSoulIntent } from "./orchestrator.js";
 
 describe("classifyIntent", () => {
   it("classifies exec intents", () => {
@@ -25,7 +25,8 @@ describe("classifyIntent", () => {
   });
 
   it("classifies schedule intents", () => {
-    expect(classifyIntent("agenda uma reuniao")).toBe("schedule");
+    // "agenda uma reuniao" now matches calendar (higher priority) — correct behavior
+    expect(classifyIntent("agenda uma reuniao")).toBe("calendar");
     expect(classifyIntent("schedule a reminder")).toBe("schedule");
     expect(classifyIntent("lembra-me amanha")).toBe("schedule");
     expect(classifyIntent("set a cron job")).toBe("schedule");
@@ -49,6 +50,44 @@ describe("classifyIntent", () => {
     expect(classifyIntent("monitor the logs")).toBe("monitor");
     expect(classifyIntent("watch for changes")).toBe("monitor");
     expect(classifyIntent("vigia o sistema")).toBe("monitor");
+  });
+
+  it("classifies soul intents", () => {
+    expect(classifyIntent("me analisa")).toBe("soul");
+    expect(classifyIntent("como estou")).toBe("soul");
+    expect(classifyIntent("meu estado")).toBe("soul");
+    expect(classifyIntent("o que estou evitando")).toBe("soul");
+    expect(classifyIntent("minhas vitorias")).toBe("soul");
+    expect(classifyIntent("padrao financeiro")).toBe("soul");
+    expect(classifyIntent("o que devo ler")).toBe("soul");
+    expect(classifyIntent("apaga meu perfil soul")).toBe("soul");
+  });
+
+  it("classifies soul-dreams intents", () => {
+    expect(classifyIntent("meus sonhos")).toBe("soul-dreams");
+    expect(classifyIntent("quero realizar algo grande")).toBe("soul-dreams");
+    expect(classifyIntent("dream vault")).toBe("soul-dreams");
+  });
+
+  it("classifies soul-productivity intents", () => {
+    expect(classifyIntent("minha produtividade")).toBe("soul-productivity");
+    expect(classifyIntent("meu ritmo de trabalho")).toBe("soul-productivity");
+    expect(classifyIntent("quando sou mais produtivo")).toBe("soul-productivity");
+  });
+
+  it("classifies soul-relationships intents", () => {
+    expect(classifyIntent("minhas relacoes")).toBe("soul-relationships");
+    expect(classifyIntent("meus relacionamentos")).toBe("soul-relationships");
+    expect(classifyIntent("quem tenho negligenciado")).toBe("soul-relationships");
+  });
+
+  it("isSoulIntent helper works", () => {
+    expect(isSoulIntent("soul")).toBe(true);
+    expect(isSoulIntent("soul-dreams")).toBe(true);
+    expect(isSoulIntent("soul-productivity")).toBe(true);
+    expect(isSoulIntent("soul-relationships")).toBe(true);
+    expect(isSoulIntent("exec")).toBe(false);
+    expect(isSoulIntent("complex")).toBe(false);
   });
 
   it("defaults to complex for unknown intents", () => {

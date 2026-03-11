@@ -44,7 +44,11 @@ export type ShadowIntent =
   | "slack"
   | "github"
   | "shopify"
-  | "home";
+  | "home"
+  | "soul"
+  | "soul-dreams"
+  | "soul-productivity"
+  | "soul-relationships";
 
 export const INTENT_TO_SHADOW: Record<ShadowIntent, string> = {
   research: "Tusk",
@@ -69,6 +73,10 @@ export const INTENT_TO_SHADOW: Record<ShadowIntent, string> = {
   github: "Jima",
   shopify: "Bellion",
   home: "Beru",
+  soul: "Igris",
+  "soul-dreams": "Igris",
+  "soul-productivity": "Igris",
+  "soul-relationships": "Igris",
 };
 
 // --- Shadow Sessions (DONNA-004) ---

@@ -10,7 +10,39 @@ import type { ShadowDefinition, ShadowIntent, ShadowRegistry } from "./types.js"
 export function classifyIntent(message: string): ShadowIntent {
   const lower = message.toLowerCase();
 
-  // Hook-specific intents (checked first for precision)
+  // SOUL Engine intents (checked first — personal/introspective commands)
+
+  // Soul dreams: "meus sonhos", "dream", "quero realizar", "aspirações"
+  if (/(meus? sonhos?|my dreams?|quero realizar|aspira[cç][oõ]|dream vault)/.test(lower)) {
+    return "soul-dreams";
+  }
+  // Soul productivity: "minha produtividade", "meu ritmo", "energy map"
+  if (
+    /(minha produtividade|meu ritmo|productivity map|mapa de energia|quando sou mais produtiv)/.test(
+      lower,
+    )
+  ) {
+    return "soul-productivity";
+  }
+  // Soul relationships: "minhas relações", "relacionamentos", "quem tenho negligenciado"
+  if (
+    /(minhas? rela[cç][oõ]|relacionamento|quem.*negligenci|network.*relacion|rela[cç][oõ].*alert)/.test(
+      lower,
+    )
+  ) {
+    return "soul-relationships";
+  }
+  // Soul general: "me analisa", "como estou", "meu estado", "soul", "o que estou evitando",
+  // "minhas vitórias", "padrão financeiro", "o que devo ler"
+  if (
+    /(me analisa|como estou|meu estado|soul\b|o que estou evitando|minhas? vit[oó]ria|padr[aã]o financeiro|o que devo ler|celebra[cç][oõ]|apaga meu perfil soul)/.test(
+      lower,
+    )
+  ) {
+    return "soul";
+  }
+
+  // Hook-specific intents (checked after SOUL for precision)
 
   // Calendar patterns
   if (
@@ -120,6 +152,11 @@ export function classifyIntent(message: string): ShadowIntent {
 
   // Default: no shadow delegation
   return "complex";
+}
+
+/** Returns true if the intent should be handled by the SOUL engine instead of a shadow. */
+export function isSoulIntent(intent: ShadowIntent): boolean {
+  return intent === "soul" || intent.startsWith("soul-");
 }
 
 const RANK_ORDER: Rank[] = ["E", "D", "C", "B", "A", "S", "SS", "SSS"];
