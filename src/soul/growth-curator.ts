@@ -90,22 +90,26 @@ interface MentorRec {
 const THEME_MENTORS: Record<string, MentorRec> = {
   stress: {
     name: "Marcus Aurelius",
-    insight: "O obstaculo e o caminho. O que te bloqueia hoje e exatamente o que precisa ser enfrentado.",
+    insight:
+      "O obstaculo e o caminho. O que te bloqueia hoje e exatamente o que precisa ser enfrentado.",
     reason: "Estoicismo pratico para lidar com pressao sem perder a cabeca.",
   },
   entrepreneurship: {
     name: "Naval Ravikant",
-    insight: "Alavancagem vem de codigo, capital e midia. Trabalho sem alavancagem e trocar tempo por dinheiro.",
+    insight:
+      "Alavancagem vem de codigo, capital e midia. Trabalho sem alavancagem e trocar tempo por dinheiro.",
     reason: "Repense como voce gera valor — nem todo esforco e igual.",
   },
   focus: {
     name: "Cal Newport",
-    insight: "Deep work e a capacidade de focar sem distracao em tarefas cognitivamente exigentes. E a nova vantagem competitiva.",
+    insight:
+      "Deep work e a capacidade de focar sem distracao em tarefas cognitivamente exigentes. E a nova vantagem competitiva.",
     reason: "No mundo das distracoes, foco profundo e um superpoder.",
   },
   financial: {
     name: "Ray Dalio",
-    insight: "Princípios claros para decisoes financeiras eliminam emocao da equacao. Diversifique, mantenha liquidez, pense em ciclos.",
+    insight:
+      "Princípios claros para decisoes financeiras eliminam emocao da equacao. Diversifique, mantenha liquidez, pense em ciclos.",
     reason: "Decisoes financeiras precisam de framework, nao de instinto.",
   },
   leadership: {
@@ -115,7 +119,8 @@ const THEME_MENTORS: Record<string, MentorRec> = {
   },
   creativity: {
     name: "Leonardo da Vinci",
-    insight: "Pensamento interdisciplinar — conectar arte, ciencia e engenharia — e a fonte da inovacao verdadeira.",
+    insight:
+      "Pensamento interdisciplinar — conectar arte, ciencia e engenharia — e a fonte da inovacao verdadeira.",
     reason: "As melhores ideias nascem na interseccao de disciplinas diferentes.",
   },
 };
@@ -131,27 +136,34 @@ interface FrameworkRec {
 const THEME_FRAMEWORKS: Record<string, FrameworkRec> = {
   overwhelmed: {
     name: "Eisenhower Matrix",
-    description: "Classifique tarefas em 4 quadrantes: urgente+importante, importante, urgente, nenhum. Delegue ou elimine os ultimos dois.",
-    reason: "Voce esta sobrecarregado porque trata tudo como prioridade. Isso elimina 50% da sua lista.",
+    description:
+      "Classifique tarefas em 4 quadrantes: urgente+importante, importante, urgente, nenhum. Delegue ou elimine os ultimos dois.",
+    reason:
+      "Voce esta sobrecarregado porque trata tudo como prioridade. Isso elimina 50% da sua lista.",
   },
   no_clarity: {
     name: "First Principles Thinking",
-    description: "Decomponha o problema ate os fundamentos. Remonte de baixo pra cima sem premissas herdadas.",
+    description:
+      "Decomponha o problema ate os fundamentos. Remonte de baixo pra cima sem premissas herdadas.",
     reason: "Quando nao sabe por onde comecar, volte aos fundamentos.",
   },
   stuck: {
     name: "Jobs-to-be-Done",
-    description: "Em vez de perguntar 'o que devo fazer?', pergunte 'que trabalho o usuario/situacao precisa que eu faca?'",
+    description:
+      "Em vez de perguntar 'o que devo fazer?', pergunte 'que trabalho o usuario/situacao precisa que eu faca?'",
     reason: "Muda o frame de 'estou travado' para 'qual o job a ser feito aqui?'",
   },
   decision_fatigue: {
     name: "Regret Minimization (Bezos)",
-    description: "Projete-se aos 80 anos. A decisao que minimiza arrependimento e a certa. Use para decisoes grandes, nao para triviais.",
-    reason: "Fadiga de decisao vem de tratar decisoes pequenas e grandes igual. Esse framework separa.",
+    description:
+      "Projete-se aos 80 anos. A decisao que minimiza arrependimento e a certa. Use para decisoes grandes, nao para triviais.",
+    reason:
+      "Fadiga de decisao vem de tratar decisoes pequenas e grandes igual. Esse framework separa.",
   },
   productivity: {
     name: "Pomodoro + Deep Work blocks",
-    description: "25 min focado + 5 min pausa. Combine com blocos de 2-4h sem interrupcao para trabalho profundo.",
+    description:
+      "25 min focado + 5 min pausa. Combine com blocos de 2-4h sem interrupcao para trabalho profundo.",
     reason: "Estrutura temporal transforma intencao em execucao.",
   },
 };
@@ -159,10 +171,18 @@ const THEME_FRAMEWORKS: Record<string, FrameworkRec> = {
 function resolveBookKey(context: GrowthContext): string {
   // Check patterns first
   for (const p of context.patterns) {
-    if (p.type === "procrastination") return "procrastination";
-    if (p.type === "analysis_paralysis") return "analysis_paralysis";
-    if (p.type === "stress_loop") return "stress";
-    if (p.type === "avoidance" && p.subject.toLowerCase().includes("deleg")) return "delegation";
+    if (p.type === "procrastination") {
+      return "procrastination";
+    }
+    if (p.type === "analysis_paralysis") {
+      return "analysis_paralysis";
+    }
+    if (p.type === "stress_loop") {
+      return "stress";
+    }
+    if (p.type === "avoidance" && p.subject.toLowerCase().includes("deleg")) {
+      return "delegation";
+    }
   }
 
   // Finance pattern
@@ -172,57 +192,109 @@ function resolveBookKey(context: GrowthContext): string {
 
   // Dominant theme
   const theme = context.dominantTheme.toLowerCase();
-  if (theme.includes("lider") || theme.includes("leader")) return "leadership";
-  if (theme.includes("criat") || theme.includes("creat")) return "creativity_block";
-  if (theme.includes("stress") || theme.includes("burnout")) return "stress";
-  if (theme.includes("delega")) return "delegation";
-  if (theme.includes("paralis") || theme.includes("analys")) return "analysis_paralysis";
+  if (theme.includes("lider") || theme.includes("leader")) {
+    return "leadership";
+  }
+  if (theme.includes("criat") || theme.includes("creat")) {
+    return "creativity_block";
+  }
+  if (theme.includes("stress") || theme.includes("burnout")) {
+    return "stress";
+  }
+  if (theme.includes("delega")) {
+    return "delegation";
+  }
+  if (theme.includes("paralis") || theme.includes("analys")) {
+    return "analysis_paralysis";
+  }
 
   // Snapshot-based fallback
   if (context.currentSnapshot) {
-    if (context.currentSnapshot.stressLevel >= 7) return "stress";
-    if (context.currentSnapshot.mood === "frustrated") return "procrastination";
+    if (context.currentSnapshot.stressLevel >= 7) {
+      return "stress";
+    }
+    if (context.currentSnapshot.mood === "frustrated") {
+      return "procrastination";
+    }
   }
 
   return "default";
 }
 
 function resolveMentorKey(context: GrowthContext): string {
-  if (context.currentSnapshot?.stressLevel && context.currentSnapshot.stressLevel >= 7) return "stress";
+  if (context.currentSnapshot?.stressLevel && context.currentSnapshot.stressLevel >= 7) {
+    return "stress";
+  }
 
   const theme = context.dominantTheme.toLowerCase();
-  if (theme.includes("empreend") || theme.includes("negocio") || theme.includes("startup")) return "entrepreneurship";
-  if (theme.includes("foco") || theme.includes("focus") || theme.includes("distrac")) return "focus";
-  if (theme.includes("financ") || theme.includes("dinheiro")) return "financial";
-  if (theme.includes("lider") || theme.includes("leader") || theme.includes("equipe")) return "leadership";
-  if (theme.includes("criat") || theme.includes("creat") || theme.includes("ideia")) return "creativity";
+  if (theme.includes("empreend") || theme.includes("negocio") || theme.includes("startup")) {
+    return "entrepreneurship";
+  }
+  if (theme.includes("foco") || theme.includes("focus") || theme.includes("distrac")) {
+    return "focus";
+  }
+  if (theme.includes("financ") || theme.includes("dinheiro")) {
+    return "financial";
+  }
+  if (theme.includes("lider") || theme.includes("leader") || theme.includes("equipe")) {
+    return "leadership";
+  }
+  if (theme.includes("criat") || theme.includes("creat") || theme.includes("ideia")) {
+    return "creativity";
+  }
 
-  if (context.financePattern === "anxiety" || context.financePattern === "scarcity") return "financial";
+  if (context.financePattern === "anxiety" || context.financePattern === "scarcity") {
+    return "financial";
+  }
 
   for (const p of context.patterns) {
-    if (p.type === "stress_loop") return "stress";
-    if (p.type === "analysis_paralysis") return "focus";
+    if (p.type === "stress_loop") {
+      return "stress";
+    }
+    if (p.type === "analysis_paralysis") {
+      return "focus";
+    }
   }
 
   return "entrepreneurship";
 }
 
 function resolveFrameworkKey(context: GrowthContext): string {
-  if (context.currentSnapshot?.stressLevel && context.currentSnapshot.stressLevel >= 7) return "overwhelmed";
+  if (context.currentSnapshot?.stressLevel && context.currentSnapshot.stressLevel >= 7) {
+    return "overwhelmed";
+  }
 
   for (const p of context.patterns) {
-    if (p.type === "overcommitment") return "overwhelmed";
-    if (p.type === "analysis_paralysis") return "no_clarity";
-    if (p.type === "procrastination") return "stuck";
-    if (p.type === "impulsivity") return "decision_fatigue";
+    if (p.type === "overcommitment") {
+      return "overwhelmed";
+    }
+    if (p.type === "analysis_paralysis") {
+      return "no_clarity";
+    }
+    if (p.type === "procrastination") {
+      return "stuck";
+    }
+    if (p.type === "impulsivity") {
+      return "decision_fatigue";
+    }
   }
 
   const theme = context.dominantTheme.toLowerCase();
-  if (theme.includes("sobrecarr") || theme.includes("overwhelm")) return "overwhelmed";
-  if (theme.includes("clarez") || theme.includes("clarity")) return "no_clarity";
-  if (theme.includes("trav") || theme.includes("stuck")) return "stuck";
-  if (theme.includes("decisao") || theme.includes("decision")) return "decision_fatigue";
-  if (theme.includes("produtiv") || theme.includes("product")) return "productivity";
+  if (theme.includes("sobrecarr") || theme.includes("overwhelm")) {
+    return "overwhelmed";
+  }
+  if (theme.includes("clarez") || theme.includes("clarity")) {
+    return "no_clarity";
+  }
+  if (theme.includes("trav") || theme.includes("stuck")) {
+    return "stuck";
+  }
+  if (theme.includes("decisao") || theme.includes("decision")) {
+    return "decision_fatigue";
+  }
+  if (theme.includes("produtiv") || theme.includes("product")) {
+    return "productivity";
+  }
 
   return "productivity";
 }

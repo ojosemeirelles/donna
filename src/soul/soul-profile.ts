@@ -1,3 +1,4 @@
+import { createReadStream } from "node:fs";
 /**
  * Soul Profile — aggregates everything into a unified profile.
  * Manages the soul profile, observations log, and context generation.
@@ -6,9 +7,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
-import type { SoulProfile, SoulContext, VoiceSnapshot, Observation } from "./types.js";
+import type { SoulProfile, SoulContext, Observation } from "./types.js";
 
 const SOUL_DIR = path.join(os.homedir(), ".donna", "soul");
 const PROFILE_PATH = path.join(SOUL_DIR, "profile.json");
@@ -79,7 +79,9 @@ export async function loadRecentObservations(days: number): Promise<Observation[
     const rl = createInterface({ input: stream, crlfDelay: Infinity });
 
     rl.on("line", (line) => {
-      if (!line.trim()) return;
+      if (!line.trim()) {
+        return;
+      }
       try {
         const obs = JSON.parse(line) as Observation;
         if (obs.timestamp >= cutoff) {
@@ -117,7 +119,12 @@ export function buildSoulContext(profile: SoulProfile): SoulContext {
   }
 
   // Generate adaptation hint
-  const adaptationHint = generateContextHint(currentState.energy, currentState.mood, currentState.stressLevel, activePattern);
+  const adaptationHint = generateContextHint(
+    currentState.energy,
+    currentState.mood,
+    currentState.stressLevel,
+    activePattern,
+  );
 
   return {
     energy: currentState.energy,
@@ -195,9 +202,15 @@ export function generateSoulSummary(profile: SoulProfile): string {
 
   // Sentence 2: dominant patterns
   const activePatterns: string[] = [];
-  if (patterns.procrastinating.length > 0) activePatterns.push(`procrastinando em ${patterns.procrastinating.length} area(s)`);
-  if (patterns.avoiding.length > 0) activePatterns.push(`evitando ${patterns.avoiding.length} tema(s)`);
-  if (patterns.strengths.length > 0) activePatterns.push(`forcas em ${patterns.strengths.length} area(s)`);
+  if (patterns.procrastinating.length > 0) {
+    activePatterns.push(`procrastinando em ${patterns.procrastinating.length} area(s)`);
+  }
+  if (patterns.avoiding.length > 0) {
+    activePatterns.push(`evitando ${patterns.avoiding.length} tema(s)`);
+  }
+  if (patterns.strengths.length > 0) {
+    activePatterns.push(`forcas em ${patterns.strengths.length} area(s)`);
+  }
 
   if (activePatterns.length > 0) {
     parts.push(`Padroes: ${activePatterns.join(", ")}.`);

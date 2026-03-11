@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { ProductivityRhythms, HourlyEnergy, DayPattern, VoiceSnapshot } from "./types.js";
+import type { ProductivityRhythms, VoiceSnapshot } from "./types.js";
 
 const SOUL_DIR = path.join(os.homedir(), ".donna", "soul");
 const RHYTHMS_PATH = path.join(SOUL_DIR, "rhythms.json");
@@ -38,22 +38,44 @@ export async function saveRhythms(rhythms: ProductivityRhythms): Promise<void> {
 
 function energyToNumeric(energy: VoiceSnapshot["energy"]): number {
   switch (energy) {
-    case "high": return 9;
-    case "medium": return 6;
-    case "low": return 3;
-    case "depleted": return 1;
+    case "high": {
+      return 9;
+    }
+    case "medium": {
+      return 6;
+    }
+    case "low": {
+      return 3;
+    }
+    case "depleted": {
+      return 1;
+    }
   }
 }
 
 function moodToComplexity(mood: VoiceSnapshot["mood"]): number {
   switch (mood) {
-    case "focused": return 8;
-    case "reflective": return 5;
-    case "excited": return 7;
-    case "neutral": return 5;
-    case "rushed": return 4;
-    case "anxious": return 3;
-    case "frustrated": return 2;
+    case "focused": {
+      return 8;
+    }
+    case "reflective": {
+      return 5;
+    }
+    case "excited": {
+      return 7;
+    }
+    case "neutral": {
+      return 5;
+    }
+    case "rushed": {
+      return 4;
+    }
+    case "anxious": {
+      return 3;
+    }
+    case "frustrated": {
+      return 2;
+    }
   }
 }
 
@@ -61,7 +83,10 @@ function runningAvg(current: number, newVal: number, count: number): number {
   return (current * (count - 1) + newVal) / count;
 }
 
-export function recordDataPoint(rhythms: ProductivityRhythms, snapshot: VoiceSnapshot): ProductivityRhythms {
+export function recordDataPoint(
+  rhythms: ProductivityRhythms,
+  snapshot: VoiceSnapshot,
+): ProductivityRhythms {
   const date = new Date(snapshot.timestamp);
   const hour = date.getHours();
   const day = date.getDay();
@@ -80,7 +105,11 @@ export function recordDataPoint(rhythms: ProductivityRhythms, snapshot: VoiceSna
   }
   hourEntry.messageCount++;
   hourEntry.avgEnergy = runningAvg(hourEntry.avgEnergy, energyNum, hourEntry.messageCount);
-  hourEntry.avgComplexity = runningAvg(hourEntry.avgComplexity, complexityNum, hourEntry.messageCount);
+  hourEntry.avgComplexity = runningAvg(
+    hourEntry.avgComplexity,
+    complexityNum,
+    hourEntry.messageCount,
+  );
 
   // Update daily entry
   let dayEntry = updated.daily.find((d) => d.day === day);
@@ -90,31 +119,35 @@ export function recordDataPoint(rhythms: ProductivityRhythms, snapshot: VoiceSna
   }
   dayEntry.messageCount++;
   dayEntry.avgEnergy = runningAvg(dayEntry.avgEnergy, energyNum, dayEntry.messageCount);
-  dayEntry.avgProductivity = runningAvg(dayEntry.avgProductivity, complexityNum, dayEntry.messageCount);
+  dayEntry.avgProductivity = runningAvg(
+    dayEntry.avgProductivity,
+    complexityNum,
+    dayEntry.messageCount,
+  );
 
   updated.dataPoints++;
 
   // Recalculate peak hours (top 3 by avgEnergy)
-  const sortedHours = [...updated.hourly].sort((a, b) => b.avgEnergy - a.avgEnergy);
+  const sortedHours = [...updated.hourly].toSorted((a, b) => b.avgEnergy - a.avgEnergy);
   updated.peakHours = sortedHours.slice(0, 3).map((h) => h.hour);
 
   // Recalculate peak days (top 2 by avgEnergy)
-  const sortedDays = [...updated.daily].sort((a, b) => b.avgEnergy - a.avgEnergy);
+  const sortedDays = [...updated.daily].toSorted((a, b) => b.avgEnergy - a.avgEnergy);
   updated.peakDays = sortedDays.slice(0, 2).map((d) => d.day);
 
   // Update current cycle based on last 3 days vs overall average
-  const overallAvg = updated.hourly.reduce((sum, h) => sum + h.avgEnergy, 0) / (updated.hourly.length || 1);
-  const now = Date.now();
-  const threeDaysAgo = now - 3 * 24 * 60 * 60 * 1000;
+  const overallAvg =
+    updated.hourly.reduce((sum, h) => sum + h.avgEnergy, 0) / (updated.hourly.length || 1);
   // Approximate recent energy from hourly data weighted by recency
   // Since we don't store per-timestamp data, use the current snapshot's energy as a proxy
   const recentHours = updated.hourly.filter((h) => {
     const hourDiff = Math.abs(h.hour - hour);
     return hourDiff <= 3 || hourDiff >= 21; // nearby hours as proxy for recent
   });
-  const recentAvg = recentHours.length > 0
-    ? recentHours.reduce((sum, h) => sum + h.avgEnergy, 0) / recentHours.length
-    : overallAvg;
+  const recentAvg =
+    recentHours.length > 0
+      ? recentHours.reduce((sum, h) => sum + h.avgEnergy, 0) / recentHours.length
+      : overallAvg;
 
   if (recentAvg > overallAvg * 1.2) {
     updated.currentCycle = "high";
@@ -163,7 +196,8 @@ export function generateProductivityMap(rhythms: ProductivityRhythms): string {
   }
 
   // Current cycle
-  const cycleLabel = rhythms.currentCycle === "high" ? "Alto" : rhythms.currentCycle === "low" ? "Baixo" : "Normal";
+  const cycleLabel =
+    rhythms.currentCycle === "high" ? "Alto" : rhythms.currentCycle === "low" ? "Baixo" : "Normal";
   lines.push(`Ciclo atual: ${cycleLabel}\n`);
 
   // ASCII energy bars by time block
@@ -177,9 +211,10 @@ export function generateProductivityMap(rhythms: ProductivityRhythms): string {
   lines.push("Energia por periodo:");
   for (const block of blocks) {
     const blockHours = rhythms.hourly.filter((h) => h.hour >= block.start && h.hour < block.end);
-    const avg = blockHours.length > 0
-      ? blockHours.reduce((sum, h) => sum + h.avgEnergy, 0) / blockHours.length
-      : 0;
+    const avg =
+      blockHours.length > 0
+        ? blockHours.reduce((sum, h) => sum + h.avgEnergy, 0) / blockHours.length
+        : 0;
     lines.push(`  ${block.label} ${energyBar(avg)} ${avg.toFixed(1)}`);
   }
 
@@ -188,11 +223,13 @@ export function generateProductivityMap(rhythms: ProductivityRhythms): string {
   if (rhythms.peakHours.length > 0) {
     const peakStart = Math.min(...rhythms.peakHours);
     const peakEnd = Math.max(...rhythms.peakHours) + 1;
-    lines.push(`Suas ${formatHourRange(peakStart, peakEnd)} sao seu periodo de pico. Agende tarefas dificeis aqui.`);
+    lines.push(
+      `Suas ${formatHourRange(peakStart, peakEnd)} sao seu periodo de pico. Agende tarefas dificeis aqui.`,
+    );
   }
 
   // Find low energy days
-  const sortedDaysAsc = [...rhythms.daily].sort((a, b) => a.avgEnergy - b.avgEnergy);
+  const sortedDaysAsc = [...rhythms.daily].toSorted((a, b) => a.avgEnergy - b.avgEnergy);
   if (sortedDaysAsc.length > 0 && sortedDaysAsc[0].avgEnergy < 5) {
     const lowDay = DAY_NAMES[sortedDaysAsc[0].day];
     lines.push(`${lowDay} sao consistentemente baixas. Evite decisoes importantes.`);
@@ -210,11 +247,13 @@ export function getSchedulingSuggestion(
     return "Ainda nao tenho dados suficientes para sugerir horarios.";
   }
 
-  const sorted = [...rhythms.hourly].sort((a, b) => b.avgEnergy - a.avgEnergy);
+  const sorted = [...rhythms.hourly].toSorted((a, b) => b.avgEnergy - a.avgEnergy);
 
   switch (taskType) {
     case "heavy": {
-      if (sorted.length === 0) return "Sem dados para sugerir.";
+      if (sorted.length === 0) {
+        return "Sem dados para sugerir.";
+      }
       const best = sorted[0];
       return `Tarefas pesadas: agende para ${best.hour}h, seu horario de maior energia (${best.avgEnergy.toFixed(1)}/10).`;
     }
@@ -239,17 +278,22 @@ export function detectEnergyAlert(
   rhythms: ProductivityRhythms,
   recentSnapshots: VoiceSnapshot[],
 ): string | null {
-  if (recentSnapshots.length < 3) return null;
+  if (recentSnapshots.length < 3) {
+    return null;
+  }
 
   const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
   const recent = recentSnapshots.filter((s) => s.timestamp >= threeDaysAgo);
 
-  if (recent.length < 3) return null;
+  if (recent.length < 3) {
+    return null;
+  }
 
   const recentAvg = recent.reduce((sum, s) => sum + energyToNumeric(s.energy), 0) / recent.length;
-  const overallAvg = rhythms.hourly.length > 0
-    ? rhythms.hourly.reduce((sum, h) => sum + h.avgEnergy, 0) / rhythms.hourly.length
-    : 5;
+  const overallAvg =
+    rhythms.hourly.length > 0
+      ? rhythms.hourly.reduce((sum, h) => sum + h.avgEnergy, 0) / rhythms.hourly.length
+      : 5;
 
   // Significantly below normal: more than 30% lower
   if (recentAvg < overallAvg * 0.7) {

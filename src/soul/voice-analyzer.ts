@@ -6,7 +6,14 @@ import type {
   UrgencyLevel,
 } from "./types.js";
 
-const DEPLETED_SIGNALS = ["cansado", "exausto", "dormi mal", "dor de cabeca", "dor de cabeça", "sem energia"];
+const DEPLETED_SIGNALS = [
+  "cansado",
+  "exausto",
+  "dormi mal",
+  "dor de cabeca",
+  "dor de cabeça",
+  "sem energia",
+];
 const HIGH_ENERGY_SIGNALS = ["vamos", "bora", "animado", "empolgado"];
 
 const FOCUSED_SIGNALS = ["preciso focar", "concentrar"];
@@ -20,7 +27,15 @@ const URGENCY_WORDS = ["urgente", "deadline", "prazo", "agora"];
 const CRISIS_WORDS = ["emergência", "caiu", "fora do ar", "perdendo dinheiro", "desastre", "fodeu"];
 const POSITIVE_WORDS = ["ótimo", "tranquilo", "suave", "beleza", "top"];
 
-const ANALYTICAL_SIGNALS = ["dados", "métricas", "análise", "performance", "benchmark", "query", "schema"];
+const ANALYTICAL_SIGNALS = [
+  "dados",
+  "métricas",
+  "análise",
+  "performance",
+  "benchmark",
+  "query",
+  "schema",
+];
 const ASSERTIVE_SIGNALS = ["faça", "preciso", "quero", "agora", "muda", "troca"];
 const PASSIVE_SIGNALS = ["por favor", "será que poderia", "se possível", "quando puder", "talvez"];
 const CREATIVE_SIGNALS = ["e se", "imagina", "seria legal", "brainstorm", "ideia"];
@@ -28,15 +43,13 @@ const CREATIVE_SIGNALS = ["e se", "imagina", "seria legal", "brainstorm", "ideia
 const ELEVATED_URGENCY_WORDS = ["urgente", "agora", "rápido", "preciso já", "deadline hoje"];
 const CRISIS_URGENCY_WORDS = ["emergência", "caiu", "fora do ar", "perdendo dinheiro"];
 
-function normalize(text: string): string {
-  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
-
 function countMatches(text: string, patterns: string[]): number {
   const lower = text.toLowerCase();
   let count = 0;
   for (const p of patterns) {
-    if (lower.includes(p)) count++;
+    if (lower.includes(p)) {
+      count++;
+    }
   }
   return count;
 }
@@ -73,33 +86,62 @@ function hasMultipleQuestions(text: string): boolean {
 }
 
 function detectEnergy(text: string, words: number): EnergyLevel {
-  if (hasPattern(text, DEPLETED_SIGNALS)) return "depleted";
-  if (hasPattern(text, HIGH_ENERGY_SIGNALS)) return "high";
-  if (hasExclamations(text) || hasCaps(text)) return "high";
-  if (words < 15 && !/[.!?]/.test(text)) return "low";
-  if (words > 40) return "medium";
+  if (hasPattern(text, DEPLETED_SIGNALS)) {
+    return "depleted";
+  }
+  if (hasPattern(text, HIGH_ENERGY_SIGNALS)) {
+    return "high";
+  }
+  if (hasExclamations(text) || hasCaps(text)) {
+    return "high";
+  }
+  if (words < 15 && !/[.!?]/.test(text)) {
+    return "low";
+  }
+  if (words > 40) {
+    return "medium";
+  }
   return "medium";
 }
 
 function detectMood(text: string, words: number): MoodState {
-  if (hasPattern(text, FRUSTRATED_SIGNALS)) return "frustrated";
-  if (hasPattern(text, EXCITED_SIGNALS) || hasExclamations(text)) return "excited";
-  if (hasPattern(text, ANXIOUS_SIGNALS) || hasMultipleQuestions(text)) return "anxious";
-  if (hasPattern(text, FOCUSED_SIGNALS) || (words > 50 && countMatches(text, ANALYTICAL_SIGNALS) > 0)) return "focused";
-  if (hasPattern(text, REFLECTIVE_SIGNALS) || (hasMultipleQuestions(text) && words > 30)) return "reflective";
+  if (hasPattern(text, FRUSTRATED_SIGNALS)) {
+    return "frustrated";
+  }
+  if (hasPattern(text, EXCITED_SIGNALS) || hasExclamations(text)) {
+    return "excited";
+  }
+  if (hasPattern(text, ANXIOUS_SIGNALS) || hasMultipleQuestions(text)) {
+    return "anxious";
+  }
+  if (
+    hasPattern(text, FOCUSED_SIGNALS) ||
+    (words > 50 && countMatches(text, ANALYTICAL_SIGNALS) > 0)
+  ) {
+    return "focused";
+  }
+  if (hasPattern(text, REFLECTIVE_SIGNALS) || (hasMultipleQuestions(text) && words > 30)) {
+    return "reflective";
+  }
   // Rushed: short imperative without greetings
   const greetings = ["oi", "olá", "bom dia", "boa tarde", "boa noite", "hey", "eae"];
-  if (words < 8 && !hasPattern(text, greetings) && hasPattern(text, RUSHED_INDICATORS)) return "rushed";
+  if (words < 8 && !hasPattern(text, greetings) && hasPattern(text, RUSHED_INDICATORS)) {
+    return "rushed";
+  }
   return "neutral";
 }
 
 function detectStress(text: string): number {
   let stress = 3;
   stress += countMatches(text, URGENCY_WORDS);
-  if (hasRepeatedChars(text)) stress += 1;
+  if (hasRepeatedChars(text)) {
+    stress += 1;
+  }
   stress += countMatches(text, CRISIS_WORDS) * 2;
   stress -= Math.min(countMatches(text, POSITIVE_WORDS), 2);
-  if (hasEmojis(text)) stress -= 1;
+  if (hasEmojis(text)) {
+    stress -= 1;
+  }
   return Math.max(0, Math.min(10, stress));
 }
 
@@ -122,8 +164,12 @@ function detectCommunicationStyle(text: string): CommunicationStyle {
 }
 
 function detectUrgency(text: string): UrgencyLevel {
-  if (hasPattern(text, CRISIS_URGENCY_WORDS)) return "crisis";
-  if (hasPattern(text, ELEVATED_URGENCY_WORDS)) return "elevated";
+  if (hasPattern(text, CRISIS_URGENCY_WORDS)) {
+    return "crisis";
+  }
+  if (hasPattern(text, ELEVATED_URGENCY_WORDS)) {
+    return "elevated";
+  }
   return "normal";
 }
 
@@ -142,12 +188,22 @@ function collectSignals(text: string): string[] {
     [CREATIVE_SIGNALS, "creative"],
   ];
   for (const [patterns, label] of allPatterns) {
-    if (hasPattern(text, patterns)) signals.push(label);
+    if (hasPattern(text, patterns)) {
+      signals.push(label);
+    }
   }
-  if (hasExclamations(text)) signals.push("exclamations");
-  if (hasCaps(text)) signals.push("caps");
-  if (hasEmojis(text)) signals.push("emojis");
-  if (hasMultipleQuestions(text)) signals.push("multiple-questions");
+  if (hasExclamations(text)) {
+    signals.push("exclamations");
+  }
+  if (hasCaps(text)) {
+    signals.push("caps");
+  }
+  if (hasEmojis(text)) {
+    signals.push("emojis");
+  }
+  if (hasMultipleQuestions(text)) {
+    signals.push("multiple-questions");
+  }
   return signals;
 }
 

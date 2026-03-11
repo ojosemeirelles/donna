@@ -159,7 +159,9 @@ export function analyzeFinanceSignals(
     ...scarcityMatches,
   ];
 
-  if (allSignals.length === 0) return null;
+  if (allSignals.length === 0) {
+    return null;
+  }
 
   // Determine dominant pattern from this message
   const counts: Array<[FinancePattern, number]> = [
@@ -170,8 +172,8 @@ export function analyzeFinanceSignals(
     ["scarcity", scarcityMatches.length],
   ];
 
-  counts.sort((a, b) => b[1] - a[1]);
-  const pattern: FinancePattern = counts[0][1] > 0 ? counts[0][0] : "mixed";
+  const sortedCounts = counts.toSorted((a, b) => b[1] - a[1]);
+  const pattern: FinancePattern = sortedCounts[0][1] > 0 ? sortedCounts[0][0] : "mixed";
 
   return { pattern, signals: allSignals };
 }
@@ -179,23 +181,29 @@ export function analyzeFinanceSignals(
 /** Update finance profile with signals from a new message. */
 export function updateFinanceProfile(profile: FinanceProfile, message: string): FinanceProfile {
   const result = analyzeFinanceSignals(message);
-  if (!result) return profile;
+  if (!result) {
+    return profile;
+  }
 
   const updated = { ...profile };
   const now = Date.now();
 
   // Update counters based on detected pattern
-  if (result.pattern === "anxiety") updated.anxietySignals += result.signals.length;
-  if (result.pattern === "abundance") updated.abundanceSignals += result.signals.length;
-  if (result.pattern === "avoidance") updated.avoidanceSignals += result.signals.length;
+  if (result.pattern === "anxiety") {
+    updated.anxietySignals += result.signals.length;
+  }
+  if (result.pattern === "abundance") {
+    updated.abundanceSignals += result.signals.length;
+  }
+  if (result.pattern === "avoidance") {
+    updated.avoidanceSignals += result.signals.length;
+  }
 
   // Add examples (cap at MAX_EXAMPLES)
   const excerpt = message.length > 120 ? message.slice(0, 117) + "..." : message;
-  const examples = [
-    ...updated.examples,
-    { text: excerpt, pattern: result.pattern, date: now },
-  ];
-  updated.examples = examples.length > MAX_EXAMPLES ? examples.slice(examples.length - MAX_EXAMPLES) : examples;
+  const examples = [...updated.examples, { text: excerpt, pattern: result.pattern, date: now }];
+  updated.examples =
+    examples.length > MAX_EXAMPLES ? examples.slice(examples.length - MAX_EXAMPLES) : examples;
 
   // Recalculate dominant pattern
   const patternCounts: Array<[FinancePattern, number]> = [
@@ -203,14 +211,14 @@ export function updateFinanceProfile(profile: FinanceProfile, message: string): 
     ["abundance", updated.abundanceSignals],
     ["avoidance", updated.avoidanceSignals],
   ];
-  patternCounts.sort((a, b) => b[1] - a[1]);
+  const sortedPatternCounts = patternCounts.toSorted((a, b) => b[1] - a[1]);
 
-  if (patternCounts[0][1] === 0) {
+  if (sortedPatternCounts[0][1] === 0) {
     updated.dominantPattern = "mixed";
-  } else if (patternCounts[0][1] === patternCounts[1]?.[1]) {
+  } else if (sortedPatternCounts[0][1] === sortedPatternCounts[1]?.[1]) {
     updated.dominantPattern = "mixed";
   } else {
-    updated.dominantPattern = patternCounts[0][0];
+    updated.dominantPattern = sortedPatternCounts[0][0];
   }
 
   updated.lastUpdated = now;
@@ -220,20 +228,31 @@ export function updateFinanceProfile(profile: FinanceProfile, message: string): 
 // --- Book recommendations per pattern ---
 
 const PATTERN_BOOK_RECS: Record<FinancePattern, string> = {
-  anxiety: '"A Psicologia Financeira" de Morgan Housel — entenda por que medo domina suas decisoes financeiras.',
-  scarcity: '"A Psicologia Financeira" de Morgan Housel — a mentalidade de escassez te impede de ver oportunidades.',
-  avoidance: '"Pai Rico, Pai Pobre" de Robert Kiyosaki — evitar dinheiro nao e virtude, e medo disfarçado.',
-  abundance: '"O Investidor Inteligente" de Benjamin Graham — abundancia precisa de disciplina para durar.',
-  confident: '"Antifrágil" de Nassim Taleb — confianca e otima, mas construa sistemas que ganham com volatilidade.',
-  mixed: '"A Psicologia Financeira" de Morgan Housel — entenda seu proprio padrao emocional com dinheiro.',
+  anxiety:
+    '"A Psicologia Financeira" de Morgan Housel — entenda por que medo domina suas decisoes financeiras.',
+  scarcity:
+    '"A Psicologia Financeira" de Morgan Housel — a mentalidade de escassez te impede de ver oportunidades.',
+  avoidance:
+    '"Pai Rico, Pai Pobre" de Robert Kiyosaki — evitar dinheiro nao e virtude, e medo disfarçado.',
+  abundance:
+    '"O Investidor Inteligente" de Benjamin Graham — abundancia precisa de disciplina para durar.',
+  confident:
+    '"Antifrágil" de Nassim Taleb — confianca e otima, mas construa sistemas que ganham com volatilidade.',
+  mixed:
+    '"A Psicologia Financeira" de Morgan Housel — entenda seu proprio padrao emocional com dinheiro.',
 };
 
 const PATTERN_INSIGHTS: Record<FinancePattern, string> = {
-  anxiety: "Ansiedade financeira raramente e sobre dinheiro — e sobre controle. Foque no que voce controla.",
-  scarcity: "Mentalidade de escassez te faz cortar custos quando deveria investir. Pare e recalcule.",
-  avoidance: "Evitar falar de dinheiro nao faz o problema sumir. O primeiro passo e olhar os numeros.",
-  abundance: "Voce esta num ciclo positivo. Aproveite para construir reservas e sistemas que protegem esse momentum.",
-  confident: "Confianca com dinheiro e rara. Continue precificando pelo valor que entrega, nao pelo medo de perder.",
+  anxiety:
+    "Ansiedade financeira raramente e sobre dinheiro — e sobre controle. Foque no que voce controla.",
+  scarcity:
+    "Mentalidade de escassez te faz cortar custos quando deveria investir. Pare e recalcule.",
+  avoidance:
+    "Evitar falar de dinheiro nao faz o problema sumir. O primeiro passo e olhar os numeros.",
+  abundance:
+    "Voce esta num ciclo positivo. Aproveite para construir reservas e sistemas que protegem esse momentum.",
+  confident:
+    "Confianca com dinheiro e rara. Continue precificando pelo valor que entrega, nao pelo medo de perder.",
   mixed: "Seu padrao financeiro ainda esta se formando. Continue e a Donna vai refinar a analise.",
 };
 

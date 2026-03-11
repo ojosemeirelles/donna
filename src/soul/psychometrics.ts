@@ -10,11 +10,10 @@ import type {
   SoulProfile,
 } from "./types.js";
 
-const SOUL_DIR = path.join(os.homedir(), ".donna", "soul");
-const PROFILE_PATH = path.join(SOUL_DIR, "profile.json");
+const PROFILE_PATH = path.join(os.homedir(), ".donna", "soul", "profile.json");
 
 async function ensureSoulDir(): Promise<void> {
-  await fs.mkdir(SOUL_DIR, { recursive: true });
+  await fs.mkdir(path.dirname(PROFILE_PATH), { recursive: true });
 }
 
 async function readProfileFile(): Promise<SoulProfile | null> {
@@ -67,7 +66,8 @@ function createDefaultSoulProfile(): SoulProfile {
 // --- Signal helpers ---
 
 function extractText(obs: Observation): string {
-  return `${obs.messageExcerpt} ${String((obs.data as Record<string, unknown>)["text"] ?? "")}`.toLowerCase();
+  const textVal = obs.data["text"];
+  return `${obs.messageExcerpt} ${typeof textVal === "string" ? textVal : ""}`.toLowerCase();
 }
 
 function countSignals(observations: Observation[], patterns: string[]): number {
@@ -75,7 +75,9 @@ function countSignals(observations: Observation[], patterns: string[]): number {
   for (const obs of observations) {
     const text = extractText(obs);
     for (const p of patterns) {
-      if (text.includes(p)) count++;
+      if (text.includes(p)) {
+        count++;
+      }
     }
   }
   return count;
@@ -86,7 +88,9 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 function scaleToHundred(signalCount: number, total: number, base: number): number {
-  if (total === 0) return base;
+  if (total === 0) {
+    return base;
+  }
   const ratio = signalCount / total;
   return clamp(Math.round(base + ratio * 80), 0, 100);
 }
@@ -94,22 +98,56 @@ function scaleToHundred(signalCount: number, total: number, base: number): numbe
 // --- OCEAN ---
 
 const OPENNESS_SIGNALS = [
-  "ideia", "imagina", "e se", "novo", "diferente", "criativo", "experimentar",
-  "curioso", "interessante", "metáfora", "analogia",
+  "ideia",
+  "imagina",
+  "e se",
+  "novo",
+  "diferente",
+  "criativo",
+  "experimentar",
+  "curioso",
+  "interessante",
+  "metáfora",
+  "analogia",
 ];
 const CONSCIENTIOUSNESS_SIGNALS = [
-  "deadline", "prazo", "organiz", "agenda", "planej", "checklist", "prioridade",
-  "cronograma", "compromisso", "terminei", "entreguei",
+  "deadline",
+  "prazo",
+  "organiz",
+  "agenda",
+  "planej",
+  "checklist",
+  "prioridade",
+  "cronograma",
+  "compromisso",
+  "terminei",
+  "entreguei",
 ];
 const EXTRAVERSION_SIGNALS = [
-  "galera", "pessoal", "evento", "festa", "grupo", "reunião", "call",
-  "encontr", "conversar", "networking",
+  "galera",
+  "pessoal",
+  "evento",
+  "festa",
+  "grupo",
+  "reunião",
+  "call",
+  "encontr",
+  "conversar",
+  "networking",
 ];
 const AGREEABLENESS_POSITIVE = ["vamos", "nós", "juntos", "colabor", "ajudar", "apoiar", "equipe"];
 const AGREEABLENESS_NEGATIVE = ["faça", "preciso que", "quero que", "exijo"];
 const NEUROTICISM_SIGNALS = [
-  "ansied", "preocup", "medo", "insegur", "dúvida", "estresse", "pressão",
-  "não consigo", "fracass", "erro meu",
+  "ansied",
+  "preocup",
+  "medo",
+  "insegur",
+  "dúvida",
+  "estresse",
+  "pressão",
+  "não consigo",
+  "fracass",
+  "erro meu",
 ];
 
 export function updateOceanFromObservations(observations: Observation[]): OceanProfile {
@@ -117,12 +155,24 @@ export function updateOceanFromObservations(observations: Observation[]): OceanP
   const base = 50;
 
   const openness = scaleToHundred(countSignals(observations, OPENNESS_SIGNALS), total, base);
-  const conscientiousness = scaleToHundred(countSignals(observations, CONSCIENTIOUSNESS_SIGNALS), total, base);
-  const extraversion = scaleToHundred(countSignals(observations, EXTRAVERSION_SIGNALS), total, base);
+  const conscientiousness = scaleToHundred(
+    countSignals(observations, CONSCIENTIOUSNESS_SIGNALS),
+    total,
+    base,
+  );
+  const extraversion = scaleToHundred(
+    countSignals(observations, EXTRAVERSION_SIGNALS),
+    total,
+    base,
+  );
 
   const agreePos = countSignals(observations, AGREEABLENESS_POSITIVE);
   const agreeNeg = countSignals(observations, AGREEABLENESS_NEGATIVE);
-  const agreeableness = clamp(Math.round(base + ((agreePos - agreeNeg) / Math.max(total, 1)) * 60), 0, 100);
+  const agreeableness = clamp(
+    Math.round(base + ((agreePos - agreeNeg) / Math.max(total, 1)) * 60),
+    0,
+    100,
+  );
 
   const neuroticism = scaleToHundred(countSignals(observations, NEUROTICISM_SIGNALS), total, base);
 
@@ -131,10 +181,43 @@ export function updateOceanFromObservations(observations: Observation[]): OceanP
 
 // --- DISC ---
 
-const D_SIGNALS = ["quero", "preciso", "agora", "resultado", "meta", "ganhar", "vencer", "competir"];
-const I_SIGNALS = ["incrível", "animado", "empolgado", "convencer", "influenci", "motivar", "entusiasm"];
-const S_SIGNALS = ["calma", "paciência", "consistente", "rotina", "equipe", "estabilidade", "confiança"];
-const C_SIGNALS = ["dados", "detalhe", "processo", "análise", "precisão", "qualidade", "procedimento"];
+const D_SIGNALS = [
+  "quero",
+  "preciso",
+  "agora",
+  "resultado",
+  "meta",
+  "ganhar",
+  "vencer",
+  "competir",
+];
+const I_SIGNALS = [
+  "incrível",
+  "animado",
+  "empolgado",
+  "convencer",
+  "influenci",
+  "motivar",
+  "entusiasm",
+];
+const S_SIGNALS = [
+  "calma",
+  "paciência",
+  "consistente",
+  "rotina",
+  "equipe",
+  "estabilidade",
+  "confiança",
+];
+const C_SIGNALS = [
+  "dados",
+  "detalhe",
+  "processo",
+  "análise",
+  "precisão",
+  "qualidade",
+  "procedimento",
+];
 
 export function updateDISCFromObservations(observations: Observation[]): DISCProfile {
   const total = observations.length;
@@ -150,8 +233,20 @@ export function updateDISCFromObservations(observations: Observation[]): DISCPro
 
 // --- Genius Zone ---
 
-const FLOW_SIGNALS = ["perdi a noção do tempo", "flow", "hiperfoco", "absorvido", "não vi o tempo passar"];
-const EXCELLENCE_SIGNALS = ["elogiaram", "destaque", "melhor em", "forte em", "minha especialidade"];
+const FLOW_SIGNALS = [
+  "perdi a noção do tempo",
+  "flow",
+  "hiperfoco",
+  "absorvido",
+  "não vi o tempo passar",
+];
+const EXCELLENCE_SIGNALS = [
+  "elogiaram",
+  "destaque",
+  "melhor em",
+  "forte em",
+  "minha especialidade",
+];
 const INCOMPETENCE_SIGNALS = ["odeio", "delegar isso", "não suporto", "péssimo em", "evitar"];
 const COMPETENCE_SIGNALS = ["rotina", "obrigação", "tenho que", "parte do trabalho"];
 
@@ -181,9 +276,13 @@ export function detectGeniusZone(observations: Observation[]): GeniusZoneProfile
 
   // Determine current zone based on most recent signals
   let currentZone: GeniusZoneProfile["currentZone"] = "competence";
-  if (genius.length > 0) currentZone = "genius";
-  else if (excellence.length > incompetence.length) currentZone = "excellence";
-  else if (incompetence.length > excellence.length) currentZone = "incompetence";
+  if (genius.length > 0) {
+    currentZone = "genius";
+  } else if (excellence.length > incompetence.length) {
+    currentZone = "excellence";
+  } else if (incompetence.length > excellence.length) {
+    currentZone = "incompetence";
+  }
 
   return { currentZone, incompetence, competence, excellence, genius };
 }
@@ -193,30 +292,52 @@ export function detectGeniusZone(observations: Observation[]): GeniusZoneProfile
 export function generatePsychometricReport(profile: PsychometricProfile): string {
   const { ocean, disc, geniusZone } = profile;
 
-  const oceanHighest = (Object.entries(ocean) as Array<[string, number]>)
-    .sort((a, b) => b[1] - a[1])
+  const oceanHighest = Object.entries(ocean)
+    .toSorted((a, b) => b[1] - a[1])
     .slice(0, 2)
     .map(([k]) => k);
 
-  const discHighest = (Object.entries(disc) as Array<[string, number]>)
-    .sort((a, b) => b[1] - a[1])
+  const discHighest = Object.entries(disc)
+    .toSorted((a, b) => b[1] - a[1])
     .slice(0, 2)
     .map(([k]) => k);
 
   const strengths: string[] = [];
-  if (ocean.openness > 65) strengths.push("Alta criatividade e abertura a novas ideias");
-  if (ocean.conscientiousness > 65) strengths.push("Forte organizacao e disciplina");
-  if (disc.dominance > 65) strengths.push("Orientado a resultados");
-  if (disc.influence > 65) strengths.push("Capacidade de influenciar e motivar");
-  if (geniusZone.genius.length > 0) strengths.push(`Zona de genialidade identificada`);
-  if (strengths.length === 0) strengths.push("Perfil equilibrado, sem extremos");
+  if (ocean.openness > 65) {
+    strengths.push("Alta criatividade e abertura a novas ideias");
+  }
+  if (ocean.conscientiousness > 65) {
+    strengths.push("Forte organizacao e disciplina");
+  }
+  if (disc.dominance > 65) {
+    strengths.push("Orientado a resultados");
+  }
+  if (disc.influence > 65) {
+    strengths.push("Capacidade de influenciar e motivar");
+  }
+  if (geniusZone.genius.length > 0) {
+    strengths.push(`Zona de genialidade identificada`);
+  }
+  if (strengths.length === 0) {
+    strengths.push("Perfil equilibrado, sem extremos");
+  }
 
   const limiting: string[] = [];
-  if (ocean.neuroticism > 65) limiting.push("Tendencia a estresse e ansiedade");
-  if (ocean.agreeableness < 35) limiting.push("Dificuldade em colaboracao e delegacao");
-  if (disc.steadiness < 35) limiting.push("Impaciente com processos lentos");
-  if (geniusZone.incompetence.length > 0) limiting.push("Areas de incompetencia nao delegadas");
-  if (limiting.length === 0) limiting.push("Nenhum padrao limitante significativo detectado");
+  if (ocean.neuroticism > 65) {
+    limiting.push("Tendencia a estresse e ansiedade");
+  }
+  if (ocean.agreeableness < 35) {
+    limiting.push("Dificuldade em colaboracao e delegacao");
+  }
+  if (disc.steadiness < 35) {
+    limiting.push("Impaciente com processos lentos");
+  }
+  if (geniusZone.incompetence.length > 0) {
+    limiting.push("Areas de incompetencia nao delegadas");
+  }
+  if (limiting.length === 0) {
+    limiting.push("Nenhum padrao limitante significativo detectado");
+  }
 
   const lines = [
     "=== PERFIL PSICOMETRICO ===",
@@ -240,7 +361,9 @@ export function generatePsychometricReport(profile: PsychometricProfile): string
     `  Zona atual: ${geniusZone.currentZone}`,
     geniusZone.genius.length > 0 ? `  Genialidade: ${geniusZone.genius.join("; ")}` : "",
     geniusZone.excellence.length > 0 ? `  Excelencia: ${geniusZone.excellence.join("; ")}` : "",
-    geniusZone.incompetence.length > 0 ? `  Incompetencia: ${geniusZone.incompetence.join("; ")}` : "",
+    geniusZone.incompetence.length > 0
+      ? `  Incompetencia: ${geniusZone.incompetence.join("; ")}`
+      : "",
     "",
     "-- Top 3 Forcas --",
     ...strengths.slice(0, 3).map((s, i) => `  ${i + 1}. ${s}`),
@@ -288,7 +411,13 @@ export function recalculateProfile(observations: Observation[]): PsychometricPro
 
   const confidence: Record<string, number> = {};
   const minConfidence = Math.min(observations.length * 2, 100);
-  for (const key of ["openness", "conscientiousness", "extraversion", "agreeableness", "neuroticism"]) {
+  for (const key of [
+    "openness",
+    "conscientiousness",
+    "extraversion",
+    "agreeableness",
+    "neuroticism",
+  ]) {
     confidence[key] = clamp(minConfidence, 0, 100);
   }
   for (const key of ["dominance", "influence", "steadiness", "disc_conscientiousness"]) {

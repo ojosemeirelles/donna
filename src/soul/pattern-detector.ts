@@ -42,8 +42,12 @@ function extractSubject(obs: Observation): string {
 }
 
 function severity(count: number): DetectedPattern["severity"] {
-  if (count >= 7) return "significant";
-  if (count >= 5) return "moderate";
+  if (count >= 7) {
+    return "significant";
+  }
+  if (count >= 5) {
+    return "moderate";
+  }
   return "mild";
 }
 
@@ -51,7 +55,9 @@ function groupBySubject(observations: Observation[]): Map<string, Observation[]>
   const groups = new Map<string, Observation[]>();
   for (const obs of observations) {
     const subject = extractSubject(obs);
-    if (!subject) continue;
+    if (!subject) {
+      continue;
+    }
     const existing = groups.get(subject);
     if (existing) {
       existing.push(obs);
@@ -67,7 +73,9 @@ export function detectProcrastination(observations: Observation[]): DetectedPatt
   const groups = groupBySubject(observations);
 
   for (const [subject, entries] of groups) {
-    if (entries.length < 3) continue;
+    if (entries.length < 3) {
+      continue;
+    }
 
     // Check if any entry signals completion
     const doneSignals = ["feito", "pronto", "concluido", "terminei", "done", "finalizado"];
@@ -76,7 +84,7 @@ export function detectProcrastination(observations: Observation[]): DetectedPatt
     );
 
     if (!hasDone) {
-      const sorted = entries.sort((a, b) => a.timestamp - b.timestamp);
+      const sorted = entries.toSorted((a, b) => a.timestamp - b.timestamp);
       patterns.push({
         type: "procrastination",
         subject,
@@ -96,20 +104,28 @@ export function detectProcrastination(observations: Observation[]): DetectedPatt
 export function detectAvoidance(observations: Observation[]): DetectedPattern[] {
   const patterns: DetectedPattern[] = [];
   const deflectionSignals = [
-    "depois vejo", "deixa pra la", "nao quero falar", "muda de assunto",
-    "tanto faz", "sei la", "esquece", "nao importa",
+    "depois vejo",
+    "deixa pra la",
+    "nao quero falar",
+    "muda de assunto",
+    "tanto faz",
+    "sei la",
+    "esquece",
+    "nao importa",
   ];
   const groups = groupBySubject(observations);
 
   for (const [subject, entries] of groups) {
-    if (entries.length < 2) continue;
+    if (entries.length < 2) {
+      continue;
+    }
 
     const deflected = entries.filter((e) =>
       deflectionSignals.some((s) => e.messageExcerpt.toLowerCase().includes(s)),
     );
 
     if (deflected.length >= 2) {
-      const sorted = entries.sort((a, b) => a.timestamp - b.timestamp);
+      const sorted = entries.toSorted((a, b) => a.timestamp - b.timestamp);
       patterns.push({
         type: "avoidance",
         subject,
@@ -132,17 +148,18 @@ export function detectStressLoop(observations: Observation[]): DetectedPattern[]
   const recent = observations.filter((o) => o.timestamp >= tenDaysAgo);
 
   const stressObs = recent.filter((o) => {
-    const data = o.data as Record<string, unknown>;
-    return (typeof data.stressLevel === "number" && data.stressLevel >= 6) ||
-      o.type === "pattern";
+    const data = o.data;
+    return (typeof data.stressLevel === "number" && data.stressLevel >= 6) || o.type === "pattern";
   });
 
   const groups = groupBySubject(stressObs);
 
   for (const [subject, entries] of groups) {
-    if (entries.length < 5) continue;
+    if (entries.length < 5) {
+      continue;
+    }
 
-    const sorted = entries.sort((a, b) => a.timestamp - b.timestamp);
+    const sorted = entries.toSorted((a, b) => a.timestamp - b.timestamp);
     patterns.push({
       type: "stress_loop",
       subject,
@@ -162,16 +179,27 @@ export function detectDecisionBias(observations: Observation[]): DetectedPattern
   const patterns: DetectedPattern[] = [];
 
   const perfectionismSignals = [
-    "nao esta bom o suficiente", "preciso melhorar", "refazer", "mais uma vez",
-    "ainda nao", "falta algo",
+    "nao esta bom o suficiente",
+    "preciso melhorar",
+    "refazer",
+    "mais uma vez",
+    "ainda nao",
+    "falta algo",
   ];
   const paralysisSignals = [
-    "preciso pensar mais", "vou pesquisar", "nao sei decidir",
-    "preciso de mais dados", "vou analisar",
+    "preciso pensar mais",
+    "vou pesquisar",
+    "nao sei decidir",
+    "preciso de mais dados",
+    "vou analisar",
   ];
   const impulsivitySignals = [
-    "me arrependi", "nao devia ter", "fiz sem pensar", "precipitei",
-    "devia ter pensado", "erro meu",
+    "me arrependi",
+    "nao devia ter",
+    "fiz sem pensar",
+    "precipitei",
+    "devia ter pensado",
+    "erro meu",
   ];
 
   const biasChecks: Array<{ type: PatternType; signals: string[] }> = [
@@ -186,7 +214,7 @@ export function detectDecisionBias(observations: Observation[]): DetectedPattern
     );
 
     if (matches.length >= 3) {
-      const sorted = matches.sort((a, b) => a.timestamp - b.timestamp);
+      const sorted = matches.toSorted((a, b) => a.timestamp - b.timestamp);
       patterns.push({
         type: check.type,
         subject: `padrao de ${check.type.replace("_", " ")}`,
@@ -250,7 +278,7 @@ export function formatPatternReport(patterns: DetectedPattern[]): string {
   const severityOrder: Record<string, number> = { significant: 0, moderate: 1, mild: 2 };
   const sorted = [...patterns]
     .filter((p) => !p.addressed)
-    .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+    .toSorted((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
   if (sorted.length === 0) {
     lines.push("Todos os padroes detectados ja foram endereados.");
@@ -276,7 +304,9 @@ export function formatPatternReport(patterns: DetectedPattern[]): string {
 
     lines.push(`[${severityLabels[pattern.severity]}] ${typeLabels[pattern.type]}`);
     lines.push(`  Parece que "${pattern.subject}" aparece com frequencia.`);
-    lines.push(`  Detectado ha ${daysAgo(pattern.firstDetected)} dias, visto ${pattern.occurrences} vezes.`);
+    lines.push(
+      `  Detectado ha ${daysAgo(pattern.firstDetected)} dias, visto ${pattern.occurrences} vezes.`,
+    );
 
     if (pattern.examples.length > 0) {
       lines.push("  Exemplos:");
@@ -295,27 +325,37 @@ export function getPatternAlerts(patterns: DetectedPattern[]): string[] {
 
   const significant = patterns
     .filter((p) => !p.addressed && (p.severity === "significant" || p.severity === "moderate"))
-    .sort((a, b) => b.occurrences - a.occurrences);
+    .toSorted((a, b) => b.occurrences - a.occurrences);
 
   for (const pattern of significant.slice(0, 2)) {
     switch (pattern.type) {
       case "procrastination":
-        alerts.push(`Parece que "${pattern.subject}" continua pendente. Quer que eu te ajude a quebrar em passos menores?`);
+        alerts.push(
+          `Parece que "${pattern.subject}" continua pendente. Quer que eu te ajude a quebrar em passos menores?`,
+        );
         break;
       case "avoidance":
-        alerts.push(`Voce tem evitado "${pattern.subject}" ha um tempo. Quando quiser falar sobre isso, estou aqui.`);
+        alerts.push(
+          `Voce tem evitado "${pattern.subject}" ha um tempo. Quando quiser falar sobre isso, estou aqui.`,
+        );
         break;
       case "stress_loop":
-        alerts.push(`"${pattern.subject}" esta gerando estresse recorrente. Talvez seja hora de resolver de vez.`);
+        alerts.push(
+          `"${pattern.subject}" esta gerando estresse recorrente. Talvez seja hora de resolver de vez.`,
+        );
         break;
       case "perfectionism":
-        alerts.push(`Parece que o perfeccionismo esta atrasando suas entregas. "Feito" e melhor que "perfeito"?`);
+        alerts.push(
+          `Parece que o perfeccionismo esta atrasando suas entregas. "Feito" e melhor que "perfeito"?`,
+        );
         break;
       case "analysis_paralysis":
         alerts.push(`Voce esta analisando demais. Que tal definir um prazo para decidir?`);
         break;
       case "impulsivity":
-        alerts.push(`Algumas decisoes recentes geraram arrependimento. Quer criar uma regra de "esperar 24h"?`);
+        alerts.push(
+          `Algumas decisoes recentes geraram arrependimento. Quer criar uma regra de "esperar 24h"?`,
+        );
         break;
       default:
         alerts.push(`Padrao detectado em "${pattern.subject}". Quer conversar sobre isso?`);

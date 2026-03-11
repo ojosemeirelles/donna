@@ -1,18 +1,27 @@
-/**
- * SOUL Engine — main orchestrator that ties all soul modules together.
- * Processes every user message to build emotional intelligence context.
- * Never throws — processMessage must be fault-tolerant.
- */
-import type { VoiceSnapshot, SoulContext, Observation } from "./types.js";
-import { analyzeVoice } from "./voice-analyzer.js";
+import { createSubsystemLogger } from "../logging/subsystem.js";
 import {
-  loadSoulProfile,
-  saveSoulProfile,
-  appendObservation,
-  loadRecentObservations,
-  buildSoulContext,
-  ensureSoulDir,
-} from "./soul-profile.js";
+  detectWin,
+  loadCelebrations,
+  saveCelebrations,
+  recordWin,
+  formatCelebrationReport,
+} from "./celebration.js";
+import {
+  detectDream,
+  loadDreams,
+  saveDreams,
+  addDream,
+  getDreamReminders,
+  formatDreamReport,
+} from "./dream-vault.js";
+import { generateRecommendations, formatGrowthPlan } from "./growth-curator.js";
+import {
+  loadRhythms,
+  saveRhythms,
+  recordDataPoint,
+  generateProductivityMap,
+} from "./productivity-map.js";
+import { generatePsychometricReport, loadPsychometricProfile } from "./psychometrics.js";
 import {
   extractPeople,
   updateRelationship,
@@ -23,25 +32,26 @@ import {
   formatRelationshipReport,
 } from "./relational-memory.js";
 import {
-  detectDream,
-  loadDreams,
-  saveDreams,
-  addDream,
-  getDreamReminders,
-  formatDreamReport,
-} from "./dream-vault.js";
-import { loadRhythms, saveRhythms, recordDataPoint, generateProductivityMap } from "./productivity-map.js";
-import {
   analyzeFinanceSignals,
   loadFinanceProfile,
   saveFinanceProfile,
   updateFinanceProfile,
   generateFinanceReport,
 } from "./shadow-finance.js";
-import { detectWin, loadCelebrations, saveCelebrations, recordWin, formatCelebrationReport } from "./celebration.js";
-import { generateRecommendations, formatGrowthPlan } from "./growth-curator.js";
-import { generatePsychometricReport, loadPsychometricProfile } from "./psychometrics.js";
-import { createSubsystemLogger } from "../logging/subsystem.js";
+import {
+  loadSoulProfile,
+  saveSoulProfile,
+  appendObservation,
+  buildSoulContext,
+  ensureSoulDir,
+} from "./soul-profile.js";
+/**
+ * SOUL Engine — main orchestrator that ties all soul modules together.
+ * Processes every user message to build emotional intelligence context.
+ * Never throws — processMessage must be fault-tolerant.
+ */
+import type { VoiceSnapshot, SoulContext } from "./types.js";
+import { analyzeVoice } from "./voice-analyzer.js";
 
 const log = createSubsystemLogger("soul");
 
@@ -235,14 +245,15 @@ export async function generateFullReport(): Promise<string> {
     try {
       const celebrations = await loadCelebrations();
       const celebReport = formatCelebrationReport(celebrations);
-      if (celebReport) sections.push(celebReport);
+      if (celebReport) {
+        sections.push(celebReport);
+      }
     } catch {
       // celebration module may not exist yet
     }
 
     // Growth plan
     const profile = await loadSoulProfile();
-    const observations = await loadRecentObservations(30);
     const rec = generateRecommendations({
       psychometrics,
       currentSnapshot: null,
@@ -330,7 +341,9 @@ export async function getMorningBriefSoul(): Promise<string | null> {
         rushed: "apressado",
         neutral: "estavel",
       };
-      parts.push(`Ontem voce parecia ${moodLabel[currentState.mood] ?? currentState.mood}, energia ${currentState.energy}.`);
+      parts.push(
+        `Ontem voce parecia ${moodLabel[currentState.mood] ?? currentState.mood}, energia ${currentState.energy}.`,
+      );
     }
 
     // 1 psychometric insight
@@ -372,7 +385,9 @@ export async function getMorningBriefSoul(): Promise<string | null> {
       // celebration module may not exist yet
     }
 
-    if (parts.length === 0) return null;
+    if (parts.length === 0) {
+      return null;
+    }
 
     return ["[Soul]", ...parts].join("\n  ");
   } catch (err) {
@@ -412,7 +427,11 @@ export async function handleSoulCommand(command: string): Promise<string> {
       }
     }
 
-    if (normalized.includes("o que devo ler") || normalized.includes("leitura") || normalized.includes("growth")) {
+    if (
+      normalized.includes("o que devo ler") ||
+      normalized.includes("leitura") ||
+      normalized.includes("growth")
+    ) {
       const finProfile = await loadFinanceProfile();
       const profile = await loadSoulProfile();
       const psychometrics = await loadPsychometricProfile();
@@ -431,15 +450,26 @@ export async function handleSoulCommand(command: string): Promise<string> {
       return formatRelationshipReport(relMap);
     }
 
-    if (normalized.includes("padrao financeiro") || normalized.includes("financas") || normalized.includes("finance")) {
+    if (
+      normalized.includes("padrao financeiro") ||
+      normalized.includes("financas") ||
+      normalized.includes("finance")
+    ) {
       const finProfile = await loadFinanceProfile();
       return generateFinanceReport(finProfile);
     }
 
-    if (normalized.includes("minhas vitorias") || normalized.includes("celebracoes") || normalized.includes("wins")) {
+    if (
+      normalized.includes("minhas vitorias") ||
+      normalized.includes("celebracoes") ||
+      normalized.includes("wins")
+    ) {
       try {
         const celebrations = await loadCelebrations();
-        return formatCelebrationReport(celebrations) || "Nenhuma vitoria registrada ainda. Continue — a Donna vai notar.";
+        return (
+          formatCelebrationReport(celebrations) ||
+          "Nenhuma vitoria registrada ainda. Continue — a Donna vai notar."
+        );
       } catch {
         return "Modulo de celebracoes ainda nao disponivel.";
       }
@@ -471,4 +501,3 @@ export async function handleSoulCommand(command: string): Promise<string> {
     return "Erro ao processar comando. Tente novamente.";
   }
 }
-

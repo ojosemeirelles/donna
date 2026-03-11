@@ -1,9 +1,4 @@
-import fs from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
 import type { RelationshipHealth, RelationshipCategory, Person } from "./types.js";
-
-const SOUL_DIR = path.join(os.homedir(), ".donna", "soul");
 
 const RELATIONSHIP_TO_CATEGORY: Record<Person["relationship"], RelationshipCategory> = {
   family: "family",
@@ -54,7 +49,7 @@ export function analyzeNetworkHealth(people: Person[]): RelationshipHealth[] {
     const healthScore = total > 0 ? Math.round((positive / total) * 10 * 10) / 10 : 5;
 
     // Key people: top 3 by mention count
-    const sortedByMentions = [...members].sort((a, b) => b.mentionCount - a.mentionCount);
+    const sortedByMentions = [...members].toSorted((a, b) => b.mentionCount - a.mentionCount);
     const keyPeople = sortedByMentions.slice(0, 3).map((p) => p.name);
 
     results.push({
@@ -117,10 +112,18 @@ const CATEGORY_LABELS: Record<RelationshipCategory, string> = {
 };
 
 function healthIndicator(score: number): string {
-  if (score >= 8) return "[+++]";
-  if (score >= 6) return "[++ ]";
-  if (score >= 4) return "[+  ]";
-  if (score >= 2) return "[-  ]";
+  if (score >= 8) {
+    return "[+++]";
+  }
+  if (score >= 6) {
+    return "[++ ]";
+  }
+  if (score >= 4) {
+    return "[+  ]";
+  }
+  if (score >= 2) {
+    return "[-  ]";
+  }
   return "[-- ]";
 }
 
@@ -153,7 +156,9 @@ export function generateMonthlyInsight(people: Person[], health: RelationshipHea
   // Brief analysis
   lines.push("");
   const totalPeople = people.length;
-  const conflictCount = people.filter((p) => p.sentiment === "conflict" || p.sentiment === "tension").length;
+  const conflictCount = people.filter(
+    (p) => p.sentiment === "conflict" || p.sentiment === "tension",
+  ).length;
   if (conflictCount > 0 && totalPeople > 0) {
     const pct = Math.round((conflictCount / totalPeople) * 100);
     lines.push(`${pct}% das suas relacoes mapeadas tem alguma tensao. Vale refletir sobre isso.`);
@@ -181,7 +186,7 @@ export function formatNetworkReport(people: Person[], health: RelationshipHealth
 
     lines.push(`${CATEGORY_LABELS[category]} ${indicator} (${score.toFixed(1)}/10)`);
 
-    const sorted = [...members].sort((a, b) => b.mentionCount - a.mentionCount);
+    const sorted = [...members].toSorted((a, b) => b.mentionCount - a.mentionCount);
     for (const person of sorted) {
       const sentimentLabel: Record<Person["sentiment"], string> = {
         positive: "+",
@@ -191,7 +196,9 @@ export function formatNetworkReport(people: Person[], health: RelationshipHealth
       };
       const lastDays = Math.floor((Date.now() - person.lastMentioned) / (24 * 60 * 60 * 1000));
       const contactLabel = lastDays === 0 ? "hoje" : `${lastDays}d atras`;
-      lines.push(`  ${sentimentLabel[person.sentiment]} ${person.name} (${person.mentionCount}x, ${contactLabel})`);
+      lines.push(
+        `  ${sentimentLabel[person.sentiment]} ${person.name} (${person.mentionCount}x, ${contactLabel})`,
+      );
     }
     lines.push("");
   }
@@ -199,7 +206,9 @@ export function formatNetworkReport(people: Person[], health: RelationshipHealth
   // Summary
   const totalPositive = health.reduce((sum, h) => sum + h.positiveMentions, 0);
   const totalNegative = health.reduce((sum, h) => sum + h.negativeMentions, 0);
-  lines.push(`Total: ${people.length} pessoas, ${totalPositive} mencoes positivas, ${totalNegative} negativas.`);
+  lines.push(
+    `Total: ${people.length} pessoas, ${totalPositive} mencoes positivas, ${totalNegative} negativas.`,
+  );
 
   return lines.join("\n");
 }
