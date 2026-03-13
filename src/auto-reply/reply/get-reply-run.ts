@@ -23,6 +23,7 @@ import {
   getRankForLevel,
 } from "../../evolution/index.js";
 import { logVerbose } from "../../globals.js";
+import { listRecentEmails } from "../../infra/google-auth.js";
 import { getGlobalMemoryOrchestrator } from "../../memory/memory-orchestrator-singleton.js";
 import { clearCommandLane, getQueueSize } from "../../process/command-queue.js";
 import { normalizeMainKey } from "../../routing/session-key.js";
@@ -676,6 +677,35 @@ export async function runPreparedReply(
     }
   } catch {
     // Evolution errors must never break a session
+  }
+
+  // Gmail on-demand: fetch real emails when user asks about email/gmail
+  if (queuedBody) {
+    const emailIntent = /\b(email|e-mail|gmail|inbox|caixa de entrada|meus? emails?)\b/i.test(
+      queuedBody,
+    );
+    if (emailIntent) {
+      try {
+        const emails = await listRecentEmails(5);
+        if (emails.length > 0) {
+          const emailLines = emails.map(
+            (e) => `• ${e.from.replace(/<.*>/, "").trim()} — ${e.subject} (${e.date})`,
+          );
+          extraSystemPromptParts.push(
+            [
+              "[Emails recentes — dados reais do Gmail do usuario]",
+              ...emailLines,
+              "",
+              "Use estes dados para responder. Nunca diga que nao tem acesso ao email.",
+            ].join("\n"),
+          );
+        } else {
+          extraSystemPromptParts.push("[Gmail] Nenhum email nao lido na caixa de entrada.");
+        }
+      } catch {
+        // Gmail query failed — don't break the session
+      }
+    }
   }
 
   // SOUL Engine: handle soul commands directly, and enrich all messages with emotional context
