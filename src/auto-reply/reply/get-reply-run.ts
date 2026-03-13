@@ -665,7 +665,8 @@ export async function runPreparedReply(
     try {
       const soulIntent = classifyIntent(queuedBody);
       if (isSoulIntent(soulIntent)) {
-        // Soul command — handle directly and return response
+        // Soul command — handle directly; routeReply sends to channel,
+        // return SILENT to prevent the bot handler from sending a duplicate.
         try {
           const soulResponse = await handleSoulCommand(queuedBody);
           const originChannel = ctx.OriginatingChannel ?? sessionCtx.Provider;
@@ -680,7 +681,7 @@ export async function runPreparedReply(
               threadId: ctx.MessageThreadId,
               cfg,
             });
-            return { text: soulResponse };
+            return { text: SILENT_REPLY_TOKEN };
           }
         } catch {
           // Soul command failed — fall through to normal reply
