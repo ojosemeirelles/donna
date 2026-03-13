@@ -490,6 +490,23 @@ export async function runPreparedReply(
     }
   }
 
+  // Donna capabilities — injected so the LLM knows what tools/integrations are active
+  extraSystemPromptParts.push(
+    [
+      "[Capacidades ativas da Donna]",
+      "Voce TEM acesso a estas integracoes — use-as quando relevante, nunca diga que nao tem acesso:",
+      "- Gmail: le, classifica e alerta sobre emails (OAuth autorizado, gmail-watch ativo)",
+      "- Google Calendar: agenda e compromissos do dia (calendar.readonly autorizado)",
+      "- Morning Brief: resumo diario enviado as 7h com email, agenda, tarefas, soul e foco do dia",
+      "- SOUL Engine: analisa humor, energia, estresse e perfil psicometrico do usuario em cada mensagem",
+      "- Shadow Army: 8 agentes especializados (Igris, Tusk, Jima, Iron, Tank, Bellion, Kaisel, Beru)",
+      "- Stripe: monitoramento de pagamentos e receita (se configurado)",
+      "- Notion: gestao de tasks e notas (se configurado)",
+      "- WhatsApp: envio proativo de mensagens (se configurado)",
+      "Quando o usuario perguntar sobre email, calendario ou qualquer capacidade acima, use diretamente.",
+    ].join("\n"),
+  );
+
   // Evolution Engine: track interaction + inject level context
   try {
     const evoTracker = EvolutionTracker.getGlobal();
@@ -539,10 +556,11 @@ export async function runPreparedReply(
       }
     }
     // Shadow Army: orchestrate intent → dispatch to real shadow session via Pi runner
+    // Skip shadow dispatch for soul intents — handled separately below
     try {
       const currentRank = getRankForLevel(evoTracker.getLevel());
       const shadowResult = await orchestrate(queuedBody ?? "", currentRank);
-      if (shadowResult.delegated && shadowResult.shadow) {
+      if (shadowResult.delegated && shadowResult.shadow && !isSoulIntent(shadowResult.intent)) {
         // Attempt real delegation via Pi embedded runner
         try {
           const shadowDeps: DispatchDeps = {
