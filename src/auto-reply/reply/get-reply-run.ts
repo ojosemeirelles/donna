@@ -702,8 +702,17 @@ export async function runPreparedReply(
         } else {
           extraSystemPromptParts.push("[Gmail] Nenhum email nao lido na caixa de entrada.");
         }
-      } catch {
-        // Gmail query failed — don't break the session
+      } catch (gmailErr) {
+        // Gmail query failed — inject fallback so the LLM doesn't deny having access
+        extraSystemPromptParts.push(
+          [
+            "[Gmail] Erro temporario ao consultar emails — OAuth pode precisar de refresh.",
+            "Voce TEM acesso ao Gmail do usuario mas houve um erro tecnico nesta consulta.",
+            "Diga ao usuario que houve um problema temporario ao consultar o Gmail e sugira tentar novamente em instantes.",
+            "NUNCA diga que voce nao tem acesso ao email — voce tem, so houve uma falha temporaria.",
+          ].join("\n"),
+        );
+        console.error("[gmail-on-demand] query failed:", (gmailErr as Error).message);
       }
     }
   }
