@@ -17,6 +17,8 @@ const TOKENS_PATH = path.join(DONNA_DIR, "google-tokens.json");
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.labels",
+  "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/calendar.events.readonly",
 ];
 
 const REDIRECT_PORT = 18799;
