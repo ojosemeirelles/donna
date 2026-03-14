@@ -11,8 +11,8 @@ import path from "node:path";
 import { resolveStateDir } from "../../../config/paths.js";
 import { loadCronStore, resolveCronStorePath, saveCronStore } from "../../../cron/store.js";
 import type { CronJob } from "../../../cron/types.js";
-import { EvolutionTracker } from "../../../evolution/tracker.js";
 import { buildReportData, formatReportTelegram } from "../../../evolution/report.js";
+import { EvolutionTracker } from "../../../evolution/tracker.js";
 import { createSubsystemLogger } from "../../../logging/subsystem.js";
 import type { HookHandler } from "../../hooks.js";
 import { isGatewayStartupEvent } from "../../internal-hooks.js";
@@ -31,9 +31,7 @@ export type EvolutionReportConfig = {
 };
 
 /** Load config from ~/.donna/hooks/evolution-report/config.json. */
-export async function loadEvolutionReportConfig(
-  stateDir: string,
-): Promise<EvolutionReportConfig> {
+export async function loadEvolutionReportConfig(stateDir: string): Promise<EvolutionReportConfig> {
   const configPath = path.join(stateDir, "hooks", "evolution-report", "config.json");
   try {
     const raw = await fs.readFile(configPath, "utf-8");
@@ -53,10 +51,7 @@ export async function buildEvolutionReportPrompt(): Promise<string> {
 }
 
 /** Build the CronJob record for the evolution report. */
-export function buildEvolutionReportJob(
-  config: EvolutionReportConfig,
-  prompt: string,
-): CronJob {
+export function buildEvolutionReportJob(config: EvolutionReportConfig, prompt: string): CronJob {
   const cronExpr = config.time ?? "0 10 * * 0";
   const tz = config.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const now = Date.now();
@@ -126,7 +121,7 @@ const handler: HookHandler = async (event) => {
 
     log.info(`evolution-report registered: ${cronExpr} [${tz}]${chatNote}`);
   } catch (err) {
-    log.error("failed to register evolution-report cron job", err);
+    log.error("failed to register evolution-report cron job", { error: String(err) });
   }
 };
 
