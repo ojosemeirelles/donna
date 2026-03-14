@@ -23,7 +23,7 @@ import {
   getRankForLevel,
 } from "../../evolution/index.js";
 import { logVerbose } from "../../globals.js";
-import { listRecentEmails } from "../../infra/google-auth.js";
+import { listRecentEmails, loadTokens } from "../../infra/google-auth.js";
 import { getGlobalMemoryOrchestrator } from "../../memory/memory-orchestrator-singleton.js";
 import { clearCommandLane, getQueueSize } from "../../process/command-queue.js";
 import { normalizeMainKey } from "../../routing/session-key.js";
@@ -491,13 +491,23 @@ export async function runPreparedReply(
     }
   }
 
-  // Donna capabilities — injected so the LLM knows what tools/integrations are active
-  extraSystemPromptParts.push(
-    [
+  // Donna capabilities — injected so the LLM knows what tools/integrations are active.
+  // Gmail/Calendar lines are conditional on OAuth tokens existing to avoid misleading the LLM.
+  {
+    const capLines = [
       "[Capacidades ativas da Donna]",
       "Voce TEM acesso a estas integracoes — use-as quando relevante, nunca diga que nao tem acesso:",
-      "- Gmail: le, classifica e alerta sobre emails (OAuth autorizado, gmail-watch ativo)",
-      "- Google Calendar: agenda e compromissos do dia (calendar.readonly autorizado)",
+    ];
+    const gmailTokens = await loadTokens();
+    if (gmailTokens) {
+      capLines.push(
+        "- Gmail: le, classifica e alerta sobre emails (OAuth autorizado, gmail-watch ativo)",
+      );
+      capLines.push(
+        "- Google Calendar: agenda e compromissos do dia (calendar.readonly autorizado)",
+      );
+    }
+    capLines.push(
       "- Morning Brief: resumo diario enviado as 7h com email, agenda, tarefas, soul e foco do dia",
       "- SOUL Engine: analisa humor, energia, estresse e perfil psicometrico do usuario em cada mensagem",
       "- Shadow Army: 8 agentes especializados (Igris, Tusk, Jima, Iron, Tank, Bellion, Kaisel, Beru)",
@@ -505,8 +515,9 @@ export async function runPreparedReply(
       "- Notion: gestao de tasks e notas (se configurado)",
       "- WhatsApp: envio proativo de mensagens (se configurado)",
       "Quando o usuario perguntar sobre email, calendario ou qualquer capacidade acima, use diretamente.",
-    ].join("\n"),
-  );
+    );
+    extraSystemPromptParts.push(capLines.join("\n"));
+  }
 
   // Evolution Engine: track interaction + inject level context
   try {

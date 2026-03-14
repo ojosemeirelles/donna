@@ -30,6 +30,8 @@ export type MonitorTelegramOpts = {
   webhookHost?: string;
   proxyFetch?: typeof fetch;
   webhookUrl?: string;
+  /** Channel health monitor callback — call on every inbound update to track liveness. */
+  setStatus?: (patch: { lastEventAt: number; lastInboundAt: number }) => void;
 };
 
 export function createTelegramRunnerOptions(cfg: DonnaConfig): RunOptions<unknown> {
@@ -222,7 +224,14 @@ export async function monitorTelegramProvider(opts: MonitorTelegramOpts = {}) {
           accountId: account.accountId,
           updateOffset: {
             lastUpdateId,
-            onUpdateId: persistUpdateId,
+            onUpdateId: (updateId: number) => {
+              // Track inbound update for channel health monitor stale-socket detection
+              if (opts.setStatus) {
+                const at = Date.now();
+                opts.setStatus({ lastEventAt: at, lastInboundAt: at });
+              }
+              return persistUpdateId(updateId);
+            },
           },
         });
       } catch (err) {

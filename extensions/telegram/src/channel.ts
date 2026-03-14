@@ -499,6 +499,10 @@ export const telegramPlugin: ChannelPlugin<ResolvedTelegramAccount, TelegramProb
         webhookPath: account.config.webhookPath,
         webhookHost: account.config.webhookHost,
         webhookPort: account.config.webhookPort,
+        setStatus: ctx.setStatus
+          ? (patch: { lastEventAt: number; lastInboundAt: number }) =>
+              ctx.setStatus!(patch as Parameters<typeof ctx.setStatus>[0])
+          : undefined,
       });
     },
     logoutAccount: async ({ accountId, cfg }) => {
