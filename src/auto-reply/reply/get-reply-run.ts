@@ -628,7 +628,7 @@ export async function runPreparedReply(
                 threadId: ctx.MessageThreadId,
                 cfg,
               });
-              return { text: shadowResponse.response };
+              return { text: SILENT_REPLY_TOKEN };
             }
           }
         } catch {
@@ -681,9 +681,10 @@ export async function runPreparedReply(
 
   // Gmail on-demand: fetch real emails when user asks about email/gmail
   if (queuedBody) {
-    const emailIntent = /\b(email|e-mail|gmail|inbox|caixa de entrada|meus? emails?)\b/i.test(
-      queuedBody,
-    );
+    const emailIntent =
+      /\b(email|e-mail|gmail|inbox|caixa de entrada|meus? emails?|correio|correo|mail\b)/i.test(
+        queuedBody,
+      );
     if (emailIntent) {
       try {
         const emails = await listRecentEmails(5);
