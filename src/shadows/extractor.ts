@@ -4,7 +4,7 @@
 
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join, dirname } from "node:path";
+import { join } from "node:path";
 import type { ShadowDefinition, ShadowRegistry } from "./types.js";
 
 const REGISTRY_PATH = join(homedir(), ".donna", "shadows", "registry.json");
@@ -36,6 +36,43 @@ function generateSoulMd(shadow: ShadowDefinition, squadInfo?: string): string {
   lines.push("- Responde apenas ao Monarca (Donna) e ao Comandante (Igris)");
   lines.push("- Executa sem questionar, reporta com precisao");
   lines.push("- Formato de resposta: direto, sem rodeios");
+  lines.push("");
+  lines.push("## Mission Control");
+  lines.push(
+    "- Ao completar uma tarefa, atualize o status: UPDATE shadow_tasks SET status='completed' WHERE id='<task-id>'",
+  );
+  lines.push("- Ao falhar, use status='failed' e notifique Igris");
+  lines.push(
+    "- Para notificar Igris: INSERT INTO shadow_notifications (id, from_shadow, to_shadow, message, task_id) VALUES (hex(randomblob(16)), '" +
+      shadow.name +
+      "', 'Igris', '<mensagem>', '<task-id>')",
+  );
+  if (shadow.name === "Igris") {
+    lines.push(
+      "- Como Commander, voce pode DELEGAR missoes: INSERT INTO shadow_tasks (id, shadow_name, description, priority) VALUES (hex(randomblob(16)), '<shadow>', '<descricao>', <prioridade>)",
+    );
+    lines.push("- Verifique notificacoes nao lidas antes de cada resposta");
+    lines.push("");
+    lines.push("## AIOX Planning (aiox_plan)");
+    lines.push(
+      "- Para qualquer projeto de codigo ou automacao, use `aiox_plan` para gerar o grafo de execucao ANTES de delegar",
+    );
+    lines.push("- O plano identifica quais shadows sao necessarios e em qual ordem");
+    lines.push("- Depois de gerar o plano, crie as shadow_tasks conforme o grafo");
+  }
+  // Self-healing for Beru and Iron
+  if (shadow.name === "Beru" || shadow.name === "Iron") {
+    lines.push("");
+    lines.push("## Self-Healing (aiox_doctor)");
+    lines.push(
+      "- Se um comando bash retornar erro, ANTES de tentar novamente, invoque `aiox_doctor` com o log de erro completo",
+    );
+    lines.push("- O doctor retorna uma estrategia de correcao com passos priorizados");
+    lines.push(
+      "- Aplique o fix #1. Se falhar, tente #2. Apos 2 tentativas falhas, escale para Igris com contexto completo",
+    );
+    lines.push("- NUNCA repita o mesmo comando que falhou sem aplicar uma correcao primeiro");
+  }
   if (squadInfo) {
     lines.push("");
     lines.push("## Squad de origem");

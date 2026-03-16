@@ -115,3 +115,24 @@ export type ShadowDispatchResult = {
   durationMs: number;
   tokenUsage?: { input: number; output: number };
 };
+
+// --- Heartbeat (DONNA-007) ---
+
+export type HeartbeatResult = {
+  shadowName: string;
+  status: "awake" | "sleep" | "failed";
+  response?: string;
+  durationMs: number;
+  error?: string;
+  timestamp: number;
+};
+
+export type HeartbeatCycleReport = {
+  cycleId: string;
+  startedAt: number;
+  completedAt: number;
+  results: HeartbeatResult[];
+  awake: number;
+  sleeping: number;
+  failed: number;
+};

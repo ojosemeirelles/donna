@@ -46,6 +46,7 @@ import {
   resolveHookDeliver,
 } from "./hooks.js";
 import { sendGatewayAuthFailure, setDefaultSecurityHeaders } from "./http-common.js";
+import { handleMissionControlRequest } from "./mission-control-api.js";
 import { isLoopbackAddress } from "./net.js";
 import { handleOpenAiHttpRequest } from "./openai-http.js";
 import { handleOpenResponsesHttpRequest } from "./openresponses-http.js";
@@ -574,6 +575,10 @@ export function createGatewayHttpServer(opts: {
         ? resolvePluginRoutePathContext(requestPath)
         : null;
       const requestStages: GatewayHttpRequestStage[] = [
+        {
+          name: "mission-control",
+          run: () => handleMissionControlRequest(req, res),
+        },
         {
           name: "hooks",
           run: () => handleHooksRequest(req, res),

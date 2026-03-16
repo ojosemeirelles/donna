@@ -4,12 +4,12 @@
  * giving each shadow a dedicated session with its own SOUL.md system prompt.
  */
 
+import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { randomUUID } from "node:crypto";
-import { buildShadowSystemPrompt } from "./session-prompt.js";
 import { classifyIntent } from "./orchestrator.js";
+import { buildShadowSystemPrompt } from "./session-prompt.js";
 import type {
   ShadowDefinition,
   ShadowSessionMeta,
@@ -200,7 +200,7 @@ export async function dispatch(
   }
 
   // Get or create session
-  const { sessionId, meta } = getOrCreateSession(shadow.name, intent, parentSession.sessionId);
+  const { sessionId } = getOrCreateSession(shadow.name, intent, parentSession.sessionId);
 
   // Load SOUL.md
   let soulMd: string;
@@ -216,7 +216,7 @@ export async function dispatch(
     userId: parentSession.sessionId,
     summary: null, // future: compact parent transcript
   };
-  const systemPrompt = buildShadowSystemPrompt(shadow, soulMd, parentContext);
+  const systemPrompt = await buildShadowSystemPrompt(shadow, soulMd, parentContext);
 
   // Resolve session file path for shadow
   const shadowSessionFile = join(

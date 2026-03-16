@@ -1,0 +1,194 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# WORKFLOW: Deal Structuring
+# Version: 1.0.0
+# Purpose: Structure and close business deals/transactions
+# ═══════════════════════════════════════════════════════════════════════════════
+
+workflow-id: wf-deal-structuring
+name: Deal Structuring
+version: 1.0.0
+estimated-time: 6-12h
+complexity: high
+orchestrator: "@legal-chief"
+mode: interactive
+
+description: |
+  Estrutura e fecha negociacoes e transacoes comerciais, desde a due
+  diligence inicial ate o closing. Integra analise de risco juridico,
+  estruturacao Five-Prong dos termos, redacao contratual tecnica,
+  simplificacao para stakeholders nao-juridicos e gestao de projeto
+  para o fechamento.
+
+phases:
+  - id: DUE_DILIGENCE
+    name: "Due Diligence e Avaliacao de Riscos"
+    agent: "@legal-chief"
+    mandatory: true
+    description: |
+      Conduz due diligence juridica completa da transacao e da
+      contraparte. Levanta certidoes, verifica poderes de representacao,
+      analisa historico litigioso, identifica passivos ocultos,
+      verifica regularidade fiscal e trabalhista. Classifica riscos
+      em deal-breakers, riscos gerenciaveis e riscos baixos.
+    inputs:
+      - descricao da transacao
+      - documentos da contraparte
+      - informacoes publicas disponiveis
+    outputs:
+      - due-diligence-report.yaml (achados estruturados)
+      - risk-assessment.yaml (riscos classificados por severidade)
+      - deal-breaker-list.yaml (impedimentos potenciais)
+    checkpoint:
+      criteria:
+        - "Contraparte verificada (certidoes, representacao, poderes)"
+        - "Historico litigioso levantado"
+        - "Passivos potenciais identificados e quantificados"
+        - "Riscos classificados (deal-breaker, gerenciavel, baixo)"
+        - "Recomendacao de prosseguir ou abortar documentada"
+      veto_conditions:
+        - condition: "Due diligence incompleta em area critica"
+          action: "BLOQUEAR — completar due diligence antes de prosseguir"
+        - condition: "Deal-breaker identificado sem resolucao"
+          action: "BLOQUEAR — resolver deal-breaker ou abortar transacao"
+        - condition: "Contraparte com irregularidade fiscal grave"
+          action: "ESCALAR — avaliar risco de responsabilidade solidaria"
+
+  - id: TERMS
+    name: "Estruturacao de Termos (Five-Prong)"
+    agent: "@tina-stark"
+    mandatory: true
+    description: |
+      Aplica a metodologia Five-Prong para estruturar os termos do deal:
+      Money (preco, forma de pagamento, earn-outs, ajustes de preco),
+      Risk (representacoes e garantias, indemnities, limitacoes),
+      Control (governanca pos-deal, aprovacoes, non-competes),
+      Standards (condicoes precedentes, covenants, SLAs),
+      Endgame (condicoes de saida, tag/drag along, put/call options).
+    inputs:
+      - due-diligence-report.yaml
+      - risk-assessment.yaml
+      - objetivos comerciais do cliente
+    outputs:
+      - deal-terms.yaml (termos estruturados por Five-Prong)
+      - term-sheet-draft.yaml (term sheet preliminar)
+      - negotiation-ranges.yaml (ranges aceitaveis por termo)
+    checkpoint:
+      criteria:
+        - "Todos os 5 prongs analisados e estruturados"
+        - "Term sheet preliminar elaborado"
+        - "Ranges de negociacao definidos (ideal, aceitavel, walk-away)"
+        - "Riscos da due diligence refletidos nos termos"
+      veto_conditions:
+        - condition: "Termos comerciais fundamentais nao acordados"
+          action: "BLOQUEAR — alinhar termos com contraparte antes da redacao"
+        - condition: "Risco da due diligence nao enderecado nos termos"
+          action: "ALERTAR — incorporar protecao ou documentar aceite de risco"
+
+  - id: DRAFT
+    name: "Redacao de Documentos da Transacao"
+    agent: "@kenneth-adams"
+    mandatory: true
+    description: |
+      Redige todos os documentos necessarios para a transacao utilizando
+      Categories of Contract Language: contrato principal, anexos,
+      instrumentos acessorios (escrow, non-compete, transition services).
+      Garante consistencia terminologica entre todos os documentos,
+      referencia cruzada precisa e estrutura logica.
+    inputs:
+      - deal-terms.yaml
+      - term-sheet-draft.yaml
+      - due-diligence-report.yaml (para clausulas de protecao)
+    outputs:
+      - transaction-documents/ (pasta com todos os documentos)
+      - cross-reference-index.yaml (indice de referencias cruzadas)
+      - definitions-master.yaml (glossario unificado)
+    checkpoint:
+      criteria:
+        - "Todos os documentos necessarios redigidos"
+        - "Consistencia terminologica entre documentos verificada"
+        - "Referencias cruzadas corretas e completas"
+        - "Clausulas de protecao refletem achados da due diligence"
+        - "Sem ambiguidades identificaveis"
+      veto_conditions:
+        - condition: "Documento essencial faltante (contrato principal, anexos criticos)"
+          action: "BLOQUEAR — redigir documento antes de prosseguir"
+        - condition: "Inconsistencia terminologica entre documentos"
+          action: "BLOQUEAR — unificar terminologia usando glossario master"
+
+  - id: SIMPLIFY
+    name: "Resumo Executivo e Visual Term Sheet"
+    agent: "@margaret-hagan"
+    mandatory: true
+    description: |
+      Cria materiais acessiveis para stakeholders nao-juridicos.
+      margaret-hagan produz resumo executivo da transacao em linguagem
+      de negocios, visual term sheet com os principais termos em
+      formato grafico, e FAQ com as perguntas mais comuns sobre a
+      transacao. Permite que decisores compreendam o deal sem ler
+      centenas de paginas de contratos.
+    inputs:
+      - transaction-documents/
+      - deal-terms.yaml
+      - risk-assessment.yaml
+    outputs:
+      - executive-summary.md (resumo para decisores)
+      - visual-term-sheet.md (term sheet visual simplificado)
+      - deal-faq.md (perguntas frequentes sobre a transacao)
+    checkpoint:
+      criteria:
+        - "Resumo executivo compreensivel para nao-advogados"
+        - "Visual term sheet cobre termos essenciais"
+        - "FAQ responde as 10+ perguntas mais provaveis"
+        - "Nenhuma distorcao juridica na simplificacao"
+      veto_conditions:
+        - condition: "Simplificacao distorceu termo juridico relevante"
+          action: "BLOQUEAR — corrigir para refletir realidade juridica com linguagem simples"
+        - condition: "Risco material omitido do resumo executivo"
+          action: "BLOQUEAR — incluir risco com explicacao adequada"
+
+  - id: CLOSE
+    name: "Fechamento da Transacao"
+    agent: "@steven-levy"
+    mandatory: true
+    description: |
+      Estrutura o plano de closing como projeto com milestones claros.
+      steven-levy organiza checklist de condicoes precedentes, timeline
+      de signing/closing, coordenacao de assinaturas, verificacao de
+      poderes, registro quando necessario. legal-chief faz verificacao
+      final de compliance antes da assinatura.
+    inputs:
+      - transaction-documents/
+      - deal-terms.yaml (condicoes precedentes)
+      - compliance-check solicitada a legal-chief
+    outputs:
+      - closing-plan.yaml (plano de fechamento com milestones)
+      - cp-checklist.yaml (condicoes precedentes com status)
+      - closing-memo.md (memorando de fechamento)
+      - post-closing-tasks.yaml (tarefas pos-fechamento)
+    checkpoint:
+      criteria:
+        - "Todas as condicoes precedentes cumpridas ou waived"
+        - "Poderes de assinatura verificados para todas as partes"
+        - "Compliance final verificado por legal-chief"
+        - "Plano de pos-closing definido"
+        - "Todos os documentos em versao final assinavel"
+      veto_conditions:
+        - condition: "Condicao precedente material nao cumprida"
+          action: "BLOQUEAR — cumprir condicao ou obter waiver formal"
+        - condition: "Compliance issue identificado na verificacao final"
+          action: "BLOQUEAR — resolver issue antes do closing"
+        - condition: "Poderes de assinatura invalidos ou vencidos"
+          action: "BLOQUEAR — obter procuracao valida antes da assinatura"
+
+integration:
+  triggered_by:
+    - "Nova transacao comercial (M&A, JV, investimento)"
+    - "Parceria estrategica com formalizacao complexa"
+    - "Reestruturacao societaria"
+  feeds_into:
+    - "wf-compliance-audit (verificacao pos-closing)"
+    - "wf-contract-lifecycle (contratos acessorios pos-deal)"
+  complete_flow: |
+    DUE_DILIGENCE → TERMS → DRAFT → SIMPLIFY → CLOSE
+         ↓            ↓       ↓         ↓         ↓
+      dd-report    terms   docs    summary    closing

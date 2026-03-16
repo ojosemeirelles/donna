@@ -1,0 +1,194 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# WORKFLOW: Dispute Resolution
+# Version: 1.0.0
+# Purpose: Handle legal disputes from diagnosis to resolution
+# ═══════════════════════════════════════════════════════════════════════════════
+
+workflow-id: wf-dispute-resolution
+name: Dispute Resolution
+version: 1.0.0
+estimated-time: 3-6h
+complexity: high
+orchestrator: "@legal-chief"
+mode: interactive
+
+description: |
+  Gerencia disputas juridicas do diagnostico inicial ate a resolucao final.
+  Combina analise juridica especializada (civil ou tributaria), preparacao
+  tatica de negociacao e formalizacao de acordos. O fluxo prioriza
+  resolucao extrajudicial quando possivel, escalando para contencioso
+  apenas quando necessario.
+
+phases:
+  - id: DIAGNOSE
+    name: "Diagnostico e Classificacao da Disputa"
+    agent: "@legal-chief"
+    mandatory: true
+    description: |
+      Classifica a disputa por natureza (civil, tributaria, trabalhista,
+      societaria, contratual), avalia urgencia (medida liminar necessaria,
+      prazos processuais correndo), mapeia riscos financeiros e
+      reputacionais, e identifica o especialista adequado para a
+      fundamentacao juridica.
+    inputs:
+      - descricao da disputa pelo cliente
+      - documentos relevantes (contratos, notificacoes, autos)
+      - historico de tentativas de resolucao anteriores
+    outputs:
+      - dispute-diagnosis.yaml (classificacao, urgencia, riscos)
+      - specialist-assignment.yaml (especialista designado)
+      - timeline.yaml (prazos criticos e deadlines)
+    checkpoint:
+      criteria:
+        - "Natureza da disputa classificada"
+        - "Nivel de urgencia definido (baixa/media/alta/critica)"
+        - "Riscos financeiros estimados (melhor/pior cenario)"
+        - "Especialista designado para analise juridica"
+        - "Prazos processuais mapeados"
+      veto_conditions:
+        - condition: "Jurisdicao desconhecida ou nao determinavel"
+          action: "BLOQUEAR — resolver jurisdicao antes de qualquer analise"
+        - condition: "Prazo processual iminente (< 48h) sem medida de protecao"
+          action: "ESCALAR — acionar medida de urgencia imediatamente"
+        - condition: "Documentos essenciais nao disponibilizados"
+          action: "BLOQUEAR — solicitar documentos minimos para analise"
+
+  - id: LEGAL_ANALYSIS
+    name: "Fundamentacao Juridica Especializada"
+    agent: "@flavio-tartuce"
+    mandatory: true
+    description: |
+      Analise juridica aprofundada por especialista. flavio-tartuce atua
+      em disputas civis, contratuais e de responsabilidade civil.
+      humberto-avila assume para questoes tributarias e de direito
+      publico. O especialista identifica fundamentos legais, jurisprudencia
+      relevante, teses de defesa e ataque, e calcula probabilidade de
+      exito em cada cenario (acordo, arbitragem, judicial).
+    inputs:
+      - dispute-diagnosis.yaml
+      - documentos do caso
+      - contratos relevantes
+    outputs:
+      - legal-analysis.yaml (fundamentos, teses, jurisprudencia)
+      - scenario-matrix.yaml (cenarios com probabilidades e custos)
+      - legal-memo.md (parecer juridico estruturado)
+    checkpoint:
+      criteria:
+        - "Base legal identificada com artigos e dispositivos especificos"
+        - "Jurisprudencia relevante levantada (minimo 3 precedentes)"
+        - "Teses de defesa e ataque documentadas"
+        - "Cenarios com probabilidade de exito estimada"
+        - "Parecer juridico estruturado entregue"
+      veto_conditions:
+        - condition: "Nenhuma base legal identificada para a pretensao"
+          action: "BLOQUEAR — informar cliente sobre ausencia de fundamento e recomendar alternativas"
+        - condition: "Jurisprudencia majoritariamente contraria sem tese diferenciadora"
+          action: "ALERTAR — documentar risco e obter aceite do cliente para prosseguir"
+
+  - id: STRATEGY
+    name: "Preparacao Tatica de Negociacao"
+    agent: "@chris-voss"
+    mandatory: true
+    description: |
+      Prepara a estrategia de negociacao com base na analise juridica.
+      Elabora accusation audit (antecipar objecoes da contraparte),
+      define calibrated questions (perguntas "como" e "o que" para
+      guiar a negociacao), prepara labels para emocoes identificadas,
+      e busca black swans (informacoes ocultas que podem mudar o jogo).
+      Calcula BATNA, WATNA e ZOPA para cada cenario.
+    inputs:
+      - legal-analysis.yaml
+      - scenario-matrix.yaml
+      - dispute-diagnosis.yaml
+    outputs:
+      - negotiation-playbook.yaml (plano tatico completo)
+      - batna-analysis.yaml (BATNA, WATNA, ZOPA calculados)
+      - tactical-tools.yaml (accusation audit, labels, questions)
+    checkpoint:
+      criteria:
+        - "BATNA calculado com valores e consequencias claras"
+        - "Accusation audit com minimo 5 objecoes antecipadas"
+        - "Calibrated questions preparadas (minimo 7)"
+        - "Black swans potenciais identificados"
+        - "Estrategia de abertura definida"
+      veto_conditions:
+        - condition: "BATNA nao calculado"
+          action: "BLOQUEAR — calcular BATNA antes de qualquer negociacao"
+        - condition: "Nenhum cenario de acordo viavel identificado"
+          action: "ALERTAR — considerar escalacao direta para contencioso"
+
+  - id: NEGOTIATE
+    name: "Execucao da Negociacao"
+    agent: "@chris-voss"
+    mandatory: true
+    description: |
+      Executa a negociacao seguindo o playbook preparado. chris-voss
+      lidera com taticas de negociacao tatica. Se a disputa envolver
+      relacao de longo prazo ou parceria estrategica, fisher-ury assume
+      como abordagem complementar com foco em negociacao baseada em
+      principios: separar pessoas do problema, focar em interesses,
+      gerar opcoes de ganho mutuo, insistir em criterios objetivos.
+    inputs:
+      - negotiation-playbook.yaml
+      - batna-analysis.yaml
+      - tactical-tools.yaml
+    outputs:
+      - negotiation-log.yaml (registro de cada rodada)
+      - agreement-terms.yaml (termos acordados ou impasse documentado)
+      - concession-tracker.yaml (concessoes feitas e recebidas)
+    checkpoint:
+      criteria:
+        - "Cada rodada documentada no negotiation-log"
+        - "Concessoes rastreadas com justificativa"
+        - "Resultado dentro da ZOPA ou impasse documentado"
+        - "Decisao clara: acordo fechado ou escalar para contencioso"
+      veto_conditions:
+        - condition: "Concessao abaixo do BATNA sem autorizacao do cliente"
+          action: "BLOQUEAR — obter autorizacao expressa antes de conceder"
+        - condition: "Acordo verbal sem registro formal"
+          action: "BLOQUEAR — formalizar termos antes de considerar fechado"
+
+  - id: FORMALIZE
+    name: "Formalizacao do Resultado"
+    agent: "@bryan-garner"
+    mandatory: true
+    description: |
+      Formaliza o resultado da negociacao em documento juridico adequado.
+      bryan-garner redige o acordo, termo de transacao ou peca processual
+      em plain english (quando aplicavel ao contexto). Se o resultado
+      envolver novo contrato ou aditivo, kenneth-adams assume a redacao
+      contratual com Categories of Contract Language. legal-chief faz
+      revisao final de compliance.
+    inputs:
+      - agreement-terms.yaml
+      - legal-analysis.yaml (para referencia)
+      - negotiation-log.yaml
+    outputs:
+      - settlement-document.md (acordo/transacao formalizado)
+      - compliance-check.yaml (verificacao de conformidade)
+      - closing-report.yaml (relatorio de encerramento)
+    checkpoint:
+      criteria:
+        - "Documento reflete exatamente os termos acordados"
+        - "Linguagem clara e sem ambiguidades"
+        - "Compliance verificado para jurisdicao aplicavel"
+        - "Todas as partes identificadas com poderes de assinatura"
+      veto_conditions:
+        - condition: "Termos do documento divergem do acordo negociado"
+          action: "BLOQUEAR — corrigir para refletir termos exatos"
+        - condition: "Clausula de confidencialidade ausente quando necessaria"
+          action: "ALERTAR — adicionar clausula ou documentar justificativa para omissao"
+
+integration:
+  triggered_by:
+    - "Notificacao extrajudicial recebida"
+    - "Citacao judicial"
+    - "Conflito contratual identificado"
+    - "Escalacao de wf-contract-lifecycle (impasse na negociacao)"
+  feeds_into:
+    - "wf-contract-lifecycle (se acordo gerar novo contrato)"
+    - "wf-compliance-audit (verificacao pos-acordo)"
+  complete_flow: |
+    DIAGNOSE → LEGAL_ANALYSIS → STRATEGY → NEGOTIATE → FORMALIZE
+       ↓            ↓               ↓           ↓           ↓
+    diagnosis   legal-memo     playbook    agreement   settlement

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donna — Mission Control</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            terminal: { bg: '#0a0e14', card: '#131920', border: '#1e2a38', green: '#00ff9f', red: '#ff3860', yellow: '#ffc857', blue: '#39bae6', purple: '#c084fc', dim: '#4a5568' },
+          },
+          fontFamily: { mono: ['JetBrains Mono', 'Fira Code', 'monospace'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'JetBrains Mono', monospace; }
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 4px rgba(0,255,159,0.3); } 50% { box-shadow: 0 0 12px rgba(0,255,159,0.6); } }
+    .glow-working { animation: pulse-glow 2s ease-in-out infinite; }
+    .xp-bar { transition: width 1s ease-out; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #0a0e14; } ::-webkit-scrollbar-thumb { background: #1e2a38; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-terminal-bg text-gray-300 min-h-screen">
+
+<div id="app" class="max-w-7xl mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-terminal-green">DONNA <span class="text-terminal-dim">// Mission Control</span></h1>
+      <p class="text-xs text-terminal-dim mt-1">Shadow Army Operations Dashboard</p>
+    </div>
+    <div id="evolution-badge" class="text-right"></div>
+  </div>
+
+  <!-- Evolution XP Bar -->
+  <div id="evolution-bar" class="mb-4"></div>
+
+  <!-- AIOX Project Status -->
+  <div id="aiox-status" class="mb-8"></div>
+
+  <!-- Shadow Grid -->
+  <h2 class="text-sm font-bold text-terminal-dim uppercase tracking-wider mb-3">Shadow Army</h2>
+  <div id="shadow-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8"></div>
+
+  <!-- Two columns: Tasks + Timeline -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Active Tasks -->
+    <div>
+      <h2 class="text-sm font-bold text-terminal-dim uppercase tracking-wider mb-3">Active Tasks</h2>
+      <div id="tasks-list" class="space-y-2"></div>
+    </div>
+
+    <!-- Notification Timeline -->
+    <div>
+      <h2 class="text-sm font-bold text-terminal-dim uppercase tracking-wider mb-3">Activity Timeline</h2>
+      <div id="timeline" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- Heartbeat Log -->
+  <h2 class="text-sm font-bold text-terminal-dim uppercase tracking-wider mb-3">Heartbeat Log</h2>
+  <div id="heartbeat-log" class="space-y-1 mb-8"></div>
+
+  <!-- Footer -->
+  <div class="text-center text-xs text-terminal-dim mt-8">
+    <span id="last-update"></span> &middot; Polling every 10s &middot; Gateway :18789
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:18789/api/mission-control';
+const POLL_INTERVAL = 10000;
+
+const SHADOW_ICONS = {
+  Igris: { icon: '\u2694\uFE0F', color: 'terminal-purple' },
+  Tusk: { icon: '\uD83D\uDD0D', color: 'terminal-blue' },
+  Jima: { icon: '\uD83D\uDC41\uFE0F', color: 'terminal-yellow' },
+  Iron: { icon: '\u270D\uFE0F', color: 'terminal-green' },
+  Tank: { icon: '\u23F0', color: 'terminal-blue' },
+  Bellion: { icon: '\uD83D\uDCCA', color: 'terminal-purple' },
+  Kaisel: { icon: '\uD83D\uDC09', color: 'terminal-red' },
+  Beru: { icon: '\u26A1', color: 'terminal-yellow' },
+};
+
+function statusBadge(status) {
+  const map = {
+    working: '<span class="text-terminal-green font-bold">WORKING</span>',
+    pending: '<span class="text-terminal-yellow">PENDING</span>',
+    sleeping: '<span class="text-terminal-dim">SLEEP</span>',
+  };
+  return map[status] || `<span class="text-terminal-dim">${status}</span>`;
+}
+
+function taskStatusBadge(status) {
+  const map = {
+    pending: 'bg-terminal-yellow/20 text-terminal-yellow',
+    in_progress: 'bg-terminal-green/20 text-terminal-green',
+    completed: 'bg-terminal-dim/20 text-terminal-dim',
+    failed: 'bg-terminal-red/20 text-terminal-red',
+  };
+  return map[status] || 'bg-terminal-dim/20 text-terminal-dim';
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - (typeof ts === 'number' ? ts : new Date(ts).getTime());
+  if (diff < 60000) return `${Math.floor(diff/1000)}s ago`;
+  if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
+  if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
+  return `${Math.floor(diff/86400000)}d ago`;
+}
+
+function renderEvolution(evo) {
+  const badge = document.getElementById('evolution-badge');
+  const bar = document.getElementById('evolution-bar');
+  if (!evo) {
+    badge.innerHTML = '<span class="text-terminal-dim">No evolution data</span>';
+    bar.innerHTML = '';
+    return;
+  }
+  badge.innerHTML = `
+    <div class="text-terminal-green font-bold text-lg">Rank ${evo.rank}</div>
+    <div class="text-xs text-terminal-dim">${evo.title} &middot; ${evo.xp} XP &middot; ${evo.streakDays}d streak</div>
+  `;
+  const pct = evo.nextXp ? Math.min((evo.xp / evo.nextXp) * 100, 100) : 100;
+  bar.innerHTML = `
+    <div class="bg-terminal-card border border-terminal-border rounded-lg p-3">
+      <div class="flex justify-between text-xs text-terminal-dim mb-1">
+        <span>Rank ${evo.rank} — ${evo.title}</span>
+        <span>${evo.nextXp ? evo.xp + '/' + evo.nextXp + ' XP' : 'MAX'}</span>
+      </div>
+      <div class="w-full bg-terminal-bg rounded-full h-2">
+        <div class="xp-bar bg-terminal-green h-2 rounded-full" style="width: ${pct}%"></div>
+      </div>
+      <div class="flex justify-between text-xs text-terminal-dim mt-1">
+        <span>${evo.totalInteractions} msgs</span>
+        <span>${evo.streakDays}d streak</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderAIOX(aiox) {
+  const el = document.getElementById('aiox-status');
+  if (!aiox) { el.innerHTML = ''; return; }
+  const pct = aiox.totalStories > 0 ? Math.round((aiox.completedStories / aiox.totalStories) * 100) : 0;
+  el.innerHTML = `
+    <div class="bg-terminal-card border border-terminal-border rounded-lg p-3 grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+      <div>
+        <div class="text-xs text-terminal-dim">Current Epic</div>
+        <div class="text-sm font-bold text-terminal-blue truncate">${aiox.currentEpic || 'None'}</div>
+      </div>
+      <div>
+        <div class="text-xs text-terminal-dim">Stories</div>
+        <div class="text-sm font-bold text-terminal-green">${aiox.completedStories}/${aiox.totalStories}</div>
+      </div>
+      <div>
+        <div class="text-xs text-terminal-dim">Pending Tasks</div>
+        <div class="text-sm font-bold ${aiox.pendingTasks > 0 ? 'text-terminal-yellow' : 'text-terminal-green'}">${aiox.pendingTasks}</div>
+      </div>
+      <div>
+        <div class="text-xs text-terminal-dim">Confidence</div>
+        <div class="text-sm font-bold text-terminal-green">${pct}%</div>
+      </div>
+      <div>
+        <div class="text-xs text-terminal-dim">Error Rate</div>
+        <div class="text-sm font-bold ${aiox.errorRate > 0 ? 'text-terminal-red' : 'text-terminal-green'}">${aiox.errorRate}%</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderShadows(shadows) {
+  const grid = document.getElementById('shadow-grid');
+  grid.innerHTML = shadows.map(s => {
+    const meta = SHADOW_ICONS[s.name] || { icon: '\uD83D\uDC64', color: 'terminal-dim' };
+    const isWorking = s.status === 'working';
+    return `
+      <div class="bg-terminal-card border border-terminal-border rounded-lg p-4 ${isWorking ? 'glow-working border-terminal-green/40' : ''}">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xl">${meta.icon}</span>
+          <span class="font-bold text-${meta.color}">${s.name}</span>
+        </div>
+        <div class="text-xs text-terminal-dim mb-1">${s.role}</div>
+        <div class="mb-2">${statusBadge(s.status)}</div>
+        ${s.currentTask ? `<div class="text-xs text-gray-400 border-t border-terminal-border pt-2 mt-2">${s.currentTask.slice(0, 80)}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTasks(tasks) {
+  const list = document.getElementById('tasks-list');
+  if (!tasks.length) {
+    list.innerHTML = '<div class="text-terminal-dim text-sm">No active tasks</div>';
+    return;
+  }
+  list.innerHTML = tasks.slice(0, 10).map(t => `
+    <div class="bg-terminal-card border border-terminal-border rounded p-3 flex items-center gap-3">
+      <span class="px-2 py-0.5 rounded text-xs font-mono ${taskStatusBadge(t.status)}">${t.status}</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm truncate">${t.description}</div>
+        <div class="text-xs text-terminal-dim">${t.shadow_name} &middot; p${t.priority} &middot; ${timeAgo(t.created_at)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTimeline(notifications) {
+  const tl = document.getElementById('timeline');
+  if (!notifications.length) {
+    tl.innerHTML = '<div class="text-terminal-dim text-sm">No notifications yet</div>';
+    return;
+  }
+  tl.innerHTML = notifications.map(n => `
+    <div class="flex gap-3 items-start">
+      <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.is_read ? 'bg-terminal-dim' : 'bg-terminal-green'}"></div>
+      <div>
+        <div class="text-sm"><span class="text-terminal-blue font-bold">${n.from_shadow}</span> \u2192 ${n.to_shadow}</div>
+        <div class="text-xs text-gray-400">${n.message.slice(0, 120)}</div>
+        <div class="text-xs text-terminal-dim">${timeAgo(n.created_at)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderHeartbeat(entries) {
+  const log = document.getElementById('heartbeat-log');
+  if (!entries.length) {
+    log.innerHTML = '<div class="text-terminal-dim text-sm font-mono">No heartbeat cycles recorded</div>';
+    return;
+  }
+  log.innerHTML = entries.map(e => {
+    const ts = new Date(e.startedAt).toLocaleTimeString();
+    const dur = ((e.completedAt - e.startedAt) / 1000).toFixed(1);
+    return `
+      <div class="font-mono text-xs flex gap-4">
+        <span class="text-terminal-dim">${ts}</span>
+        <span class="text-terminal-green">\u2588 ${e.awake} awake</span>
+        <span class="text-terminal-dim">\u2588 ${e.sleeping} sleep</span>
+        ${e.failed > 0 ? `<span class="text-terminal-red">\u2588 ${e.failed} fail</span>` : ''}
+        <span class="text-terminal-dim">${dur}s</span>
+      </div>
+    `;
+  }).join('');
+}
+
+async function poll() {
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    renderEvolution(data.evolution);
+    renderAIOX(data.aiox);
+    renderShadows(data.shadows);
+    renderTasks(data.tasks);
+    renderTimeline(data.notifications);
+    renderHeartbeat(data.heartbeat);
+
+    document.getElementById('last-update').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+  } catch (err) {
+    document.getElementById('last-update').textContent = `Error: ${err.message} — retrying...`;
+  }
+}
+
+// Initial load + polling
+poll();
+setInterval(poll, POLL_INTERVAL);
+</script>
+
+</body>
+</html>

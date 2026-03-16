@@ -1,0 +1,172 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# WORKFLOW: Legal Triage — Diagnose and Route
+# Version: 1.0.0
+# Purpose: Systematically diagnose legal needs and route to the right specialist
+# ═══════════════════════════════════════════════════════════════════════════════
+
+workflow-id: wf-legal-triage
+name: Legal Triage
+version: 1.0.0
+estimated-time: 5-15 minutes
+complexity: low
+orchestrator: "@legal-chief"
+mode: interactive
+
+description: |
+  Diagnostica a necessidade juridica do usuario e roteia para o
+  especialista correto do squad. Garante que nenhuma questao juridica
+  seja tratada pelo agent errado.
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PHASES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+phases:
+  - id: INTAKE
+    name: "Intake — Coleta de Contexto"
+    agent: "@legal-chief"
+    mandatory: true
+    description: |
+      Coletar informacoes basicas sobre a necessidade juridica.
+
+    elicitation:
+      - question: "Descreva sua necessidade juridica em 2-3 frases"
+        type: free-text
+        required: true
+
+      - question: "Qual jurisdicao se aplica?"
+        type: select
+        options:
+          - "Brasil"
+          - "Estados Unidos"
+          - "Internacional/Multi-jurisdicao"
+          - "Nao sei"
+        required: true
+
+      - question: "Qual a urgencia?"
+        type: select
+        options:
+          - "Imediata (prazo em dias)"
+          - "Curto prazo (semanas)"
+          - "Planejamento (meses)"
+          - "Preventivo (sem prazo)"
+        required: true
+
+    checkpoint:
+      criteria:
+        - "Necessidade juridica descrita"
+        - "Jurisdicao identificada"
+        - "Urgencia classificada"
+      veto_conditions:
+        - condition: "Necessidade nao descrita"
+          action: "HALT — pedir mais contexto"
+
+  - id: CLASSIFY
+    name: "Classificacao — Tipo de Demanda"
+    agent: "@legal-chief"
+    mandatory: true
+    description: |
+      Classificar a demanda em uma das categorias do squad.
+
+    categories:
+      contract_drafting:
+        description: "Redacao ou revisao de contratos"
+        primary: "@kenneth-adams"
+        secondary: "@tina-stark"
+        trigger_words: ["contrato", "clausula", "redigir", "draft"]
+
+      contract_deal:
+        description: "Estruturacao de deal/transacao"
+        primary: "@tina-stark"
+        secondary: "@kenneth-adams"
+        trigger_words: ["deal", "transacao", "M&A", "investimento", "SPA"]
+
+      legal_writing:
+        description: "Redacao juridica (peticoes, pareceres, memos)"
+        primary: "@bryan-garner"
+        trigger_words: ["peticao", "parecer", "memo", "brief", "redacao"]
+
+      negotiation_principled:
+        description: "Negociacao colaborativa, criacao de valor"
+        primary: "@fisher-ury"
+        trigger_words: ["negociar", "acordo", "mediacao", "conciliacao"]
+
+      negotiation_tactical:
+        description: "Negociacao de conflito, disputa, alta pressao"
+        primary: "@chris-voss"
+        trigger_words: ["disputa", "conflito", "cobranca", "pressao"]
+
+      tax_brazil:
+        description: "Direito tributario brasileiro"
+        primary: "@humberto-avila"
+        trigger_words: ["tributo", "imposto", "ICMS", "ISS", "IR", "tributario"]
+
+      civil_brazil:
+        description: "Direito civil brasileiro (contratos, responsabilidade)"
+        primary: "@flavio-tartuce"
+        trigger_words: ["civil", "responsabilidade", "dano", "CC/2002", "boa-fe"]
+
+      legal_design:
+        description: "Design de documentos, acessibilidade juridica"
+        primary: "@margaret-hagan"
+        trigger_words: ["simplificar", "design", "usuario", "acessivel"]
+
+      legal_tech:
+        description: "Modernizacao, automacao, maturidade legal"
+        primary: "@richard-susskind"
+        trigger_words: ["automacao", "tech", "modernizar", "futuro", "digital"]
+
+      legal_project:
+        description: "Gestao de projetos juridicos, orcamento"
+        primary: "@steven-levy"
+        trigger_words: ["projeto", "orcamento", "prazo", "escopo", "gestao"]
+
+    checkpoint:
+      criteria:
+        - "Categoria identificada"
+        - "Agent primario selecionado"
+      veto_conditions:
+        - condition: "Nenhuma categoria match"
+          action: "Escalar para @legal-chief para analise manual"
+
+  - id: ROUTE
+    name: "Roteamento — Handoff para Especialista"
+    agent: "@legal-chief"
+    mandatory: true
+    description: |
+      Fazer handoff para o especialista correto com contexto completo.
+
+    handoff_template: |
+      ## Handoff para {agent}
+
+      **Demanda:** {descricao}
+      **Jurisdicao:** {jurisdicao}
+      **Urgencia:** {urgencia}
+      **Categoria:** {categoria}
+      **Contexto adicional:** {contexto}
+
+      Recomendacao: Iniciar com comando *{comando_sugerido}
+
+    checkpoint:
+      criteria:
+        - "Handoff completo com contexto"
+        - "Agent especialista ativado"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INTEGRATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+integration:
+  triggered_by:
+    - "@legal-chief *triage"
+    - "User describes legal need to legal-chief"
+
+  feeds_into:
+    - "Any specialist agent command"
+
+  complete_flow: |
+    User → @legal-chief *triage
+        → INTAKE (coleta contexto)
+        → CLASSIFY (identifica categoria)
+        → ROUTE (handoff para especialista)
+        → Especialista executa

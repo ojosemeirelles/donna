@@ -1,0 +1,183 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# WORKFLOW: Contract Lifecycle Management
+# Version: 1.0.0
+# Purpose: Full contract lifecycle from intake to execution
+# ═══════════════════════════════════════════════════════════════════════════════
+
+workflow-id: wf-contract-lifecycle
+name: Contract Lifecycle Management
+version: 1.0.0
+estimated-time: 4-8h
+complexity: high
+orchestrator: "@legal-chief"
+mode: interactive
+
+description: |
+  Gerencia o ciclo de vida completo de um contrato, desde a coleta de
+  requisitos iniciais ate a negociacao e execucao final. Integra analise
+  estrutural (Five-Prong), redacao tecnica (Categories of Contract Language),
+  revisao em plain english e negociacao tatica para garantir contratos
+  solidos, claros e estrategicamente alinhados.
+
+phases:
+  - id: INTAKE
+    name: "Coleta de Requisitos e Classificacao"
+    agent: "@legal-chief"
+    mandatory: true
+    description: |
+      Coleta todas as informacoes necessarias para iniciar a elaboracao do
+      contrato: tipo contratual, partes envolvidas, jurisdicao aplicavel,
+      objeto do contrato, prazos e valores estimados. Classifica o contrato
+      por complexidade e risco para definir o nivel de rigor necessario
+      nas fases seguintes.
+    inputs:
+      - briefing do cliente ou area solicitante
+      - informacoes das partes (CNPJ/CPF, representantes, poderes)
+      - contexto comercial da operacao
+    outputs:
+      - contract-intake.yaml (requisitos estruturados)
+      - risk-classification (low/medium/high/critical)
+    checkpoint:
+      criteria:
+        - "Todas as partes identificadas com dados completos"
+        - "Jurisdicao e lei aplicavel definidas"
+        - "Objeto do contrato descrito com clareza"
+        - "Classificacao de risco atribuida"
+      veto_conditions:
+        - condition: "Dados de uma ou mais partes incompletos"
+          action: "BLOQUEAR — solicitar informacoes faltantes antes de prosseguir"
+        - condition: "Jurisdicao nao definida ou ambigua"
+          action: "BLOQUEAR — resolver jurisdicao com legal-chief antes da estruturacao"
+        - condition: "Objeto do contrato vago ou indefinido"
+          action: "BLOQUEAR — refinar escopo com solicitante"
+
+  - id: STRUCTURE
+    name: "Analise Estrutural Five-Prong"
+    agent: "@tina-stark"
+    mandatory: true
+    description: |
+      Aplica a metodologia Five-Prong para analisar e estruturar os
+      termos essenciais do contrato: Money (valor, pagamento, penalidades),
+      Risk (alocacao de riscos, garantias, limitacoes de responsabilidade),
+      Control (governanca, aprovacoes, direitos de veto), Standards
+      (obrigacoes de desempenho, SLAs, metricas), Endgame (termino,
+      renovacao, transicao, direitos pos-contratuais).
+    inputs:
+      - contract-intake.yaml
+    outputs:
+      - deal-structure.yaml (termos organizados por Five-Prong)
+      - risk-matrix.yaml (riscos mapeados por categoria)
+    checkpoint:
+      criteria:
+        - "Todos os 5 prongs analisados e documentados"
+        - "Alocacao de riscos definida para cada parte"
+        - "Condicoes de endgame claras e completas"
+      veto_conditions:
+        - condition: "Termos financeiros (Money) nao resolvidos entre as partes"
+          action: "BLOQUEAR — alinhar termos comerciais antes da redacao"
+        - condition: "Alocacao de risco desequilibrada sem justificativa"
+          action: "ALERTAR — documentar justificativa e obter aprovacao do cliente"
+
+  - id: DRAFT
+    name: "Redacao Contratual"
+    agent: "@kenneth-adams"
+    mandatory: true
+    description: |
+      Redige o contrato utilizando as Categories of Contract Language:
+      language of obligation (shall), language of discretion (may),
+      language of prohibition (shall not), language of condition (if/when),
+      language of declaration (estados de fato), language of policy
+      (regras gerais). Garante precisao terminologica, eliminacao de
+      ambiguidades e estrutura logica das clausulas.
+    inputs:
+      - deal-structure.yaml
+      - contract-intake.yaml
+    outputs:
+      - contract-draft.md (minuta completa)
+      - definitions-index.yaml (glossario de termos definidos)
+    checkpoint:
+      criteria:
+        - "Todas as clausulas mapeadas para categorias de linguagem"
+        - "Termos definidos consistentes ao longo do documento"
+        - "Estrutura logica: recitais, definicoes, operacionais, gerais"
+        - "Sem ambiguidades sintaticas identificaveis"
+      veto_conditions:
+        - condition: "Clausula com linguagem ambigua nao resolvida"
+          action: "BLOQUEAR — reescrever clausula com linguagem precisa"
+        - condition: "Termo usado sem definicao no glossario"
+          action: "BLOQUEAR — adicionar definicao ou substituir por termo comum"
+
+  - id: REVIEW
+    name: "Revisao de Clareza e Compliance"
+    agent: "@bryan-garner"
+    mandatory: true
+    description: |
+      Revisao dupla: (1) bryan-garner aplica principios de plain english
+      para garantir legibilidade sem perder precisao juridica —
+      frases curtas, voz ativa, eliminacao de legalese desnecessario;
+      (2) legal-chief verifica compliance regulatorio, adequacao a
+      legislacao aplicavel e consistencia com politicas internas.
+    inputs:
+      - contract-draft.md
+      - definitions-index.yaml
+      - contract-intake.yaml (para referencia de jurisdicao)
+    outputs:
+      - contract-reviewed.md (minuta revisada)
+      - review-report.yaml (issues encontrados e resolucoes)
+    checkpoint:
+      criteria:
+        - "Indice de legibilidade dentro do padrao (Flesch-Kincaid adequado)"
+        - "Nenhum legalese desnecessario remanescente"
+        - "Compliance verificado para jurisdicao aplicavel"
+        - "Todas as clausulas obrigatorias por lei presentes"
+      veto_conditions:
+        - condition: "Clausula obrigatoria por lei ausente"
+          action: "BLOQUEAR — adicionar clausula antes de prosseguir"
+        - condition: "Linguagem incompreensivel para publico nao-juridico sem justificativa"
+          action: "ALERTAR — simplificar ou adicionar nota explicativa"
+
+  - id: NEGOTIATE
+    name: "Negociacao de Termos"
+    agent: "@chris-voss"
+    mandatory: true
+    description: |
+      Prepara e conduz a estrategia de negociacao dos termos contratuais.
+      chris-voss lidera com taticas de negociacao tatica (accusation audit,
+      calibrated questions, labels, mirrors). Se o contexto demandar
+      negociacao baseada em principios (disputas de longo prazo,
+      parcerias estrategicas), fisher-ury assume como backup com foco
+      em interesses, opcoes de ganho mutuo e criterios objetivos.
+    inputs:
+      - contract-reviewed.md
+      - deal-structure.yaml (para referencia de BATNA)
+      - risk-matrix.yaml
+    outputs:
+      - negotiation-strategy.yaml (plano tatico)
+      - contract-final.md (versao negociada e aceita)
+      - negotiation-log.yaml (registro de concessoes e acordos)
+    checkpoint:
+      criteria:
+        - "BATNA calculado e documentado"
+        - "Todas as concessoes registradas com justificativa"
+        - "Termos finais aceitos por todas as partes"
+        - "Contrato final pronto para assinatura"
+      veto_conditions:
+        - condition: "BATNA nao calculado antes de iniciar negociacao"
+          action: "BLOQUEAR — definir BATNA com legal-chief antes de negociar"
+        - condition: "Concessao feita sem registro ou justificativa"
+          action: "BLOQUEAR — documentar concessao antes de prosseguir"
+        - condition: "Termos fundamentais (preco, prazo, responsabilidade) ainda em aberto"
+          action: "BLOQUEAR — resolver deal terms antes de finalizar contrato"
+
+integration:
+  triggered_by:
+    - "Solicitacao de novo contrato"
+    - "Renovacao contratual com alteracoes significativas"
+    - "Operacao comercial que requer formalizacao juridica"
+  feeds_into:
+    - "wf-compliance-audit (verificacao pos-execucao)"
+    - "wf-dispute-resolution (se surgir divergencia na negociacao)"
+  complete_flow: |
+    INTAKE → STRUCTURE → DRAFT → REVIEW → NEGOTIATE
+       ↓         ↓          ↓        ↓          ↓
+    intake.yaml  deal.yaml  draft.md reviewed.md final.md

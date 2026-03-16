@@ -1,0 +1,76 @@
+pack:
+  name: legal
+  version: 1.0.0
+  short-title: LegalOS - Elite Legal Squad
+  description: >-
+    Squad juridico com 10 elite minds reais cobrindo redacao contratual,
+    negociacao, direito tributario BR, direito civil BR, legal design,
+    legal tech, legal project management e redacao juridica.
+    Cada agent e um clone cognitivo de um expert com framework documentado.
+  author: Jose Carlos Amorim
+  icon: "gavel"
+  slashPrefix: LegalOS
+  created: "2026-03-07"
+
+agents:
+  orchestrator:
+    - legal-chief
+
+  tier_0_diagnosis:
+    - richard-susskind
+    - margaret-hagan
+
+  tier_1_masters:
+    - kenneth-adams
+    - bryan-garner
+    - fisher-ury
+    - tina-stark
+    - chris-voss
+    - humberto-avila
+
+  tier_2_systematizers:
+    - steven-levy
+    - flavio-tartuce
+
+data_references:
+  - id: compliance-frameworks
+    description: "COSO Internal Control + ERM frameworks"
+  - id: legal-ops-maturity
+    description: "CLOC Core 12 Maturity Assessment"
+  - id: legal-reasoning
+    description: "IRAC/CREAC legal reasoning frameworks"
+
+pattern_library:
+  prefix: LG
+  naming_convention:
+    format: "{PREFIX}-{CATEGORY}-{NUMBER}"
+    example: "LG-TP-001"
+  categories:
+    - id: TP
+      name: "Task Patterns"
+    - id: EP
+      name: "Executor Patterns"
+    - id: PP
+      name: "Process Patterns"
+    - id: CP
+      name: "Contract Patterns"
+    - id: NP
+      name: "Negotiation Patterns"
+
+task_standards:
+  enforce_anatomy: true
+  validator: "LG-TP-001"
+  required_fields:
+    - task_name
+    - status
+    - responsible_executor
+    - execution_type
+    - input
+    - output
+    - action_items
+    - acceptance_criteria
+
+workflow_config:
+  checkpoint_policy: always_active
+  fail_fast: true
+  allow_manual_override: false

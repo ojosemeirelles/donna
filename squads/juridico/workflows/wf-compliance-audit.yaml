@@ -1,0 +1,164 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# WORKFLOW: Compliance Audit
+# Version: 1.0.0
+# Purpose: Compliance assessment and remediation
+# ═══════════════════════════════════════════════════════════════════════════════
+
+workflow-id: wf-compliance-audit
+name: Compliance Audit
+version: 1.0.0
+estimated-time: 4-10h
+complexity: high
+orchestrator: "@legal-chief"
+mode: interactive
+
+description: |
+  Avaliacao completa de conformidade regulatoria e remediacao. Cobre
+  as principais areas de compliance para empresas brasileiras: LGPD,
+  anticorrupcao, trabalhista e tributario. Cada area e avaliada por
+  especialista, as nao-conformidades sao classificadas por severidade
+  e um plano de remediacao priorizado e gerado.
+
+phases:
+  - id: SCOPE
+    name: "Definicao de Escopo do Audit"
+    agent: "@legal-chief"
+    mandatory: true
+    description: |
+      Define o escopo da auditoria de compliance: quais areas serao
+      auditadas (LGPD, anticorrupcao, trabalhista, tributario), qual
+      a profundidade de cada area (superficial, padrao, profunda),
+      quais unidades de negocio, periodo temporal de analise e
+      documentos necessarios. Designa especialistas para cada area.
+    inputs:
+      - solicitacao de auditoria (interna ou externa)
+      - estrutura organizacional da empresa
+      - auditorias anteriores (se existirem)
+    outputs:
+      - audit-scope.yaml (areas, profundidade, periodo, unidades)
+      - specialist-map.yaml (especialista por area)
+      - document-request.yaml (documentos necessarios por area)
+    checkpoint:
+      criteria:
+        - "Areas de auditoria definidas e priorizadas"
+        - "Profundidade de cada area justificada"
+        - "Especialista designado para cada area"
+        - "Lista de documentos necessarios enviada"
+        - "Cronograma de auditoria estabelecido"
+      veto_conditions:
+        - condition: "Escopo nao definido ou excessivamente vago"
+          action: "BLOQUEAR — refinar escopo com stakeholders antes de iniciar"
+        - condition: "Documentos criticos indisponiveis sem previsao de entrega"
+          action: "BLOQUEAR — obter compromisso de entrega ou ajustar escopo"
+
+  - id: ASSESS
+    name: "Avaliacao por Especialistas"
+    agent: "@humberto-avila"
+    mandatory: true
+    description: |
+      Cada area de compliance e avaliada pelo especialista designado.
+      humberto-avila lidera a avaliacao tributaria (regimes, retencoes,
+      obrigacoes acessorias, planejamento). flavio-tartuce avalia areas
+      civil e trabalhista (contratos, terceirizacao, NRs, banco de horas).
+      legal-chief avalia LGPD e anticorrupcao (programa de integridade,
+      canal de denuncias, tratamento de dados pessoais, DPO).
+      Cada achado e classificado por severidade: critico, alto, medio, baixo.
+    inputs:
+      - audit-scope.yaml
+      - documentos coletados por area
+      - politicas e procedimentos internos
+    outputs:
+      - findings-by-area.yaml (achados classificados por severidade)
+      - evidence-log.yaml (evidencias coletadas)
+      - risk-heat-map.yaml (mapa de calor de riscos por area)
+    checkpoint:
+      criteria:
+        - "Todas as areas do escopo avaliadas"
+        - "Cada achado classificado por severidade"
+        - "Evidencias documentadas para cada achado"
+        - "Mapa de riscos consolidado"
+      veto_conditions:
+        - condition: "Area critica do escopo nao avaliada"
+          action: "BLOQUEAR — completar avaliacao antes de consolidar"
+        - condition: "Achado critico identificado sem escalacao imediata"
+          action: "ESCALAR — notificar legal-chief e stakeholders imediatamente"
+        - condition: "Evidencias insuficientes para sustentar achado critico"
+          action: "ALERTAR — coletar evidencias adicionais ou reclassificar achado"
+
+  - id: REPORT
+    name: "Relatorio de Achados"
+    agent: "@bryan-garner"
+    mandatory: true
+    description: |
+      Consolida todos os achados em relatorio estruturado e claro.
+      bryan-garner redige o relatorio tecnico em linguagem acessivel,
+      sem sacrificar a precisao juridica. margaret-hagan cria versao
+      simplificada para stakeholders nao-juridicos, com visualizacoes
+      (risk heat map, severity dashboard) e recomendacoes em linguagem
+      de negocios.
+    inputs:
+      - findings-by-area.yaml
+      - risk-heat-map.yaml
+      - evidence-log.yaml
+    outputs:
+      - compliance-report.md (relatorio tecnico completo)
+      - executive-summary.md (resumo para stakeholders)
+      - remediation-priorities.yaml (achados priorizados para correcao)
+    checkpoint:
+      criteria:
+        - "Relatorio cobre todas as areas auditadas"
+        - "Achados priorizados por severidade e impacto"
+        - "Recomendacoes claras e acionaveis para cada achado"
+        - "Resumo executivo compreensivel para nao-juridicos"
+        - "Prazo estimado de remediacao para cada achado"
+      veto_conditions:
+        - condition: "Achado critico sem recomendacao de remediacao"
+          action: "BLOQUEAR — definir recomendacao antes de publicar relatorio"
+        - condition: "Relatorio tecnico incompreensivel para audiencia definida"
+          action: "ALERTAR — simplificar linguagem mantendo precisao"
+
+  - id: REMEDIATE
+    name: "Plano de Remediacao e Acompanhamento"
+    agent: "@legal-chief"
+    mandatory: true
+    description: |
+      Legal-chief coordena a criacao do plano de remediacao, designando
+      tarefas especificas para cada especialista por area. steven-levy
+      estrutura o plano como projeto com milestones, responsaveis,
+      prazos e metricas de acompanhamento. Cada achado critico e alto
+      recebe um owner e um prazo. Achados medios e baixos entram em
+      backlog priorizado.
+    inputs:
+      - remediation-priorities.yaml
+      - compliance-report.md
+      - specialist-map.yaml
+    outputs:
+      - remediation-plan.yaml (plano com tarefas, owners, prazos)
+      - monitoring-schedule.yaml (calendario de verificacao)
+      - compliance-dashboard.yaml (metricas de acompanhamento)
+    checkpoint:
+      criteria:
+        - "Cada achado critico e alto tem owner e prazo definido"
+        - "Plano de remediacao aprovado por stakeholders"
+        - "Calendario de monitoramento estabelecido"
+        - "Metricas de sucesso definidas por area"
+      veto_conditions:
+        - condition: "Achado critico sem owner ou prazo"
+          action: "BLOQUEAR — designar responsavel e prazo antes de aprovar plano"
+        - condition: "Plano sem calendario de monitoramento"
+          action: "BLOQUEAR — definir frequencia de verificacao para cada area"
+
+integration:
+  triggered_by:
+    - "Auditoria periodica programada"
+    - "Incidente de compliance identificado"
+    - "Requisicao regulatoria ou de autoridade"
+    - "Pos-fechamento de wf-deal-structuring"
+    - "Pos-resolucao de wf-dispute-resolution"
+  feeds_into:
+    - "wf-contract-lifecycle (atualizacao de clausulas por compliance)"
+    - "wf-dispute-resolution (se achado gerar exposicao litigiosa)"
+  complete_flow: |
+    SCOPE → ASSESS → REPORT → REMEDIATE
+      ↓        ↓        ↓          ↓
+    scope   findings  report   remediation-plan
