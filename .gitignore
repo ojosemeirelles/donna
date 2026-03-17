@@ -146,3 +146,7 @@ Thumbs.db
 .aiox-core/local/
 .claude/settings.local.json
 .aiox/install-log.txt
+
+# Desktop release artifacts (too large for GitHub)
+apps/desktop/release/*.dmg
+apps/desktop/release/*.zip
