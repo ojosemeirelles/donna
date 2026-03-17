@@ -150,3 +150,5 @@ Thumbs.db
 # Desktop release artifacts (too large for GitHub)
 apps/desktop/release/*.dmg
 apps/desktop/release/*.zip
+.env.backup*
+.serena/
