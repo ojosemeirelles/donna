@@ -639,8 +639,12 @@ export async function runPreparedReply(
                 threadId: ctx.MessageThreadId,
                 cfg,
               });
-              return { text: SILENT_REPLY_TOKEN };
             }
+            // Always return SILENT when shadow produced a response — even if
+            // routeReply was skipped (dispatchShadow already delivered via
+            // messageChannel/messageTo). Without this, runReplyAgent fires
+            // a second LLM response causing duplicate Telegram messages.
+            return { text: SILENT_REPLY_TOKEN };
           }
         } catch {
           // Shadow dispatch failed — fall through to hint injection
@@ -740,16 +744,20 @@ export async function runPreparedReply(
           const soulResponse = await handleSoulCommand(queuedBody);
           const originChannel = ctx.OriginatingChannel ?? sessionCtx.Provider;
           const originTo = ctx.OriginatingTo ?? sessionCtx.To;
-          if (originChannel && originTo && soulResponse) {
-            await routeReply({
-              payload: { text: soulResponse },
-              channel: originChannel,
-              to: originTo,
-              sessionKey,
-              accountId: sessionCtx.AccountId,
-              threadId: ctx.MessageThreadId,
-              cfg,
-            });
+          if (soulResponse) {
+            if (originChannel && originTo) {
+              await routeReply({
+                payload: { text: soulResponse },
+                channel: originChannel,
+                to: originTo,
+                sessionKey,
+                accountId: sessionCtx.AccountId,
+                threadId: ctx.MessageThreadId,
+                cfg,
+              });
+            }
+            // Always return SILENT when soul produced a response to prevent
+            // runReplyAgent from generating a duplicate reply.
             return { text: SILENT_REPLY_TOKEN };
           }
         } catch {
